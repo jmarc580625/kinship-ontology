@@ -1,0 +1,442 @@
+{
+  "module": "core-neutral",
+  "ontologies": [
+    "ontology/kinship/core-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "description": "Core gender-neutral relationships: spouse, child, parent, sibling, twin, adoptive, partner",
+  "tests": {
+    "hasChild": {
+      "description": "Verifies all directly asserted hasChild triples, including adoptive (via rdfs:subPropertyOf hasChild OWL inference).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?parent ?child WHERE { ?parent :hasChild ?child . } ORDER BY ?parent ?child",
+      "expected": [
+        {
+          "parent": ":abel",
+          "child": ":zela"
+        },
+        {
+          "parent": ":ada",
+          "child": ":zela"
+        },
+        {
+          "parent": ":adam",
+          "child": ":abel"
+        },
+        {
+          "parent": ":adam",
+          "child": ":azura"
+        },
+        {
+          "parent": ":antoine",
+          "child": ":fiona"
+        },
+        {
+          "parent": ":antoine",
+          "child": ":helen"
+        },
+        {
+          "parent": ":azura",
+          "child": ":bob"
+        },
+        {
+          "parent": ":azura",
+          "child": ":carol"
+        },
+        {
+          "parent": ":azura",
+          "child": ":helen"
+        },
+        {
+          "parent": ":bob",
+          "child": ":david"
+        },
+        {
+          "parent": ":carol",
+          "child": ":eliza"
+        },
+        {
+          "parent": ":eva",
+          "child": ":abel"
+        },
+        {
+          "parent": ":eva",
+          "child": ":azura"
+        },
+        {
+          "parent": ":frank",
+          "child": ":ada"
+        },
+        {
+          "parent": ":grace",
+          "child": ":ada"
+        },
+        {
+          "parent": ":hathor",
+          "child": ":jay"
+        },
+        {
+          "parent": ":hera",
+          "child": ":luna"
+        },
+        {
+          "parent": ":re",
+          "child": ":iris"
+        },
+        {
+          "parent": ":zeus",
+          "child": ":mars"
+        },
+        {
+          "parent": ":nana",
+          "child": ":hera"
+        },
+        {
+          "parent": ":nana",
+          "child": ":re"
+        },
+        {
+          "parent": ":papa",
+          "child": ":hathor"
+        },
+        {
+          "parent": ":papa",
+          "child": ":zeus"
+        }
+      ]
+    },
+    "hasParent": {
+      "description": "hasParent is declared owl:inverseOf hasChild; OWL reasoning must derive all pairs.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?person ?parent WHERE { ?person :hasParent ?parent . } ORDER BY ?person ?parent",
+      "expected": [
+        {
+          "person": ":abel",
+          "parent": ":adam"
+        },
+        {
+          "person": ":abel",
+          "parent": ":eva"
+        },
+        {
+          "person": ":ada",
+          "parent": ":frank"
+        },
+        {
+          "person": ":ada",
+          "parent": ":grace"
+        },
+        {
+          "person": ":azura",
+          "parent": ":adam"
+        },
+        {
+          "person": ":azura",
+          "parent": ":eva"
+        },
+        {
+          "person": ":bob",
+          "parent": ":azura"
+        },
+        {
+          "person": ":carol",
+          "parent": ":azura"
+        },
+        {
+          "person": ":david",
+          "parent": ":bob"
+        },
+        {
+          "person": ":eliza",
+          "parent": ":carol"
+        },
+        {
+          "person": ":fiona",
+          "parent": ":antoine"
+        },
+        {
+          "person": ":hathor",
+          "parent": ":papa"
+        },
+        {
+          "person": ":helen",
+          "parent": ":antoine"
+        },
+        {
+          "person": ":helen",
+          "parent": ":azura"
+        },
+        {
+          "person": ":hera",
+          "parent": ":nana"
+        },
+        {
+          "person": ":iris",
+          "parent": ":re"
+        },
+        {
+          "person": ":jay",
+          "parent": ":hathor"
+        },
+        {
+          "person": ":luna",
+          "parent": ":hera"
+        },
+        {
+          "person": ":mars",
+          "parent": ":zeus"
+        },
+        {
+          "person": ":re",
+          "parent": ":nana"
+        },
+        {
+          "person": ":zela",
+          "parent": ":abel"
+        },
+        {
+          "person": ":zela",
+          "parent": ":ada"
+        },
+        {
+          "person": ":zeus",
+          "parent": ":papa"
+        }
+      ]
+    },
+    "hasSpouse": {
+      "description": "hasSpouse is symmetric; asserting one direction derives the other via OWL reasoning.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasSpouse ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":abel",
+          "p2": ":ada"
+        },
+        {
+          "p1": ":ada",
+          "p2": ":abel"
+        },
+        {
+          "p1": ":adam",
+          "p2": ":eva"
+        },
+        {
+          "p1": ":antoine",
+          "p2": ":azura"
+        },
+        {
+          "p1": ":azura",
+          "p2": ":antoine"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":carl"
+        },
+        {
+          "p1": ":carl",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":eva",
+          "p2": ":adam"
+        }
+      ]
+    },
+    "hasSibling": {
+      "description": "hasSibling is materialized for all pairs sharing at least one hasChild parent. hasAdoptiveChild subPropertyOf hasChild makes azura and abel siblings.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasSibling ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":abel",
+          "p2": ":azura"
+        },
+        {
+          "p1": ":azura",
+          "p2": ":abel"
+        },
+        {
+          "p1": ":bob",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":bob",
+          "p2": ":helen"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":bob"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":helen"
+        },
+        {
+          "p1": ":fiona",
+          "p2": ":helen"
+        },
+        {
+          "p1": ":hathor",
+          "p2": ":zeus"
+        },
+        {
+          "p1": ":helen",
+          "p2": ":bob"
+        },
+        {
+          "p1": ":helen",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":helen",
+          "p2": ":fiona"
+        },
+        {
+          "p1": ":hera",
+          "p2": ":re"
+        },
+        {
+          "p1": ":re",
+          "p2": ":hera"
+        },
+        {
+          "p1": ":zeus",
+          "p2": ":hathor"
+        }
+      ]
+    },
+    "hasTwin": {
+      "description": "hasTwin is symmetric and subPropertyOf hasSibling; asserting carol hasTwin bob derives bob hasTwin carol.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasTwin ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":bob",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":bob"
+        }
+      ]
+    },
+    "hasTwin-implies-hasSibling": {
+      "description": "hasTwin rdfs:subPropertyOf hasSibling – every twin pair must also appear as a sibling pair.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasTwin ?p2 . FILTER NOT EXISTS { ?p1 :hasSibling ?p2 . } }",
+      "expect_empty": true
+    },
+    "hasAdoptiveChild": {
+      "description": "Verifies the two directly asserted hasAdoptiveChild triples.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?parent ?child WHERE { ?parent :hasAdoptiveChild ?child . } ORDER BY ?parent",
+      "expected": [
+        {
+          "parent": ":adam",
+          "child": ":abel"
+        },
+        {
+          "parent": ":eva",
+          "child": ":abel"
+        }
+      ]
+    },
+    "hasAdoptiveParent": {
+      "description": "OWL reasoning derives hasAdoptiveParent from hasAdoptiveChild inverseOf.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?child ?parent WHERE { ?child :hasAdoptiveParent ?parent . } ORDER BY ?parent",
+      "expected": [
+        {
+          "child": ":abel",
+          "parent": ":adam"
+        },
+        {
+          "child": ":abel",
+          "parent": ":eva"
+        }
+      ]
+    },
+    "hasAdoptiveChild-implies-hasChild": {
+      "description": "hasAdoptiveChild rdfs:subPropertyOf hasChild – every adoptive-child pair must also appear as a hasChild pair.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?c WHERE { ?p :hasAdoptiveChild ?c . FILTER NOT EXISTS { ?p :hasChild ?c . } }",
+      "expect_empty": true
+    },
+    "hasLifePartner": {
+      "description": "hasLifePartner is symmetric; OWL derives the reverse direction.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasLifePartner ?p2 . } ORDER BY ?p1",
+      "expected": [
+        {
+          "p1": ":hathor",
+          "p2": ":re"
+        },
+        {
+          "p1": ":re",
+          "p2": ":hathor"
+        }
+      ]
+    },
+    "hasCivilPartner": {
+      "description": "hasCivilPartner is symmetric; OWL derives the reverse direction.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasCivilPartner ?p2 . } ORDER BY ?p1",
+      "expected": [
+        {
+          "p1": ":hera",
+          "p2": ":zeus"
+        },
+        {
+          "p1": ":zeus",
+          "p2": ":hera"
+        }
+      ]
+    },
+    "hasPartner": {
+      "description": "hasPartner is the symmetric super-property of hasSpouse, hasCivilPartner and hasLifePartner. OWL sub-property inference makes every spouse, civil partner and life partner also a hasPartner. Verifies all 6 couples (12 triples).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasPartner ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":abel",
+          "p2": ":ada"
+        },
+        {
+          "p1": ":ada",
+          "p2": ":abel"
+        },
+        {
+          "p1": ":adam",
+          "p2": ":eva"
+        },
+        {
+          "p1": ":antoine",
+          "p2": ":azura"
+        },
+        {
+          "p1": ":azura",
+          "p2": ":antoine"
+        },
+        {
+          "p1": ":carl",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":carl"
+        },
+        {
+          "p1": ":eva",
+          "p2": ":adam"
+        },
+        {
+          "p1": ":hathor",
+          "p2": ":re"
+        },
+        {
+          "p1": ":hera",
+          "p2": ":zeus"
+        },
+        {
+          "p1": ":re",
+          "p2": ":hathor"
+        },
+        {
+          "p1": ":zeus",
+          "p2": ":hera"
+        }
+      ]
+    }
+  }
+}

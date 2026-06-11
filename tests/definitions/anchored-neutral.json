@@ -1,0 +1,95 @@
+{
+  "module": "anchored-neutral",
+  "ontologies": [
+    "ontology/kinship/anchored-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl",
+    "tests/data/anchored-data.ttl"
+  ],
+  "description": "Gender-neutral family-anchored ceremonial relationships: godchild, godparent, witness",
+  "tests": {
+    "hasGodchild": {
+      "description": "Asserted in data as hasGodchild triples.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gp ?gc WHERE { ?gp :hasGodchild ?gc . } ORDER BY ?gp ?gc",
+      "expected": [
+        {
+          "gp": ":abel",
+          "gc": ":eliza"
+        },
+        {
+          "gp": ":adam",
+          "gc": ":zela"
+        },
+        {
+          "gp": ":bob",
+          "gc": ":jay"
+        },
+        {
+          "gp": ":carol",
+          "gc": ":iris"
+        },
+        {
+          "gp": ":eva",
+          "gc": ":david"
+        }
+      ]
+    },
+    "hasGodparent": {
+      "description": "OWL reasoning derives hasGodparent from inverseOf hasGodchild.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gc ?gp WHERE { ?gc :hasGodparent ?gp . } ORDER BY ?gc ?gp",
+      "expected": [
+        {
+          "gc": ":david",
+          "gp": ":eva"
+        },
+        {
+          "gc": ":eliza",
+          "gp": ":abel"
+        },
+        {
+          "gc": ":iris",
+          "gp": ":carol"
+        },
+        {
+          "gc": ":jay",
+          "gp": ":bob"
+        },
+        {
+          "gc": ":zela",
+          "gp": ":adam"
+        }
+      ]
+    },
+    "hasCeremonialBond-eliza": {
+      "description": "Spot-check: abel hasGodchild eliza → eliza hasGodparent abel → eliza hasCeremonialBond abel.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?r WHERE { :eliza :hasCeremonialBond ?r . } ORDER BY ?r",
+      "expected": [
+        {
+          "r": ":abel"
+        }
+      ]
+    },
+    "hasCeremonialBond-all": {
+      "description": "Exhaustive check: all 5 godparent assertions produce 10 hasCeremonialBond pairs (both directions via hasGodchild and its inverse hasGodparent).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?a ?b WHERE { ?a :hasCeremonialBond ?b . } ORDER BY ?a ?b",
+      "expected": [
+        { "a": ":abel",  "b": ":eliza" },
+        { "a": ":adam",  "b": ":zela"  },
+        { "a": ":bob",   "b": ":jay"   },
+        { "a": ":carol", "b": ":iris"  },
+        { "a": ":david", "b": ":eva"   },
+        { "a": ":eliza", "b": ":abel"  },
+        { "a": ":eva",   "b": ":david" },
+        { "a": ":iris",  "b": ":carol" },
+        { "a": ":jay",   "b": ":bob"   },
+        { "a": ":zela",  "b": ":adam"  }
+      ]
+    },
+    "neg-godparent-not-parent": {
+      "description": "bob is godfather of jay (asserted) but must NOT be inferred hasChild jay. hasGodchild is in the ceremonial hierarchy, disjoint from hasChild/hasParent.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :bob :hasChild :jay . BIND(:jay AS ?x) }",
+      "expect_empty": true
+    }
+  }
+}

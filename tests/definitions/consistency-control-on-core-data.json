@@ -1,0 +1,39 @@
+{
+  "module": "consistency-control-on-core-data",
+  "query_library": "tests/definitions/queries/consistency-control-queries.json",
+  "ontologies": [
+    "ontology/kinship/core-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "abox_only": true,
+  "description": "Happy-path consistency control — all consistency-control queries must return empty on valid family data. Uses generic queries from the shared library.",
+  "tests": {
+
+    "Q-IRR":  { "expect_empty": true },
+
+    "Q-CON1": { "expect_empty": true },
+    "Q-CON2": { "expect_empty": true },
+    "Q-CON3": { "expect_empty": true },
+    "Q-CON4": { "expect_empty": true },
+
+    "Q-RED1": { "expect_empty": true },
+    "Q-RED2": { "expect_empty": true },
+    "Q-RED3": { "expect_empty": true },
+
+    "Q-CAR1": { "expect_empty": true },
+    "Q-CAR2": { "expect_empty": true },
+
+    "Q-TWI1": { "expect_empty": true },
+    "Q-TWI2": { "expect_empty": true },
+
+    "Q-CIR1": { "expect_empty": true },
+    "Q-CIR2": { "expect_empty": true },
+
+    "Q-PAR1": { "expect_empty": true },
+    "Q-PAR2": { "expect_empty": true },
+    "Q-PAR3": { "expect_empty": true }
+
+  }
+}

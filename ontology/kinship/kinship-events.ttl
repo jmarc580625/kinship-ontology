@@ -1,0 +1,184 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/kinship-events> a owl:Ontology ;
+    owl:versionIRI <http://example.org/kinship/kinship-events/1.0.0> ;
+    owl:versionInfo "1.0.0" ;
+    owl:imports <http://example.org/kinship/temporal> ;
+    owl:imports <http://example.org/kinship/gender> ;
+    owl:imports <http://example.org/kinship/materialization> ;
+    rdfs:label "Kinship Ontology – Kinship Events Module"@en ;
+    rdfs:comment "Kinship events and temporal relationships for kinship facts."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Kinship events
+#---------------------------
+
+## Abstract kinship event class
+:KinshipEvent a owl:Class ;
+    rdfs:label "Kinship Event"@en .
+
+:hasValidity a owl:ObjectProperty ;
+    rdfs:label "Has Validity"@en ;
+    rdfs:comment "Links a kinship event to its validity interval."@en ;
+    rdfs:domain :KinshipEvent ;
+    rdfs:range  :ValidityInterval .
+
+## Event to people links
+:hasPrincipal a owl:ObjectProperty ;
+    rdfs:label "Has Principal"@en ;
+    rdfs:comment "Primary subject of the event — the person the event is about."@en ;
+    rdfs:domain :KinshipEvent ;
+    rdfs:range  :Person .
+
+## Life cycle events
+
+### Birth
+:Birth a owl:Class ;
+    rdfs:subClassOf :KinshipEvent ;
+    rdfs:label "Birth"@en ;
+    rdfs:comment "Birth event of a person."@en .
+
+:hasEventGodparent a owl:ObjectProperty ;
+    rdfs:label  "has godparent"@en ;
+    rdfs:comment """Links a birth or baptism event to a godparent. 
+    Design: distinct from anchor-neutral :hasGodparent — does not require birth date knowledge. 
+    Source for :hasGodparent materialization."""@en ;
+    rdfs:domain :Birth ;
+    rdfs:range  :Person .
+
+### Death
+:Death a owl:Class ;rdfs:subClassOf :KinshipEvent ;
+    rdfs:label "Death"@en ;
+    rdfs:comment "Death event of a person."@en .
+
+## Partnership events
+:PartnershipEvent a owl:Class ;
+    rdfs:subClassOf :KinshipEvent ;
+    rdfs:label "Partnership Event"@en ;
+    rdfs:comment "Event related to a partnership."@en .
+
+:PartnershipStart a owl:Class ;
+    rdfs:subClassOf :PartnershipEvent ;
+    rdfs:label "Partnership Start"@en ;
+    rdfs:comment "Event marking the beginning of a partnership."@en .
+
+:PartnershipEnd a owl:Class ;
+    rdfs:subClassOf :PartnershipEvent ;
+    rdfs:label "Partnership End"@en ;
+    rdfs:comment "Event marking the end of a partnership."@en .
+
+:hasPartner1 a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPrincipal ;
+    rdfs:label "Has Partner 1"@en .
+
+:hasPartner2 a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPrincipal ;
+    rdfs:label "Has Partner 2"@en .    
+
+### Marriage
+:Marriage a owl:Class ;
+    rdfs:subClassOf :PartnershipStart ;
+    rdfs:label "Marriage"@en ;
+    rdfs:comment "Marriage event."@en .
+
+:hasWitnessed   a owl:ObjectProperty ;
+    rdfs:label  "has witness"@en ;
+    rdfs:comment """Links a marriage event to one of its witnesses. 
+    Design: does not identify which spouse's witness — that person-to-person link belongs in anchor-neutral :hasWitness.""""@en ;
+    rdfs:domain :Marriage ;
+    rdfs:range  :Person .
+
+### Divorce
+:Divorce a owl:Class ;
+    rdfs:subClassOf :PartnershipEnd ;
+    rdfs:label "Divorce"@en ;
+    rdfs:comment "Divorce event."@en .
+
+### Partnership end by death
+:PartnershipEndByDeath a owl:Class ;
+    rdfs:subClassOf :PartnershipEnd ;
+    rdfs:label "Partnership End by Death"@en ;
+    rdfs:comment """Partnership dissolved by the death of one partner.
+    Derived automatically from a :Death event.
+    The dissolution date equals the death date.
+    Stored in <urn:kinship:materialized:events>,
+    not in <urn:kinship:events>."""@en ;
+    :MaterializationReason :ComplexPathLimitation ;
+    :MaterializationScript """
+        INSERT {
+            IRI(CONCAT("urn:kinship:event:dissolution:",
+                STR(?p1), ".", STR(?p2), ".", STR(?deathDate)))
+                a :PartnershipEndByDeath ;
+hasPartner1 ?p1 ;
+                :hasPartner2 ?p2 ;
+                :causedBy    ?deathEvent ;
+                :hasValidity [
+                    a :ValidityInterval ;
+                    :validFrom ?deathDate
+                ] .
+        }
+        WHERE {
+            #— Partenariat actif
+            ?start a :PartnershipStart ;
+                :hasPartner1 ?p1 ;
+                :hasPartner2 ?p2 ;
+                :hasValidity/:validFrom ?startDate .
+
+            #— Décès d'un des partenaires
+            ?deathEvent a :Death ;
+                :hasPrincipal ?deceased ;
+                :hasValidity/:validFrom ?deathDate .
+
+            FILTER(?deceased IN (?p1, ?p2))
+            FILTER(?deathDate > ?startDate)
+
+            #— Aucune dissolution préexistante
+            FILTER NOT EXISTS {
+                ?end a :PartnershipEnd ;
+                    :hasPartner1|:hasPartner2 ?p1 ;
+                    :hasPartner1|:hasPartner2 ?p2 ;
+                    :hasValidity/:validFrom ?endDate .
+                FILTER(?endDate <= ?deathDate)
+            }
+        }
+    """ .
+
+:causedBy a owl:ObjectProperty ;
+    rdfs:domain :PartnershipEndByDeath ;
+    rdfs:range  :Death ;
+    rdfs:label "caused by"@en .
+
+## Filiation events
+
+### Adoption
+:Adoption a owl:Class ;
+    rdfs:subClassOf :KinshipEvent ;
+    rdfs:label "Adoption Event"@en ;
+    rdfs:comment "Adoption event of a person."@en .
+
+:hasBeenAdopted a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPrincipal ;
+    rdfs:label "Has Been Adopted"@en ;
+    rdfs:comment "Links an adoption event to a person who has been adopted."@en ;
+    rdfs:domain :Adoption ;
+    rdfs:range :Person .
+
+:hasAdopted a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPrincipal ;
+    rdfs:label "Has Adopted"@en ;
+    rdfs:comment "Links an adoption event to a person who has adopted."@en ;
+    rdfs:domain :Adoption ;
+    rdfs:range :Person .

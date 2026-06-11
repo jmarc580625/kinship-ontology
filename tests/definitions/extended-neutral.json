@@ -1,0 +1,701 @@
+{
+  "module": "extended-neutral",
+  "ontologies": [
+    "ontology/kinship/extended-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "description": "Gender-neutral extended family relationships: grandparent, nibling, cousin, great-grandparent, in-law niblings",
+  "tests": {
+    "hasGrandchild": {
+      "description": "OWL property chain axiom derives grandchildren from two hasChild hops.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gp ?gc WHERE { ?gp :hasGrandchild ?gc . } ORDER BY ?gp ?gc",
+      "expected": [
+        {
+          "gp": ":adam",
+          "gc": ":bob"
+        },
+        {
+          "gp": ":adam",
+          "gc": ":carol"
+        },
+        {
+          "gp": ":adam",
+          "gc": ":helen"
+        },
+        {
+          "gp": ":adam",
+          "gc": ":zela"
+        },
+        {
+          "gp": ":azura",
+          "gc": ":david"
+        },
+        {
+          "gp": ":azura",
+          "gc": ":eliza"
+        },
+        {
+          "gp": ":eva",
+          "gc": ":bob"
+        },
+        {
+          "gp": ":eva",
+          "gc": ":carol"
+        },
+        {
+          "gp": ":eva",
+          "gc": ":helen"
+        },
+        {
+          "gp": ":eva",
+          "gc": ":zela"
+        },
+        {
+          "gp": ":frank",
+          "gc": ":zela"
+        },
+        {
+          "gp": ":grace",
+          "gc": ":zela"
+        },
+        {
+          "gp": ":nana",
+          "gc": ":iris"
+        },
+        {
+          "gp": ":nana",
+          "gc": ":luna"
+        },
+        {
+          "gp": ":papa",
+          "gc": ":jay"
+        },
+        {
+          "gp": ":papa",
+          "gc": ":mars"
+        }
+      ]
+    },
+    "hasGrandparent": {
+      "description": "OWL inverseOf derives hasGrandparent from hasGrandchild.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?person ?gp WHERE { ?person :hasGrandparent ?gp . } ORDER BY ?person ?gp",
+      "expected": [
+        {
+          "person": ":bob",
+          "gp": ":adam"
+        },
+        {
+          "person": ":bob",
+          "gp": ":eva"
+        },
+        {
+          "person": ":carol",
+          "gp": ":adam"
+        },
+        {
+          "person": ":carol",
+          "gp": ":eva"
+        },
+        {
+          "person": ":david",
+          "gp": ":azura"
+        },
+        {
+          "person": ":eliza",
+          "gp": ":azura"
+        },
+        {
+          "person": ":helen",
+          "gp": ":adam"
+        },
+        {
+          "person": ":helen",
+          "gp": ":eva"
+        },
+        {
+          "person": ":iris",
+          "gp": ":nana"
+        },
+        {
+          "person": ":jay",
+          "gp": ":papa"
+        },
+        {
+          "person": ":luna",
+          "gp": ":nana"
+        },
+        {
+          "person": ":mars",
+          "gp": ":papa"
+        },
+        {
+          "person": ":zela",
+          "gp": ":adam"
+        },
+        {
+          "person": ":zela",
+          "gp": ":eva"
+        },
+        {
+          "person": ":zela",
+          "gp": ":frank"
+        },
+        {
+          "person": ":zela",
+          "gp": ":grace"
+        }
+      ]
+    },
+    "hasGreatGrandchild": {
+      "description": "Three-hop property chain derives great-grandchildren.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ggp ?ggc WHERE { ?ggp :hasGreatGrandchild ?ggc . } ORDER BY ?ggp ?ggc",
+      "expected": [
+        {
+          "ggp": ":adam",
+          "ggc": ":david"
+        },
+        {
+          "ggp": ":adam",
+          "ggc": ":eliza"
+        },
+        {
+          "ggp": ":eva",
+          "ggc": ":david"
+        },
+        {
+          "ggp": ":eva",
+          "ggc": ":eliza"
+        }
+      ]
+    },
+    "hasGreatGrandparent": {
+      "description": "OWL inverseOf derives hasGreatGrandparent.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?person ?ggp WHERE { ?person :hasGreatGrandparent ?ggp . } ORDER BY ?person ?ggp",
+      "expected": [
+        {
+          "person": ":david",
+          "ggp": ":adam"
+        },
+        {
+          "person": ":david",
+          "ggp": ":eva"
+        },
+        {
+          "person": ":eliza",
+          "ggp": ":adam"
+        },
+        {
+          "person": ":eliza",
+          "ggp": ":eva"
+        }
+      ]
+    },
+    "hasSiblingNibling": {
+      "description": "hasSiblingNibling is inferred via OWL property chain (hasSibling ∘ hasChild). Tests blood-only niblings; in-law niblings are covered by hasNiblingInLaw (subProperty of hasNibling).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasSiblingNibling ?n . } ORDER BY ?ua ?n",
+      "expected": [
+        {
+          "ua": ":abel",
+          "n": ":bob"
+        },
+        {
+          "ua": ":abel",
+          "n": ":carol"
+        },
+        {
+          "ua": ":abel",
+          "n": ":helen"
+        },
+        {
+          "ua": ":azura",
+          "n": ":zela"
+        },
+        {
+          "ua": ":bob",
+          "n": ":eliza"
+        },
+        {
+          "ua": ":carol",
+          "n": ":david"
+        },
+        {
+          "ua": ":hathor",
+          "n": ":mars"
+        },
+        {
+          "ua": ":helen",
+          "n": ":david"
+        },
+        {
+          "ua": ":helen",
+          "n": ":eliza"
+        },
+        {
+          "ua": ":hera",
+          "n": ":iris"
+        },
+        {
+          "ua": ":re",
+          "n": ":luna"
+        },
+        {
+          "ua": ":zeus",
+          "n": ":jay"
+        }
+      ]
+    },
+    "hasSiblingUncleAunt": {
+      "description": "OWL inverseOf derives hasSiblingUncleAunt from hasSiblingNibling. Tests blood-only uncle/aunt relationships.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?n ?ua WHERE { ?n :hasSiblingUncleAunt ?ua . } ORDER BY ?n ?ua",
+      "expected": [
+        {
+          "n": ":bob",
+          "ua": ":abel"
+        },
+        {
+          "n": ":carol",
+          "ua": ":abel"
+        },
+        {
+          "n": ":david",
+          "ua": ":carol"
+        },
+        {
+          "n": ":david",
+          "ua": ":helen"
+        },
+        {
+          "n": ":eliza",
+          "ua": ":bob"
+        },
+        {
+          "n": ":eliza",
+          "ua": ":helen"
+        },
+        {
+          "n": ":helen",
+          "ua": ":abel"
+        },
+        {
+          "n": ":iris",
+          "ua": ":hera"
+        },
+        {
+          "n": ":jay",
+          "ua": ":zeus"
+        },
+        {
+          "n": ":luna",
+          "ua": ":re"
+        },
+        {
+          "n": ":mars",
+          "ua": ":hathor"
+        },
+        {
+          "n": ":zela",
+          "ua": ":azura"
+        }
+      ]
+    },
+    "hasCousin": {
+      "description": "hasCousin is materialized; FILTER NOT EXISTS excludes pairs that are already siblings.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c1 ?c2 WHERE { ?c1 :hasCousin ?c2 . } ORDER BY ?c1 ?c2",
+      "expected": [
+        {
+          "c1": ":bob",
+          "c2": ":zela"
+        },
+        {
+          "c1": ":carol",
+          "c2": ":zela"
+        },
+        {
+          "c1": ":david",
+          "c2": ":eliza"
+        },
+        {
+          "c1": ":eliza",
+          "c2": ":david"
+        },
+        {
+          "c1": ":helen",
+          "c2": ":zela"
+        },
+        {
+          "c1": ":zela",
+          "c2": ":bob"
+        },
+        {
+          "c1": ":zela",
+          "c2": ":carol"
+        },
+        {
+          "c1": ":iris",
+          "c2": ":luna"
+        },
+        {
+          "c1": ":jay",
+          "c2": ":mars"
+        },
+        {
+          "c1": ":luna",
+          "c2": ":iris"
+        },
+        {
+          "c1": ":mars",
+          "c2": ":jay"
+        },
+        {
+          "c1": ":zela",
+          "c2": ":helen"
+        }
+      ]
+    },
+    "hasDescendant-adam": {
+      "description": "hasDescendant is blood-only (populated via hasBloodChild subproperty chain). abel is adoptive → excluded. zela's blood parents are abel+ada, not in adam's blood line → excluded. Verifies adam's full blood-descendant set.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?d WHERE { :adam :hasDescendant ?d . } ORDER BY ?d",
+      "expected": [
+        {
+          "d": ":azura"
+        },
+        {
+          "d": ":bob"
+        },
+        {
+          "d": ":carol"
+        },
+        {
+          "d": ":david"
+        },
+        {
+          "d": ":eliza"
+        },
+        {
+          "d": ":helen"
+        }
+      ]
+    },
+    "hasAncestor-eliza": {
+      "description": "OWL inverseOf derives hasAncestor. Verifies eliza's full ancestor set.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?a WHERE { :eliza :hasAncestor ?a . } ORDER BY ?a",
+      "expected": [
+        {
+          "a": ":adam"
+        },
+        {
+          "a": ":azura"
+        },
+        {
+          "a": ":carol"
+        },
+        {
+          "a": ":eva"
+        }
+      ]
+    },
+    "hasNiblingInLaw": {
+      "description": "OWL property chain (hasPartner ∘ hasSibling ∘ hasChild) derives in-law niblings after hasSibling is materialized. Covers all partner types (hasSpouse, hasCivilPartner, hasLifePartner). carl→david (carol's sibling bob's son); antoine→zela (azura's sibling abel's daughter); ada→bob/carol/helen (abel's sibling azura's children).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasNiblingInLaw ?n . } ORDER BY ?ua ?n",
+      "expected": [
+        {
+          "ua": ":ada",
+          "n": ":bob"
+        },
+        {
+          "ua": ":ada",
+          "n": ":carol"
+        },
+        {
+          "ua": ":ada",
+          "n": ":helen"
+        },
+        {
+          "ua": ":antoine",
+          "n": ":zela"
+        },
+        {
+          "ua": ":carl",
+          "n": ":david"
+        },
+        {
+          "ua": ":hathor",
+          "n": ":luna"
+        },
+        {
+          "ua": ":hera",
+          "n": ":jay"
+        },
+        {
+          "ua": ":re",
+          "n": ":mars"
+        },
+        {
+          "ua": ":zeus",
+          "n": ":iris"
+        }
+      ]
+    },
+    "hasUncleAuntInLaw": {
+      "description": "OWL inverseOf derives hasUncleAuntInLaw from hasNiblingInLaw.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?n ?ua WHERE { ?n :hasUncleAuntInLaw ?ua . } ORDER BY ?n ?ua",
+      "expected": [
+        {
+          "n": ":bob",
+          "ua": ":ada"
+        },
+        {
+          "n": ":carol",
+          "ua": ":ada"
+        },
+        {
+          "n": ":david",
+          "ua": ":carl"
+        },
+        {
+          "n": ":helen",
+          "ua": ":ada"
+        },
+        {
+          "n": ":iris",
+          "ua": ":zeus"
+        },
+        {
+          "n": ":jay",
+          "ua": ":hera"
+        },
+        {
+          "n": ":luna",
+          "ua": ":hathor"
+        },
+        {
+          "n": ":mars",
+          "ua": ":re"
+        },
+        {
+          "n": ":zela",
+          "ua": ":antoine"
+        }
+      ]
+    },
+    "hasNibling": {
+      "description": "hasNibling includes both hasSiblingNibling (OWL chain) and hasNiblingInLaw (OWL chain). Verifies the full set including in-law niblings carl→david and antoine→zela.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasNibling ?n . } ORDER BY ?ua ?n",
+      "expected": [
+        {
+          "ua": ":abel",
+          "n": ":bob"
+        },
+        {
+          "ua": ":abel",
+          "n": ":carol"
+        },
+        {
+          "ua": ":abel",
+          "n": ":helen"
+        },
+        {
+          "ua": ":ada",
+          "n": ":bob"
+        },
+        {
+          "ua": ":ada",
+          "n": ":carol"
+        },
+        {
+          "ua": ":ada",
+          "n": ":helen"
+        },
+        {
+          "ua": ":antoine",
+          "n": ":zela"
+        },
+        {
+          "ua": ":azura",
+          "n": ":zela"
+        },
+        {
+          "ua": ":bob",
+          "n": ":eliza"
+        },
+        {
+          "ua": ":carl",
+          "n": ":david"
+        },
+        {
+          "ua": ":carol",
+          "n": ":david"
+        },
+        {
+          "ua": ":hathor",
+          "n": ":luna"
+        },
+        {
+          "ua": ":hathor",
+          "n": ":mars"
+        },
+        {
+          "ua": ":helen",
+          "n": ":david"
+        },
+        {
+          "ua": ":helen",
+          "n": ":eliza"
+        },
+        {
+          "ua": ":hera",
+          "n": ":iris"
+        },
+        {
+          "ua": ":hera",
+          "n": ":jay"
+        },
+        {
+          "ua": ":re",
+          "n": ":luna"
+        },
+        {
+          "ua": ":re",
+          "n": ":mars"
+        },
+        {
+          "ua": ":zeus",
+          "n": ":iris"
+        },
+        {
+          "ua": ":zeus",
+          "n": ":jay"
+        }
+      ]
+    },
+    "hasUncleAunt": {
+      "description": "hasUncleAunt is the inverse of hasNibling and includes blood (hasSiblingUncleAunt) and in-law (hasUncleAuntInLaw) paths.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?n ?ua WHERE { ?n :hasUncleAunt ?ua . } ORDER BY ?n ?ua",
+      "expected": [
+        {
+          "n": ":bob",
+          "ua": ":abel"
+        },
+        {
+          "n": ":bob",
+          "ua": ":ada"
+        },
+        {
+          "n": ":carol",
+          "ua": ":abel"
+        },
+        {
+          "n": ":carol",
+          "ua": ":ada"
+        },
+        {
+          "n": ":david",
+          "ua": ":carl"
+        },
+        {
+          "n": ":david",
+          "ua": ":carol"
+        },
+        {
+          "n": ":david",
+          "ua": ":helen"
+        },
+        {
+          "n": ":eliza",
+          "ua": ":bob"
+        },
+        {
+          "n": ":eliza",
+          "ua": ":helen"
+        },
+        {
+          "n": ":helen",
+          "ua": ":abel"
+        },
+        {
+          "n": ":helen",
+          "ua": ":ada"
+        },
+        {
+          "n": ":iris",
+          "ua": ":hera"
+        },
+        {
+          "n": ":iris",
+          "ua": ":zeus"
+        },
+        {
+          "n": ":jay",
+          "ua": ":hera"
+        },
+        {
+          "n": ":jay",
+          "ua": ":zeus"
+        },
+        {
+          "n": ":luna",
+          "ua": ":hathor"
+        },
+        {
+          "n": ":luna",
+          "ua": ":re"
+        },
+        {
+          "n": ":mars",
+          "ua": ":hathor"
+        },
+        {
+          "n": ":mars",
+          "ua": ":re"
+        },
+        {
+          "n": ":zela",
+          "ua": ":antoine"
+        },
+        {
+          "n": ":zela",
+          "ua": ":azura"
+        }
+      ]
+    },
+    "struct-hasNiblingInLaw-subOf-hasNibling": {
+      "description": "Every hasNiblingInLaw pair must also appear as a hasNibling pair (rdfs:subPropertyOf propagation).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasNiblingInLaw ?n . FILTER NOT EXISTS { ?ua :hasNibling ?n . } }",
+      "expect_empty": true
+    },
+    "struct-hasSiblingNibling-subOf-hasNibling": {
+      "description": "Every hasSiblingNibling pair must also appear as a hasNibling pair.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasSiblingNibling ?n . FILTER NOT EXISTS { ?ua :hasNibling ?n . } }",
+      "expect_empty": true
+    },
+    "hasLineageRelative-eliza": {
+      "description": "hasLineageRelative covers all blood/lineage sub-properties: hasAncestor (carol, azura, adam, eva), hasSiblingUncleAunt (bob, helen), hasCousin (david). Carl is excluded (step-parent, not lineage). Abel is excluded (godparent, ceremonial).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?r WHERE { :eliza :hasLineageRelative ?r . } ORDER BY ?r",
+      "expected": [
+        {
+          "r": ":adam"
+        },
+        {
+          "r": ":azura"
+        },
+        {
+          "r": ":bob"
+        },
+        {
+          "r": ":carol"
+        },
+        {
+          "r": ":david"
+        },
+        {
+          "r": ":eva"
+        },
+        {
+          "r": ":helen"
+        }
+      ]
+    }
+  }
+}

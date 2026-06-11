@@ -1,0 +1,77 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/allied-neutral> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/allied-neutral/1.0.0> ;
+    owl:imports <http://example.org/kinship/extended-neutral> ;
+    rdfs:label "Allied Family Relationships Gender-Neutral Module of the Kinship Ontology"@en ;
+    rdfs:comment "Gender-neutral allied kinship relationships: child-in-law, parent-in-law, and sibling-in-law."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Gender-neutral in-law kinship relationships
+#---------------------------
+
+### child-in-law
+:hasChildInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Child-In-Law"@en ;
+    rdfs:comment "Partner of one's child — crosses one alliance link."@en ;
+    owl:inverseOf :hasParentInLaw ;
+    owl:propertyChainAxiom (
+        :hasChild
+        :hasPartner
+    ) ;
+    :crossesAlliance true .
+
+### parent-in-law
+:hasParentInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Parent-In-Law"@en ;
+    rdfs:comment "Parent of one's partner — crosses one alliance link."@en ;
+    owl:inverseOf :hasChildInLaw ;
+    :crossesAlliance true .
+
+### sibling-in-law
+:hasSiblingInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Sibling-In-Law"@en ;
+    rdfs:comment "Partner's sibling, or sibling's partner — union of two distinct paths covering both directions."@en ;
+    :MaterializationReason :UnionPatternLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?person :hasSiblingInLaw ?siblingInLaw . # owrl reasoner infers symmetric relationship
+        }
+        WHERE {
+            {
+                ?person :hasPartner ?spouse .
+                ?spouse :hasSibling ?siblingInLaw .
+            }
+            UNION
+            {
+                ?person :hasSibling ?sibling .
+                ?sibling :hasPartner ?siblingInLaw .
+            }
+        }
+    """ ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
+    :crossesAlliance true .
+
+#---------------------------
+# In-Law property disjointness axioms
+#---------------------------
+
+:hasChildInLaw owl:propertyDisjointWith :hasChild .
+:hasParentInLaw owl:propertyDisjointWith :hasParent .

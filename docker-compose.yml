@@ -1,0 +1,32 @@
+services:
+  graphdb:
+    image: ontotext/graphdb:10.8.1
+    container_name: kinship-graphdb
+    ports:
+      - "7200:7200"
+    environment:
+      - GDB_HEAP_SIZE=2g
+      - GDB_JAVA_OPTS=-Xmx2g -Xms2g
+    volumes:
+      - graphdb-data:/opt/graphdb/home
+      - graphdb-logs:/opt/graphdb/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7200/rest/repositories"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - kinship-network
+
+volumes:
+  graphdb-data:
+    name: kinship-graphdb-data
+  graphdb-logs:
+    name: kinship-graphdb-logs
+
+networks:
+  kinship-network:
+    name: kinship-network
+    driver: bridge

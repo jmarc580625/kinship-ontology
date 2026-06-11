@@ -1,0 +1,30 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# boundary-data.ttl
+# A second, fully disconnected family used to verify that no cross-family
+# relationships leak from core-data.ttl.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Individuals (all names deliberately different from the main family)
+# ---------------------------------------------------------------------------
+:mike  :hasGender  :Male .
+:sue   :hasGender  :Female .
+:tom   :hasGender  :Male .
+:lucy  :hasGender  :Female .
+:nina  :hasGender  :Female .
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+:mike :hasSpouse :sue .
+:mike :hasChild  :tom .
+:sue  :hasChild  :lucy .
+# tom and lucy share mike as step-parent / lucy as step-sibling of tom:
+#   sue married mike → mike is step-parent of lucy
+#   mike married sue → sue is step-parent of tom
+#   tom and lucy are step-siblings
+
+## Godparent (cross-boundary: mike is godparent of tom — intra-family)
+:mike :hasGodchild :nina .

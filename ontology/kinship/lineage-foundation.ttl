@@ -1,0 +1,59 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/lineage-foundation> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/lineage-foundation/1.0.0> ;
+    owl:imports <http://example.org/kinship/gender-foundation> ;
+    rdfs:label "Lineage Foundation Module of the Kinship Ontology"@en ;
+    rdfs:comment "Lineage class definitions."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Lineage Definitions
+#---------------------------
+
+## Property Annotations : flag pattern, presence = true, absence = false
+:crossesAlliance a owl:AnnotationProperty ;
+    rdfs:label "crosses alliance"@en ;
+    rdfs:comment """Flag — present only when true.
+    Signals that this property chain crosses at least one hasPartner link.
+    Never asserted as false — absence implies the property is consanguine."""@en .
+
+:crossesAdoption a owl:AnnotationProperty ;
+    rdfs:label "crosses adoption"@en ;
+    rdfs:comment """Flag — present only when true.
+    Signals that this property chain crosses at least one hasStep or hasAdoptive link.
+    Never asserted as false — absence implies the property is consanguine."""@en .
+
+## Super-property for all kinship relationships
+:hasRelative a owl:ObjectProperty ;
+    rdfs:label "has relative"@en ;
+    rdfs:comment """Root superproperty of all kinship relationships."""@en ;
+    rdfs:domain :Person ;
+    rdfs:range  :Person ;
+    rdf:type owl:SymmetricProperty .
+
+## Lineage-specific properties
+:hasLineageRelative a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "has lineage relative"@en ;
+    rdfs:comment """Superproperty of all consanguine relations. 
+    Design: subproperties carry no crossing flags — position in this hierarchy is sufficient documentation."""@en .
+
+:hasCeremonialBond a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "has ceremonial bond"@en ;
+    rdfs:comment """Relationship established through a specific ritual event (baptism, marriage). 
+    Neither consanguine nor alliance."""@en .

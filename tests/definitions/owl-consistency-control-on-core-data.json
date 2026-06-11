@@ -1,0 +1,21 @@
+{
+  "module": "owl-consistency-control-on-core-data",
+  "query_library": "tests/definitions/queries/owl-consistency-control-queries.json",
+  "ontologies": [
+    "ontology/kinship/core-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "abox_only": false,
+  "description": "Happy-path OWL post-inference consistency control — all post-inference queries must return empty on valid family data after full OWL-RL reasoning and materialization.",
+  "tests": {
+
+    "Q-POST-IRR":  { "expect_empty": true },
+    "Q-POST-CIR":  { "expect_empty": true },
+    "Q-POST-DIS":  { "expect_empty": true },
+    "Q-POST-PAR":  { "expect_empty": true },
+    "Q-POST-CAR":  { "expect_empty": true }
+
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "module": "negative",
+  "ontologies": [
+    "ontology/kinship/gendered.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "description": "Negative tests verifying absence of spurious inferences; run with the full ontology (gender-specific)",
+  "tests": {
+    "neg-fiona-no-nibling": {
+      "description": "fiona's only sibling is helen who has no children, so fiona hasNibling must be empty.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?n WHERE { :fiona :hasNibling ?n . }",
+      "expect_empty": true
+    },
+    "neg-zela-no-sibling": {
+      "description": "zela's only parents are abel and ada, each of whom has only one child (zela); she has no siblings.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?s WHERE { :zela :hasSibling ?s . }",
+      "expect_empty": true
+    },
+    "neg-adam-no-stepchild": {
+      "description": "adam and eva share all their children; no step-child should be derived for adam.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?sc WHERE { :adam :hasStepChild ?sc . }",
+      "expect_empty": true
+    },
+    "neg-helen-no-stepparent": {
+      "description": "helen is a biological child of both azura and antoine; she should have no step-parent.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?sp WHERE { :helen :hasStepParent ?sp . }",
+      "expect_empty": true
+    },
+    "hasUncle-via-inlaw": {
+      "description": "carl is david's uncle via hasNiblingInLaw (carl hasSpouse carol; carol hasSibling bob; bob hasChild david). Extended hasUncleAunt includes in-law relationships.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?u WHERE { :david :hasUncle ?u . } ORDER BY ?u",
+      "expected": [
+        {
+          "u": ":carl"
+        }
+      ]
+    },
+    "neg-bob-carol-not-halfsibling": {
+      "description": "bob and carol share parent azura and are declared twins. hasHalfSibling excludes twin pairs via FILTER NOT EXISTS { hasTwin }.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :bob :hasHalfSibling :carol . BIND(:carol AS ?x) }",
+      "expect_empty": true
+    },
+    "neg-fiona-helen-not-stepsibling": {
+      "description": "fiona and helen share biological father antoine; they are half-siblings. hasStepSibling filters out pairs already related via hasSibling or hasHalfSibling.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :fiona :hasStepSibling :helen . BIND(:helen AS ?x) }",
+      "expect_empty": true
+    },
+    "neg-antoine-no-stepdaughter-helen": {
+      "description": "helen is antoine's biological daughter (antoine hasChild helen). hasStepChild uses FILTER NOT EXISTS to exclude biological children.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :antoine :hasStepDaughter :helen . BIND(:helen AS ?x) }",
+      "expect_empty": true
+    },
+    "neg-david-no-uncle-abel": {
+      "description": "abel is david's great-uncle (azura's brother, and azura is bob's mother, bob is david's father). hasUncleAunt is limited to one generation up; no path places abel as david's uncle.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :david :hasUncle :abel . BIND(:abel AS ?x) }",
+      "expect_empty": true
+    },
+    "neg-hasSibling-irreflexive": {
+      "description": "Guards against any OWL-RL loopback that would make a person their own sibling.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { ?x :hasSibling ?x . }",
+      "expect_empty": true
+    }
+  }
+}

@@ -1,0 +1,62 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/anchored-neutral> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/anchored-neutral/1.0.0> ;
+    owl:imports <http://example.org/kinship/foundation> ;
+    rdfs:label "Anchored Family Relationships Gender-Neutral Module of the Kinship Ontology"@en ;
+    rdfs:comment "Gender-neutral family-anchored social relationships: godchild, godparent, and witness."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Family-anchored gender-neutral relationships
+#---------------------------
+
+### godchild
+:hasGodchild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasCeremonialBond ;
+    rdfs:label "Has Godchild"@en ;
+    rdfs:comment "Person for whom one acts as godparent, as established at baptism or equivalent ceremony. Usage: assert directly, or derive from :hasEventGodparent (kinship-events module) when the birth event is recorded."@en ;
+    rdfs:domain :Person ;
+    rdfs:range :Person ;
+    owl:inverseOf :hasGodparent .
+
+### godparent
+:hasGodparent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasCeremonialBond ;
+    rdfs:label "Has Godparent"@en ;
+    rdfs:comment """Person who accepted a spiritual guardianship role for the godchild at baptism or equivalent ceremony. 
+    Usage: assert directly, or derive from :hasEventGodparent (kinship-events module) when the birth event is recorded."""@en ;
+    rdfs:domain :Person ;
+    rdfs:range :Person ;
+    owl:inverseOf :hasGodchild .
+
+### witness
+:hasWitness a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasCeremonialBond ;
+    rdfs:label "Has Witness"@en ;
+    rdfs:comment """Person who witnessed a marriage on behalf of one specific spouse. 
+    Usage: asserted directly — the event-level :hasWitnessed does not identify which spouse's witness."""@en ;
+    rdfs:domain :Person ;
+    rdfs:range :Person .
+
+### witnessed
+:hasWitnessed a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasCeremonialBond ;
+    rdfs:label "Has Witnessed"@en ;
+    rdfs:comment "Person whose marriage was formally witnessed at a ceremony."@en ;
+    rdfs:domain :Person ;
+    rdfs:range :Person ;
+    owl:inverseOf :hasWitness .

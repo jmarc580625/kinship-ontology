@@ -1,0 +1,44 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/social> a owl:Ontology ;
+    owl:versionIRI <http://example.org/kinship/social/1.0.0> ;
+    owl:versionInfo "1.0.0" ;
+    rdfs:label "Kinship Ontology – Social Module"@en ;
+    rdfs:comment """Social (non-family-anchored) relationships: friendship and its variants. 
+        Independent from the remainder of the kinship ontology, it requires a separate loading"""@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Social relationships
+#---------------------------
+
+### friend
+:hasFriend a owl:ObjectProperty ;
+    rdfs:subPropertyOf foaf:knows ;
+    rdfs:label "Has Friend"@en ;
+    rdfs:comment """Non-family social bond of friendship. 
+    Usage: use :hasCloseFriend for a stronger bond."""@en ;
+    rdfs:domain :Person ;
+    rdfs:range :Person ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+
+### close friend
+:hasCloseFriend a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasFriend ;
+    rdfs:label "Has Close Friend"@en ;
+    rdfs:comment """Strong friendship — a closer bond than :hasFriend; implies :hasFriend. 
+    Usage: use :hasFriend for any friendship query."""@en ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .

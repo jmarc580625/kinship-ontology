@@ -1,0 +1,54 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/materialization-foundation> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/materialization-foundation/1.0.0> ;
+    rdfs:label "Materialization Foundation Module of the Kinship Ontology"@en ;
+    rdfs:comment "Annotation properties and materialization metadata for the Kinship Ontology."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Annotation Properties for Materialization Metadata
+#---------------------------
+
+:MaterializationReason a owl:Class ;
+    rdfs:label "Materialization Reason"@en ;
+    rdfs:comment "Explains why this relationship requires SPARQL materialization instead of OWL property chains."@en .
+
+:IrreflexivePropertyLimitation a :MaterializationReason ;
+    rdfs:label "Irreflexive Property Limitation"@en ;
+    rdfs:comment "OWL property hierarchies cannot infer irreflexive relationships (relationships where a property cannot relate an individual to itself). SPARQL materialization is required to enforce this constraint."@en .
+
+:UnionPatternLimitation a :MaterializationReason ;
+    rdfs:label "Union Pattern Limitation"@en ;
+    rdfs:comment "OWL property chains are strictly linear and cannot express branching logic (e.g., A or B). SPARQL materialization is required to enforce this constraint."@en .
+
+:ComplexPathLimitation a :MaterializationReason ;
+    rdfs:label "Complex Path Limitation"@en ;
+    rdfs:comment "The relationship requires advanced graph matching (e.g., negative property assertions or counting) that exceeds OWL 2 RL expressivity."@en .
+
+:GenderFirewallLimitation a :MaterializationReason ;
+    rdfs:label "Gender Firewall Limitation"@en ;
+    rdfs:comment """OWL rdfs:range inference on gendered properties
+    (e.g. :hasWife rdfs:range :FemalePerson) would allow
+    relationship assertions to corrupt :hasGender —
+    the single source of truth for gender.
+    Direct assertion of gendered properties is therefore forbidden.
+    SPARQL materialization reads exclusively from :hasGender
+    to preserve the firewall."""@en .
+
+:MaterializationScript a owl:AnnotationProperty ;
+    rdfs:label "Materialization Script"@en ;
+    rdfs:comment "Relative path to the SPARQL UPDATE script that materializes this relationship."@en .

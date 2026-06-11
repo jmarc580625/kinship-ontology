@@ -1,0 +1,94 @@
+{
+  "module": "owl-consistency-control",
+  "query_library": "tests/definitions/queries/owl-consistency-control-queries.json",
+  "ontologies": [
+    "ontology/kinship/core-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/consistency-control-data.ttl"
+  ],
+  "abox_only": false,
+  "description": "OWL post-inference consistency control — validates that OWL-RL reasoning (property hierarchy propagation, transitive closure, GCI class inference, maxQualifiedCardinality sameAs) correctly exposes violations that are only detectable after inference. Runs against the corrupted consistency-control dataset.",
+  "tests": {
+    "Q-POST-IRR": {
+      "expected": [
+        { "x": ":cir1a_x" },
+        { "x": ":cir1a_y" },
+        { "x": ":cir1b_x" },
+        { "x": ":cir1b_y" },
+        { "x": ":cir2f3_x" },
+        { "x": ":cir2f3_y" },
+        { "x": ":cir2f3_z" },
+        { "x": ":cir2f6_x" },
+        { "x": ":cir2f6_y" },
+        { "x": ":cir2f6_z" },
+        { "x": ":con2b_x" },
+        { "x": ":con2b_y" },
+        { "x": ":irr_c1" },
+        { "x": ":irr_c2" },
+        { "x": ":irr_c3" },
+        { "x": ":irr_p1" },
+        { "x": ":irr_p2" },
+        { "x": ":irr_p3" },
+        { "x": ":irr_s1" },
+        { "x": ":irr_s2" },
+        { "x": ":irr_s3" },
+        { "x": ":irr_s4" },
+        { "x": ":irr_t1" }
+      ]
+    },
+    "Q-POST-CIR": {
+      "expected": [
+        { "x": ":cir1a_x" },
+        { "x": ":cir1a_y" },
+        { "x": ":cir1b_x" },
+        { "x": ":cir1b_y" },
+        { "x": ":cir2f3_x" },
+        { "x": ":cir2f3_y" },
+        { "x": ":cir2f3_z" },
+        { "x": ":cir2f6_x" },
+        { "x": ":cir2f6_y" },
+        { "x": ":cir2f6_z" },
+        { "x": ":con2b_x" },
+        { "x": ":con2b_y" },
+        { "x": ":irr_c2" },
+        { "x": ":irr_p2" }
+      ]
+    },
+    "Q-POST-DIS": {
+      "expected": [
+        { "x": ":con4a_t1", "y": ":con4a_t2" },
+        { "x": ":con4b_t1", "y": ":con4b_t2" },
+        { "x": ":con4c_t1", "y": ":con4c_t2" },
+        { "x": ":con4d_t1", "y": ":con4d_t2" }
+      ]
+    },
+    "Q-POST-PAR": {
+      "expected": [
+        { "x": ":par1a_x", "y": ":par1a_y" },
+        { "x": ":par1d_x", "y": ":par1d_y" },
+        { "x": ":par2a_x", "y": ":par2a_y" },
+        { "x": ":par2b_x", "y": ":par2b_y" },
+        { "x": ":par2d_x", "y": ":par2d_y" },
+        { "x": ":par2f_x", "y": ":par2f_y" }
+      ]
+    },
+    "Q-POST-CAR": {
+      "expected": [
+        { "x": ":car2fa_pa" },
+        { "x": ":car2fa_pb" },
+        { "x": ":car2fb_pa" },
+        { "x": ":car2fb_pb" },
+        { "x": ":car2fc_pa" },
+        { "x": ":car2fc_pb" },
+        { "x": ":car2ma_pa" },
+        { "x": ":car2ma_pb" },
+        { "x": ":car2mb_pa" },
+        { "x": ":car2mb_pb" },
+        { "x": ":car2mc_pa" },
+        { "x": ":car2mc_pb" },
+        { "x": ":con3_x1" }
+      ]
+    }
+  }
+}

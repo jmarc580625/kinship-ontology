@@ -1,0 +1,87 @@
+{
+  "Q-IRR": {
+    "description": "Irreflexive self assertions over kinship properties.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?x ?p WHERE { VALUES ?p { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent kin:hasPartner kin:hasSpouse kin:hasCivilPartner kin:hasLifePartner kin:hasTwin } ?x ?p ?x . }",
+    "abox_only": true
+  },
+  "Q-CON1": {
+    "description": "Child and parent type conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?p ?c WHERE { { ?p kin:hasBloodChild ?c . ?p kin:hasAdoptiveChild ?c . } UNION { ?c kin:hasBloodParent ?p . ?c kin:hasAdoptiveParent ?p . } UNION { ?p kin:hasBloodChild ?c . ?c kin:hasAdoptiveParent ?p . } UNION { ?p kin:hasAdoptiveChild ?c . ?c kin:hasBloodParent ?p . } }",
+    "abox_only": true
+  },
+  "Q-CON2": {
+    "description": "Role conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?cp ?pp WHERE { VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild } VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent } ?x ?cp ?y . ?x ?pp ?y . }",
+    "abox_only": true
+  },
+  "Q-CON3": {
+    "description": "Gender conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?x WHERE { ?x kin:hasGender kin:Female . ?x kin:hasGender kin:Male . }",
+    "abox_only": true
+  },
+  "Q-CON4": {
+    "description": "Twin plus generational conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?t1 ?t2 WHERE { ?t1 kin:hasTwin ?t2 . VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild } VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent } { ?t1 ?pp ?t2 . } UNION { ?t2 ?cp ?t1 . } UNION { ?t1 ?cp ?t2 . } UNION { ?t2 ?pp ?t1 . } }",
+    "abox_only": true
+  },
+  "Q-RED1": {
+    "description": "Superproperty plus subproperty redundancy.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?sub ?super WHERE { VALUES (?sub ?super) { (kin:hasBloodChild kin:hasChild) (kin:hasAdoptiveChild kin:hasChild) (kin:hasBloodParent kin:hasParent) (kin:hasAdoptiveParent kin:hasParent) (kin:hasSpouse kin:hasPartner) (kin:hasCivilPartner kin:hasPartner) (kin:hasLifePartner kin:hasPartner) } ?x ?sub ?y . ?x ?super ?y . }",
+    "abox_only": true
+  },
+  "Q-RED2": {
+    "description": "Inverse property redundancy.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?p ?q WHERE { VALUES (?p ?q) { (kin:hasChild kin:hasParent) (kin:hasBloodChild kin:hasParent) (kin:hasAdoptiveChild kin:hasParent) (kin:hasBloodParent kin:hasChild) (kin:hasAdoptiveParent kin:hasChild) (kin:hasBloodChild kin:hasBloodParent) (kin:hasAdoptiveChild kin:hasAdoptiveParent) } ?x ?p ?y . ?y ?q ?x . }",
+    "abox_only": true
+  },
+  "Q-RED3": {
+    "description": "Symmetric property both directions.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?p WHERE { VALUES ?p { kin:hasPartner kin:hasSpouse kin:hasCivilPartner kin:hasLifePartner kin:hasTwin } ?x ?p ?y . ?y ?p ?x . FILTER(STR(?x) < STR(?y)) }",
+    "abox_only": true
+  },
+  "Q-CAR1": {
+    "description": "More than two biological parents.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?c (COUNT(DISTINCT ?p) AS ?nb) WHERE { { ?c kin:hasBloodParent ?p . } UNION { ?p kin:hasBloodChild ?c . } } GROUP BY ?c HAVING (COUNT(DISTINCT ?p) > 2)",
+    "abox_only": true
+  },
+  "Q-CAR2": {
+    "description": "Gendered blood parent conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?c ?gender (COUNT(DISTINCT ?p) AS ?nb) WHERE { VALUES ?gender { kin:Male kin:Female } { ?c kin:hasBloodParent ?p . } UNION { ?p kin:hasBloodChild ?c . } ?p kin:hasGender ?gender . } GROUP BY ?c ?gender HAVING (COUNT(DISTINCT ?p) > 1)",
+    "abox_only": true
+  },
+  "Q-TWI1": {
+    "description": "Twins sharing no biological parent.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?t1 ?t2 WHERE { ?t1 kin:hasTwin ?t2 . FILTER(STR(?t1) < STR(?t2)) FILTER NOT EXISTS { { ?p kin:hasBloodChild ?t1 . ?p kin:hasBloodChild ?t2 . } UNION { ?t1 kin:hasBloodParent ?p . ?t2 kin:hasBloodParent ?p . } UNION { ?p kin:hasBloodChild ?t1 . ?t2 kin:hasBloodParent ?p . } UNION { ?t1 kin:hasBloodParent ?p . ?p kin:hasBloodChild ?t2 . } } }",
+    "abox_only": true
+  },
+  "Q-TWI2": {
+    "description": "Twins with only one common biological parent.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?t1 ?t2 (COUNT(DISTINCT ?p) AS ?sharedParents) WHERE { ?t1 kin:hasTwin ?t2 . FILTER(STR(?t1) < STR(?t2)) { ?p kin:hasBloodChild ?t1 . ?p kin:hasBloodChild ?t2 . } UNION { ?t1 kin:hasBloodParent ?p . ?t2 kin:hasBloodParent ?p . } UNION { ?p kin:hasBloodChild ?t1 . ?t2 kin:hasBloodParent ?p . } UNION { ?t1 kin:hasBloodParent ?p . ?p kin:hasBloodChild ?t2 . } } GROUP BY ?t1 ?t2 HAVING (COUNT(DISTINCT ?p) = 1)",
+    "abox_only": true
+  },
+  "Q-CIR1": {
+    "description": "Mutual parent/child depth 1.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y WHERE { VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild } VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent } { ?x ?cp ?y . ?y ?cp ?x . } UNION { ?x ?pp ?y . ?y ?pp ?x . } FILTER(STR(?x) < STR(?y)) }",
+    "abox_only": true
+  },
+  "Q-CIR2": {
+    "description": "Generational cycle depth 2, all 8 forms.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?z WHERE { VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild } VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent } { ?x ?cp ?y . ?y ?cp ?z . ?z ?cp ?x . } UNION { ?x ?pp ?y . ?y ?pp ?z . ?z ?pp ?x . } UNION { ?x ?cp ?y . ?y ?cp ?z . ?x ?pp ?z . } UNION { ?x ?cp ?y . ?z ?pp ?y . ?z ?cp ?x . } UNION { ?x ?cp ?y . ?z ?pp ?y . ?x ?pp ?z . } UNION { ?y ?pp ?x . ?y ?cp ?z . ?x ?pp ?z . } UNION { ?y ?pp ?x . ?y ?cp ?z . ?z ?cp ?x . } UNION { ?x ?pp ?y . ?z ?cp ?y . ?z ?pp ?x . } FILTER(?x != ?y && ?y != ?z && ?x != ?z) }",
+    "abox_only": true
+  },
+  "Q-PAR1": {
+    "description": "Partnership plus direct parental conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?partner ?rel WHERE { VALUES ?partner { kin:hasPartner kin:hasSpouse kin:hasCivilPartner kin:hasLifePartner } VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild } VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent } ?x ?partner ?y . { ?x ?cp ?y . BIND(?cp AS ?rel) } UNION { ?x ?pp ?y . BIND(?pp AS ?rel) } UNION { ?y ?cp ?x . BIND(?cp AS ?rel) } UNION { ?y ?pp ?x . BIND(?pp AS ?rel) } }",
+    "abox_only": true
+  },
+  "Q-PAR2": {
+    "description": "Partnership plus lineage conflict depth 2.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y ?z WHERE { VALUES ?partner { kin:hasPartner kin:hasSpouse kin:hasCivilPartner kin:hasLifePartner } VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild } VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent } ?x ?partner ?y . { { ?x ?pp ?z . ?z ?pp ?y . } UNION { ?x ?pp ?z . ?y ?cp ?z . } UNION { ?z ?cp ?x . ?z ?pp ?y . } UNION { ?z ?cp ?x . ?y ?cp ?z . } } UNION { { ?x ?cp ?z . ?z ?cp ?y . } UNION { ?x ?cp ?z . ?y ?pp ?z . } UNION { ?z ?pp ?x . ?z ?cp ?y . } UNION { ?z ?pp ?x . ?y ?pp ?z . } } FILTER(?z != ?x && ?z != ?y) }",
+    "abox_only": true
+  },
+  "Q-PAR3": {
+    "description": "Twin plus partnership conflict.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?t1 ?t2 WHERE { ?t1 kin:hasTwin ?t2 . FILTER(STR(?t1) < STR(?t2)) VALUES ?partner { kin:hasPartner kin:hasSpouse kin:hasCivilPartner kin:hasLifePartner } { ?t1 ?partner ?t2 . } UNION { ?t2 ?partner ?t1 . } }",
+    "abox_only": true
+  }
+}

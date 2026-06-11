@@ -1,0 +1,112 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/blended-neutral> a owl:Ontology ;
+    owl:versionIRI <http://example.org/kinship/blended-neutral/1.0.0> ;
+    owl:versionInfo "1.0.0" ;
+    owl:imports <http://example.org/kinship/core-neutral> ;
+    rdfs:label "Blended Family Relationships Gender-Neutral Module of the Kinship Ontology"@en ;
+    rdfs:comment "Gender-neutral blended family relationships: step-child, step-parent, step-sibling, and half-sibling."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Gender-neutral blended family relationships
+#---------------------------
+
+### step-child
+:hasStepChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Step-Child"@en ;
+    rdfs:comment "Partner's child who is not one's own child — no blood or adoptive link to ego."@en ;
+    owl:inverseOf :hasStepParent ;
+    :MaterializationReason :ComplexPathLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?stepParent :hasStepChild ?stepChild .
+        }
+        WHERE {
+            ?bioParent :hasChild ?stepChild .
+            ?bioParent :hasPartner ?stepParent .
+            FILTER NOT EXISTS {
+                ?stepParent :hasChild ?stepChild .
+            }
+        }
+    """ ;
+    :crossesAlliance true .
+
+### step-parent
+:hasStepParent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Step-Parent"@en ;
+    rdfs:comment "Parent's partner who is not one's own parent — no blood or adoptive link to ego."@en ;
+    owl:inverseOf :hasStepChild ;
+    :crossesAlliance true .
+
+### step-sibling
+:hasStepSibling a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Step-Sibling"@en ;
+    rdfs:comment "Shares a step-parent but no common parent (biological or adoptive)."@en ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
+    :MaterializationReason :ComplexPathLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?x :hasStepSibling ?y .
+        }
+        WHERE {
+            ?a :hasChild ?x .
+            ?b :hasChild ?y .
+            ?a :hasPartner ?b .
+            FILTER (?x != ?y)
+            FILTER NOT EXISTS {
+                ?p :hasChild ?x .
+                ?p :hasChild ?y .
+            }
+        }
+    """ ;
+    :crossesAlliance true .
+
+### half-sibling
+:hasHalfSibling a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSibling ;
+    rdfs:label "Has Half-Sibling"@en ;
+    rdfs:comment "Shares exactly one parent (biological or adoptive) — distinguished from full sibling (two shared parents) and step-sibling (no shared parent)."@en ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
+    :MaterializationReason :ComplexPathLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?x :hasHalfSibling ?y .
+        }
+        WHERE {
+            ?p1 :hasChild ?x .
+            ?p1 :hasChild ?y .
+            FILTER (?x != ?y)
+            FILTER NOT EXISTS {
+                ?p2 :hasChild ?x .
+                ?p2 :hasChild ?y .
+                FILTER (?p1 != ?p2)
+            }
+            FILTER NOT EXISTS {
+                ?x :hasTwin ?y .
+            }
+        }
+    """ .
+
+#---------------------------
+# Property disjointness axioms (blended)
+#---------------------------
+
+:hasChild owl:propertyDisjointWith :hasStepChild .
+:hasParent owl:propertyDisjointWith :hasStepParent .
+:hasSibling owl:propertyDisjointWith :hasStepSibling .

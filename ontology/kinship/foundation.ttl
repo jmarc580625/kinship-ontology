@@ -1,0 +1,25 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Foundation Module
+#---------------------------
+# This module groups the core foundational concepts for the kinship ontology.
+#---------------------------
+
+<http://example.org/kinship/foundation> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/foundation/1.0.0> ;
+    owl:imports <http://example.org/kinship/materialization-foundation> ;
+    owl:imports <http://example.org/kinship/lineage-foundation> ;
+    rdfs:label "Foundation Module of the Kinship Ontology"@en ;
+    rdfs:comment """An ontologycally empty module which only groups together
+    foundational concepts for the kinship ontology."""@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .

@@ -1,0 +1,166 @@
+{
+  "module": "allied-neutral",
+  "ontologies": [
+    "ontology/kinship/allied-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "description": "Gender-neutral allied family relationships: child-in-law, parent-in-law, sibling-in-law",
+  "tests": {
+    "hasChildInLaw": {
+      "description": "OWL property chain (hasChild ∘ hasPartner). Covers all partner types. Includes non-spouse cases: nana→hathor (re's life-partner), nana→zeus (hera's civil-partner), papa→hera (zeus's civil-partner), papa→re (hathor's life-partner).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?cil WHERE { ?p :hasChildInLaw ?cil . } ORDER BY ?p ?cil",
+      "expected": [
+        {
+          "p": ":adam",
+          "cil": ":ada"
+        },
+        {
+          "p": ":adam",
+          "cil": ":antoine"
+        },
+        {
+          "p": ":azura",
+          "cil": ":carl"
+        },
+        {
+          "p": ":eva",
+          "cil": ":ada"
+        },
+        {
+          "p": ":eva",
+          "cil": ":antoine"
+        },
+        {
+          "p": ":frank",
+          "cil": ":abel"
+        },
+        {
+          "p": ":grace",
+          "cil": ":abel"
+        },
+        {
+          "p": ":nana",
+          "cil": ":hathor"
+        },
+        {
+          "p": ":nana",
+          "cil": ":zeus"
+        },
+        {
+          "p": ":papa",
+          "cil": ":hera"
+        },
+        {
+          "p": ":papa",
+          "cil": ":re"
+        }
+      ]
+    },
+    "hasParentInLaw": {
+      "description": "OWL inverse of hasChildInLaw. Includes non-spouse cases: hathor→nana (hathor's life-partner re's mother), zeus→nana (zeus's civil-partner hera's mother), hera→papa (hera's civil-partner zeus's father), re→papa (re's life-partner hathor's father).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?pil WHERE { ?p :hasParentInLaw ?pil . } ORDER BY ?p ?pil",
+      "expected": [
+        {
+          "p": ":abel",
+          "pil": ":frank"
+        },
+        {
+          "p": ":abel",
+          "pil": ":grace"
+        },
+        {
+          "p": ":ada",
+          "pil": ":adam"
+        },
+        {
+          "p": ":ada",
+          "pil": ":eva"
+        },
+        {
+          "p": ":antoine",
+          "pil": ":adam"
+        },
+        {
+          "p": ":antoine",
+          "pil": ":eva"
+        },
+        {
+          "p": ":carl",
+          "pil": ":azura"
+        },
+        {
+          "p": ":hathor",
+          "pil": ":nana"
+        },
+        {
+          "p": ":hera",
+          "pil": ":papa"
+        },
+        {
+          "p": ":re",
+          "pil": ":papa"
+        },
+        {
+          "p": ":zeus",
+          "pil": ":nana"
+        }
+      ]
+    },
+    "hasSiblingInLaw": {
+      "description": "Materialized from two UNION sub-patterns: (hasPartner ∘ hasSibling) and (hasSibling ∘ hasPartner). Covers all partner types. Includes non-spouse cases: hathor↔hera (via hathor-LP-re, re-SIB-hera), re↔zeus (via re-LP-hathor, hathor-SIB-zeus).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?sil WHERE { ?p :hasSiblingInLaw ?sil . } ORDER BY ?p ?sil",
+      "expected": [
+        {
+          "p": ":abel",
+          "sil": ":antoine"
+        },
+        {
+          "p": ":ada",
+          "sil": ":azura"
+        },
+        {
+          "p": ":antoine",
+          "sil": ":abel"
+        },
+        {
+          "p": ":azura",
+          "sil": ":ada"
+        },
+        {
+          "p": ":bob",
+          "sil": ":carl"
+        },
+        {
+          "p": ":carl",
+          "sil": ":bob"
+        },
+        {
+          "p": ":carl",
+          "sil": ":helen"
+        },
+        {
+          "p": ":hathor",
+          "sil": ":hera"
+        },
+        {
+          "p": ":helen",
+          "sil": ":carl"
+        },
+        {
+          "p": ":hera",
+          "sil": ":hathor"
+        },
+        {
+          "p": ":re",
+          "sil": ":zeus"
+        },
+        {
+          "p": ":zeus",
+          "sil": ":re"
+        }
+      ]
+    }
+  }
+}

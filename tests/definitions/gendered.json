@@ -1,0 +1,1266 @@
+{
+  "module": "gendered",
+  "ontologies": [
+    "ontology/kinship/gendered.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl",
+    "tests/data/anchored-data.ttl"
+  ],
+  "description": "All gender-specific relationship variants (family + anchor layers)",
+  "tests": {
+    "hasDaughter": {
+      "description": "Materialized from hasChild + a:FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?d WHERE { ?p :hasDaughter ?d . } ORDER BY ?p ?d",
+      "expected": [
+        {
+          "p": ":abel",
+          "d": ":zela"
+        },
+        {
+          "p": ":ada",
+          "d": ":zela"
+        },
+        {
+          "p": ":adam",
+          "d": ":azura"
+        },
+        {
+          "p": ":antoine",
+          "d": ":fiona"
+        },
+        {
+          "p": ":antoine",
+          "d": ":helen"
+        },
+        {
+          "p": ":azura",
+          "d": ":carol"
+        },
+        {
+          "p": ":azura",
+          "d": ":helen"
+        },
+        {
+          "p": ":carol",
+          "d": ":eliza"
+        },
+        {
+          "p": ":eva",
+          "d": ":azura"
+        },
+        {
+          "p": ":frank",
+          "d": ":ada"
+        },
+        {
+          "p": ":grace",
+          "d": ":ada"
+        },
+        {
+          "p": ":hera",
+          "d": ":luna"
+        },
+        {
+          "p": ":re",
+          "d": ":iris"
+        },
+        {
+          "p": ":nana",
+          "d": ":hera"
+        },
+        {
+          "p": ":papa",
+          "d": ":hathor"
+        }
+      ]
+    },
+    "hasSon": {
+      "description": "Materialized from hasChild + a:MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?s WHERE { ?p :hasSon ?s . } ORDER BY ?p ?s",
+      "expected": [
+        {
+          "p": ":adam",
+          "s": ":abel"
+        },
+        {
+          "p": ":azura",
+          "s": ":bob"
+        },
+        {
+          "p": ":bob",
+          "s": ":david"
+        },
+        {
+          "p": ":eva",
+          "s": ":abel"
+        },
+        {
+          "p": ":hathor",
+          "s": ":jay"
+        },
+        {
+          "p": ":zeus",
+          "s": ":mars"
+        },
+        {
+          "p": ":nana",
+          "s": ":re"
+        },
+        {
+          "p": ":papa",
+          "s": ":zeus"
+        }
+      ]
+    },
+    "hasMother": {
+      "description": "Materialized from hasParent (inverse of hasChild) filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c ?m WHERE { ?c :hasMother ?m . } ORDER BY ?c ?m",
+      "expected": [
+        {
+          "c": ":abel",
+          "m": ":eva"
+        },
+        {
+          "c": ":ada",
+          "m": ":grace"
+        },
+        {
+          "c": ":azura",
+          "m": ":eva"
+        },
+        {
+          "c": ":bob",
+          "m": ":azura"
+        },
+        {
+          "c": ":carol",
+          "m": ":azura"
+        },
+        {
+          "c": ":eliza",
+          "m": ":carol"
+        },
+        {
+          "c": ":helen",
+          "m": ":azura"
+        },
+        {
+          "c": ":jay",
+          "m": ":hathor"
+        },
+        {
+          "c": ":luna",
+          "m": ":hera"
+        },
+        {
+          "c": ":hera",
+          "m": ":nana"
+        },
+        {
+          "c": ":re",
+          "m": ":nana"
+        },
+        {
+          "c": ":zela",
+          "m": ":ada"
+        }
+      ]
+    },
+    "hasFather": {
+      "description": "Materialized from hasParent (inverse of hasChild) filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c ?f WHERE { ?c :hasFather ?f . } ORDER BY ?c ?f",
+      "expected": [
+        {
+          "c": ":abel",
+          "f": ":adam"
+        },
+        {
+          "c": ":ada",
+          "f": ":frank"
+        },
+        {
+          "c": ":azura",
+          "f": ":adam"
+        },
+        {
+          "c": ":david",
+          "f": ":bob"
+        },
+        {
+          "c": ":fiona",
+          "f": ":antoine"
+        },
+        {
+          "c": ":hathor",
+          "f": ":papa"
+        },
+        {
+          "c": ":helen",
+          "f": ":antoine"
+        },
+        {
+          "c": ":iris",
+          "f": ":re"
+        },
+        {
+          "c": ":mars",
+          "f": ":zeus"
+        },
+        {
+          "c": ":zela",
+          "f": ":abel"
+        },
+        {
+          "c": ":zeus",
+          "f": ":papa"
+        }
+      ]
+    },
+    "hasWife": {
+      "description": "Materialized from hasSpouse filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?w WHERE { ?p :hasWife ?w . } ORDER BY ?p ?w",
+      "expected": [
+        {
+          "p": ":abel",
+          "w": ":ada"
+        },
+        {
+          "p": ":adam",
+          "w": ":eva"
+        },
+        {
+          "p": ":antoine",
+          "w": ":azura"
+        },
+        {
+          "p": ":carl",
+          "w": ":carol"
+        }
+      ]
+    },
+    "hasHusband": {
+      "description": "Materialized from hasSpouse filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?h WHERE { ?p :hasHusband ?h . } ORDER BY ?p ?h",
+      "expected": [
+        {
+          "p": ":ada",
+          "h": ":abel"
+        },
+        {
+          "p": ":azura",
+          "h": ":antoine"
+        },
+        {
+          "p": ":carol",
+          "h": ":carl"
+        },
+        {
+          "p": ":eva",
+          "h": ":adam"
+        }
+      ]
+    },
+    "hasSister": {
+      "description": "Materialized from hasSibling filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?s WHERE { ?p :hasSister ?s . } ORDER BY ?p ?s",
+      "expected": [
+        {
+          "p": ":abel",
+          "s": ":azura"
+        },
+        {
+          "p": ":bob",
+          "s": ":carol"
+        },
+        {
+          "p": ":bob",
+          "s": ":helen"
+        },
+        {
+          "p": ":carol",
+          "s": ":helen"
+        },
+        {
+          "p": ":fiona",
+          "s": ":helen"
+        },
+        {
+          "p": ":helen",
+          "s": ":carol"
+        },
+        {
+          "p": ":helen",
+          "s": ":fiona"
+        },
+        {
+          "p": ":re",
+          "s": ":hera"
+        },
+        {
+          "p": ":zeus",
+          "s": ":hathor"
+        }
+      ]
+    },
+    "hasBrother": {
+      "description": "Materialized from hasSibling filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?b WHERE { ?p :hasBrother ?b . } ORDER BY ?p ?b",
+      "expected": [
+        {
+          "p": ":azura",
+          "b": ":abel"
+        },
+        {
+          "p": ":carol",
+          "b": ":bob"
+        },
+        {
+          "p": ":hathor",
+          "b": ":zeus"
+        },
+        {
+          "p": ":helen",
+          "b": ":bob"
+        },
+        {
+          "p": ":hera",
+          "b": ":re"
+        }
+      ]
+    },
+    "hasGrandmother": {
+      "description": "Materialized from hasGrandparent filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?gm WHERE { ?p :hasGrandmother ?gm . } ORDER BY ?p ?gm",
+      "expected": [
+        {
+          "p": ":bob",
+          "gm": ":eva"
+        },
+        {
+          "p": ":carol",
+          "gm": ":eva"
+        },
+        {
+          "p": ":david",
+          "gm": ":azura"
+        },
+        {
+          "p": ":eliza",
+          "gm": ":azura"
+        },
+        {
+          "p": ":helen",
+          "gm": ":eva"
+        },
+        {
+          "p": ":iris",
+          "gm": ":nana"
+        },
+        {
+          "p": ":luna",
+          "gm": ":nana"
+        },
+        {
+          "p": ":zela",
+          "gm": ":eva"
+        },
+        {
+          "p": ":zela",
+          "gm": ":grace"
+        }
+      ]
+    },
+    "hasGrandfather": {
+      "description": "Materialized from hasGrandparent filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?gf WHERE { ?p :hasGrandfather ?gf . } ORDER BY ?p ?gf",
+      "expected": [
+        {
+          "p": ":bob",
+          "gf": ":adam"
+        },
+        {
+          "p": ":carol",
+          "gf": ":adam"
+        },
+        {
+          "p": ":helen",
+          "gf": ":adam"
+        },
+        {
+          "p": ":jay",
+          "gf": ":papa"
+        },
+        {
+          "p": ":mars",
+          "gf": ":papa"
+        },
+        {
+          "p": ":zela",
+          "gf": ":adam"
+        },
+        {
+          "p": ":zela",
+          "gf": ":frank"
+        }
+      ]
+    },
+    "hasGranddaughter": {
+      "description": "Materialized from hasGrandchild filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?gd WHERE { ?p :hasGranddaughter ?gd . } ORDER BY ?p ?gd",
+      "expected": [
+        {
+          "p": ":adam",
+          "gd": ":carol"
+        },
+        {
+          "p": ":adam",
+          "gd": ":helen"
+        },
+        {
+          "p": ":adam",
+          "gd": ":zela"
+        },
+        {
+          "p": ":azura",
+          "gd": ":eliza"
+        },
+        {
+          "p": ":eva",
+          "gd": ":carol"
+        },
+        {
+          "p": ":eva",
+          "gd": ":helen"
+        },
+        {
+          "p": ":eva",
+          "gd": ":zela"
+        },
+        {
+          "p": ":frank",
+          "gd": ":zela"
+        },
+        {
+          "p": ":grace",
+          "gd": ":zela"
+        },
+        {
+          "p": ":nana",
+          "gd": ":iris"
+        },
+        {
+          "p": ":nana",
+          "gd": ":luna"
+        }
+      ]
+    },
+    "hasGrandson": {
+      "description": "Materialized from hasGrandchild filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?gs WHERE { ?p :hasGrandson ?gs . } ORDER BY ?p ?gs",
+      "expected": [
+        {
+          "p": ":adam",
+          "gs": ":bob"
+        },
+        {
+          "p": ":azura",
+          "gs": ":david"
+        },
+        {
+          "p": ":eva",
+          "gs": ":bob"
+        },
+        {
+          "p": ":papa",
+          "gs": ":jay"
+        },
+        {
+          "p": ":papa",
+          "gs": ":mars"
+        }
+      ]
+    },
+    "hasDaughterInLaw": {
+      "description": "Materialized from hasChildInLaw filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?dil WHERE { ?p :hasDaughterInLaw ?dil . } ORDER BY ?p ?dil",
+      "expected": [
+        {
+          "p": ":adam",
+          "dil": ":ada"
+        },
+        {
+          "p": ":eva",
+          "dil": ":ada"
+        },
+        {
+          "p": ":nana",
+          "dil": ":hathor"
+        },
+        {
+          "p": ":papa",
+          "dil": ":hera"
+        }
+      ]
+    },
+    "hasSonInLaw": {
+      "description": "Materialized from hasChildInLaw filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?sil WHERE { ?p :hasSonInLaw ?sil . } ORDER BY ?p ?sil",
+      "expected": [
+        {
+          "p": ":adam",
+          "sil": ":antoine"
+        },
+        {
+          "p": ":azura",
+          "sil": ":carl"
+        },
+        {
+          "p": ":eva",
+          "sil": ":antoine"
+        },
+        {
+          "p": ":frank",
+          "sil": ":abel"
+        },
+        {
+          "p": ":grace",
+          "sil": ":abel"
+        },
+        {
+          "p": ":nana",
+          "sil": ":zeus"
+        },
+        {
+          "p": ":papa",
+          "sil": ":re"
+        }
+      ]
+    },
+    "hasMotherInLaw": {
+      "description": "Materialized from hasParentInLaw filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?mil WHERE { ?p :hasMotherInLaw ?mil . } ORDER BY ?p ?mil",
+      "expected": [
+        {
+          "p": ":abel",
+          "mil": ":grace"
+        },
+        {
+          "p": ":ada",
+          "mil": ":eva"
+        },
+        {
+          "p": ":antoine",
+          "mil": ":eva"
+        },
+        {
+          "p": ":carl",
+          "mil": ":azura"
+        },
+        {
+          "p": ":hathor",
+          "mil": ":nana"
+        },
+        {
+          "p": ":zeus",
+          "mil": ":nana"
+        }
+      ]
+    },
+    "hasFatherInLaw": {
+      "description": "Materialized from hasParentInLaw filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?fil WHERE { ?p :hasFatherInLaw ?fil . } ORDER BY ?p ?fil",
+      "expected": [
+        {
+          "p": ":abel",
+          "fil": ":frank"
+        },
+        {
+          "p": ":ada",
+          "fil": ":adam"
+        },
+        {
+          "p": ":antoine",
+          "fil": ":adam"
+        },
+        {
+          "p": ":hera",
+          "fil": ":papa"
+        },
+        {
+          "p": ":re",
+          "fil": ":papa"
+        }
+      ]
+    },
+    "hasStepMother": {
+      "description": "Materialized from hasStepParent filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c ?sm WHERE { ?c :hasStepMother ?sm . } ORDER BY ?c ?sm",
+      "expected": [
+        {
+          "c": ":fiona",
+          "sm": ":azura"
+        },
+        {
+          "c": ":iris",
+          "sm": ":hathor"
+        },
+        {
+          "c": ":mars",
+          "sm": ":hera"
+        }
+      ]
+    },
+    "hasStepFather": {
+      "description": "Materialized from hasStepParent filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c ?sf WHERE { ?c :hasStepFather ?sf . } ORDER BY ?c ?sf",
+      "expected": [
+        {
+          "c": ":bob",
+          "sf": ":antoine"
+        },
+        {
+          "c": ":carol",
+          "sf": ":antoine"
+        },
+        {
+          "c": ":eliza",
+          "sf": ":carl"
+        },
+        {
+          "c": ":jay",
+          "sf": ":re"
+        },
+        {
+          "c": ":luna",
+          "sf": ":zeus"
+        }
+      ]
+    },
+    "hasStepDaughter": {
+      "description": "Materialized from hasStepChild filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?sd WHERE { ?p :hasStepDaughter ?sd . } ORDER BY ?p ?sd",
+      "expected": [
+        {
+          "p": ":antoine",
+          "sd": ":carol"
+        },
+        {
+          "p": ":azura",
+          "sd": ":fiona"
+        },
+        {
+          "p": ":carl",
+          "sd": ":eliza"
+        },
+        {
+          "p": ":hathor",
+          "sd": ":iris"
+        },
+        {
+          "p": ":zeus",
+          "sd": ":luna"
+        }
+      ]
+    },
+    "hasStepSon": {
+      "description": "Materialized from hasStepChild filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?ss WHERE { ?p :hasStepSon ?ss . } ORDER BY ?p ?ss",
+      "expected": [
+        {
+          "p": ":antoine",
+          "ss": ":bob"
+        },
+        {
+          "p": ":hera",
+          "ss": ":mars"
+        },
+        {
+          "p": ":re",
+          "ss": ":jay"
+        }
+      ]
+    },
+    "hasStepSister": {
+      "description": "Materialized from hasStepSibling filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?ss WHERE { ?p :hasStepSister ?ss . } ORDER BY ?p ?ss",
+      "expected": [
+        {
+          "p": ":bob",
+          "ss": ":fiona"
+        },
+        {
+          "p": ":carol",
+          "ss": ":fiona"
+        },
+        {
+          "p": ":fiona",
+          "ss": ":carol"
+        },
+        {
+          "p": ":jay",
+          "ss": ":iris"
+        },
+        {
+          "p": ":mars",
+          "ss": ":luna"
+        }
+      ]
+    },
+    "hasStepBrother": {
+      "description": "Materialized from hasStepSibling filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?sb WHERE { ?p :hasStepBrother ?sb . } ORDER BY ?p ?sb",
+      "expected": [
+        {
+          "p": ":fiona",
+          "sb": ":bob"
+        },
+        {
+          "p": ":iris",
+          "sb": ":jay"
+        },
+        {
+          "p": ":luna",
+          "sb": ":mars"
+        }
+      ]
+    },
+    "hasHalfSister": {
+      "description": "Materialized from hasHalfSibling filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?hs WHERE { ?p :hasHalfSister ?hs . } ORDER BY ?p ?hs",
+      "expected": [
+        {
+          "p": ":bob",
+          "hs": ":helen"
+        },
+        {
+          "p": ":carol",
+          "hs": ":helen"
+        },
+        {
+          "p": ":fiona",
+          "hs": ":helen"
+        },
+        {
+          "p": ":helen",
+          "hs": ":carol"
+        },
+        {
+          "p": ":helen",
+          "hs": ":fiona"
+        },
+        {
+          "p": ":re",
+          "hs": ":hera"
+        },
+        {
+          "p": ":zeus",
+          "hs": ":hathor"
+        }
+      ]
+    },
+    "hasHalfBrother": {
+      "description": "Materialized from hasHalfSibling filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?hb WHERE { ?p :hasHalfBrother ?hb . } ORDER BY ?p ?hb",
+      "expected": [
+        {
+          "p": ":hathor",
+          "hb": ":zeus"
+        },
+        {
+          "p": ":helen",
+          "hb": ":bob"
+        },
+        {
+          "p": ":hera",
+          "hb": ":re"
+        }
+      ]
+    },
+    "hasNiece": {
+      "description": "Materialized from hasUncleAunt (blood + in-law) filtered by FemalePerson. antoine hasNiece zela is the in-law case.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasNiece ?n . } ORDER BY ?ua ?n",
+      "expected": [
+        {
+          "ua": ":abel",
+          "n": ":carol"
+        },
+        {
+          "ua": ":abel",
+          "n": ":helen"
+        },
+        {
+          "ua": ":ada",
+          "n": ":carol"
+        },
+        {
+          "ua": ":ada",
+          "n": ":helen"
+        },
+        {
+          "ua": ":antoine",
+          "n": ":zela"
+        },
+        {
+          "ua": ":azura",
+          "n": ":zela"
+        },
+        {
+          "ua": ":bob",
+          "n": ":eliza"
+        },
+        {
+          "ua": ":hathor",
+          "n": ":luna"
+        },
+        {
+          "ua": ":helen",
+          "n": ":eliza"
+        },
+        {
+          "ua": ":hera",
+          "n": ":iris"
+        },
+        {
+          "ua": ":re",
+          "n": ":luna"
+        },
+        {
+          "ua": ":zeus",
+          "n": ":iris"
+        }
+      ]
+    },
+    "hasNephew": {
+      "description": "Materialized from hasUncleAunt (blood + in-law) filtered by MalePerson. carl hasNephew david is the in-law case.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?ua ?n WHERE { ?ua :hasNephew ?n . } ORDER BY ?ua ?n",
+      "expected": [
+        {
+          "ua": ":abel",
+          "n": ":bob"
+        },
+        {
+          "ua": ":ada",
+          "n": ":bob"
+        },
+        {
+          "ua": ":carl",
+          "n": ":david"
+        },
+        {
+          "ua": ":carol",
+          "n": ":david"
+        },
+        {
+          "ua": ":helen",
+          "n": ":david"
+        },
+        {
+          "ua": ":hathor",
+          "n": ":mars"
+        },
+        {
+          "ua": ":hera",
+          "n": ":jay"
+        },
+        {
+          "ua": ":re",
+          "n": ":mars"
+        },
+        {
+          "ua": ":zeus",
+          "n": ":jay"
+        }
+      ]
+    },
+    "hasBrotherInLaw": {
+      "description": "Materialized from hasSiblingInLaw filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?bil WHERE { ?p :hasBrotherInLaw ?bil . } ORDER BY ?p ?bil",
+      "expected": [
+        {
+          "p": ":abel",
+          "bil": ":antoine"
+        },
+        {
+          "p": ":antoine",
+          "bil": ":abel"
+        },
+        {
+          "p": ":bob",
+          "bil": ":carl"
+        },
+        {
+          "p": ":carl",
+          "bil": ":bob"
+        },
+        {
+          "p": ":helen",
+          "bil": ":carl"
+        },
+        {
+          "p": ":re",
+          "bil": ":zeus"
+        },
+        {
+          "p": ":zeus",
+          "bil": ":re"
+        }
+      ]
+    },
+    "hasSisterInLaw": {
+      "description": "Materialized from hasSiblingInLaw filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?sil WHERE { ?p :hasSisterInLaw ?sil . } ORDER BY ?p ?sil",
+      "expected": [
+        {
+          "p": ":ada",
+          "sil": ":azura"
+        },
+        {
+          "p": ":azura",
+          "sil": ":ada"
+        },
+        {
+          "p": ":carl",
+          "sil": ":helen"
+        },
+        {
+          "p": ":hathor",
+          "sil": ":hera"
+        },
+        {
+          "p": ":hera",
+          "sil": ":hathor"
+        }
+      ]
+    },
+    "hasMaleCousin": {
+      "description": "Materialized from hasCousin filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c1 ?c2 WHERE { ?c1 :hasMaleCousin ?c2 . } ORDER BY ?c1 ?c2",
+      "expected": [
+        {
+          "c1": ":eliza",
+          "c2": ":david"
+        },
+        {
+          "c1": ":jay",
+          "c2": ":mars"
+        },
+        {
+          "c1": ":mars",
+          "c2": ":jay"
+        },
+        {
+          "c1": ":zela",
+          "c2": ":bob"
+        }
+      ]
+    },
+    "hasFemaleCousin": {
+      "description": "Materialized from hasCousin filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c1 ?c2 WHERE { ?c1 :hasFemaleCousin ?c2 . } ORDER BY ?c1 ?c2",
+      "expected": [
+        {
+          "c1": ":bob",
+          "c2": ":zela"
+        },
+        {
+          "c1": ":carol",
+          "c2": ":zela"
+        },
+        {
+          "c1": ":david",
+          "c2": ":eliza"
+        },
+        {
+          "c1": ":helen",
+          "c2": ":zela"
+        },
+        {
+          "c1": ":iris",
+          "c2": ":luna"
+        },
+        {
+          "c1": ":luna",
+          "c2": ":iris"
+        },
+        {
+          "c1": ":zela",
+          "c2": ":carol"
+        },
+        {
+          "c1": ":zela",
+          "c2": ":helen"
+        }
+      ]
+    },
+    "hasGreatGrandmother": {
+      "description": "Materialized from hasGreatGrandparent filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?ggm WHERE { ?p :hasGreatGrandmother ?ggm . } ORDER BY ?p ?ggm",
+      "expected": [
+        {
+          "p": ":david",
+          "ggm": ":eva"
+        },
+        {
+          "p": ":eliza",
+          "ggm": ":eva"
+        }
+      ]
+    },
+    "hasGreatGrandfather": {
+      "description": "Materialized from hasGreatGrandparent filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?ggf WHERE { ?p :hasGreatGrandfather ?ggf . } ORDER BY ?p ?ggf",
+      "expected": [
+        {
+          "p": ":david",
+          "ggf": ":adam"
+        },
+        {
+          "p": ":eliza",
+          "ggf": ":adam"
+        }
+      ]
+    },
+    "hasGreatGranddaughter": {
+      "description": "Materialized from hasGreatGrandchild filtered by FemalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?ggd WHERE { ?p :hasGreatGranddaughter ?ggd . } ORDER BY ?p ?ggd",
+      "expected": [
+        {
+          "p": ":adam",
+          "ggd": ":eliza"
+        },
+        {
+          "p": ":eva",
+          "ggd": ":eliza"
+        }
+      ]
+    },
+    "hasGreatGrandson": {
+      "description": "Materialized from hasGreatGrandchild filtered by MalePerson.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?ggs WHERE { ?p :hasGreatGrandson ?ggs . } ORDER BY ?p ?ggs",
+      "expected": [
+        {
+          "p": ":adam",
+          "ggs": ":david"
+        },
+        {
+          "p": ":eva",
+          "ggs": ":david"
+        }
+      ]
+    },
+    "hasAunt": {
+      "description": "Materialized from hasUncleAunt filtered by FemalePerson. Includes in-law cases: luna→hathor and jay→hera (via hasUncleAuntInLaw).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?n ?a WHERE { ?n :hasAunt ?a . } ORDER BY ?n ?a",
+      "expected": [
+        {
+          "n": ":bob",
+          "a": ":ada"
+        },
+        {
+          "n": ":carol",
+          "a": ":ada"
+        },
+        {
+          "n": ":david",
+          "a": ":carol"
+        },
+        {
+          "n": ":david",
+          "a": ":helen"
+        },
+        {
+          "n": ":eliza",
+          "a": ":helen"
+        },
+        {
+          "n": ":helen",
+          "a": ":ada"
+        },
+        {
+          "n": ":iris",
+          "a": ":hera"
+        },
+        {
+          "n": ":jay",
+          "a": ":hera"
+        },
+        {
+          "n": ":luna",
+          "a": ":hathor"
+        },
+        {
+          "n": ":mars",
+          "a": ":hathor"
+        },
+        {
+          "n": ":zela",
+          "a": ":azura"
+        }
+      ]
+    },
+    "hasUncle": {
+      "description": "Materialized from hasUncleAunt filtered by MalePerson. bob/carol/helen→abel (blood); david→carl and zela→antoine (in-law). Replaces the single-case spot-check in 8.1.5.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?n ?u WHERE { ?n :hasUncle ?u . } ORDER BY ?n ?u",
+      "expected": [
+        {
+          "n": ":bob",
+          "u": ":abel"
+        },
+        {
+          "n": ":carol",
+          "u": ":abel"
+        },
+        {
+          "n": ":david",
+          "u": ":carl"
+        },
+        {
+          "n": ":eliza",
+          "u": ":bob"
+        },
+        {
+          "n": ":helen",
+          "u": ":abel"
+        },
+        {
+          "n": ":iris",
+          "u": ":zeus"
+        },
+        {
+          "n": ":jay",
+          "u": ":zeus"
+        },
+        {
+          "n": ":luna",
+          "u": ":re"
+        },
+        {
+          "n": ":mars",
+          "u": ":re"
+        },
+        {
+          "n": ":zela",
+          "u": ":antoine"
+        }
+      ]
+    },
+    "hasGodfather": {
+      "description": "Materialized: ?godparent hasGodchild ?godchild . ?godparent a MalePerson → ?godchild hasGodfather ?godparent.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gc ?gf WHERE { ?gc :hasGodfather ?gf . } ORDER BY ?gc ?gf",
+      "expected": [
+        {
+          "gc": ":eliza",
+          "gf": ":abel"
+        },
+        {
+          "gc": ":jay",
+          "gf": ":bob"
+        },
+        {
+          "gc": ":zela",
+          "gf": ":adam"
+        }
+      ]
+    },
+    "hasGodmother": {
+      "description": "Materialized: ?godparent hasGodchild ?godchild . ?godparent a FemalePerson → ?godchild hasGodmother ?godparent.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gc ?gm WHERE { ?gc :hasGodmother ?gm . } ORDER BY ?gc ?gm",
+      "expected": [
+        {
+          "gc": ":david",
+          "gm": ":eva"
+        },
+        {
+          "gc": ":iris",
+          "gm": ":carol"
+        }
+      ]
+    },
+    "hasGoddaughter": {
+      "description": "Materialized: ?godparent hasGodchild ?godchild . ?godchild a FemalePerson → ?godparent hasGoddaughter ?godchild.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gp ?gd WHERE { ?gp :hasGoddaughter ?gd . } ORDER BY ?gp ?gd",
+      "expected": [
+        {
+          "gp": ":abel",
+          "gd": ":eliza"
+        },
+        {
+          "gp": ":adam",
+          "gd": ":zela"
+        },
+        {
+          "gp": ":carol",
+          "gd": ":iris"
+        }
+      ]
+    },
+    "hasGodson": {
+      "description": "Materialized: ?godparent hasGodchild ?godchild . ?godchild a MalePerson → ?godparent hasGodson ?godchild. eva is godmother of david (Male).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gp ?gs WHERE { ?gp :hasGodson ?gs . } ORDER BY ?gp ?gs",
+      "expected": [
+        {
+          "gp": ":bob",
+          "gs": ":jay"
+        },
+        {
+          "gp": ":eva",
+          "gs": ":david"
+        }
+      ]
+    },
+    "struct-hasDaughter-subOf-hasChild": {
+      "description": "Every hasDaughter pair must also appear as a hasChild pair (rdfs:subPropertyOf propagation).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?d WHERE { ?p :hasDaughter ?d . FILTER NOT EXISTS { ?p :hasChild ?d . } }",
+      "expect_empty": true
+    },
+    "struct-hasSister-subOf-hasSibling": {
+      "description": "Every hasSister pair must also appear as a hasSibling pair.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?s WHERE { ?p :hasSister ?s . FILTER NOT EXISTS { ?p :hasSibling ?s . } }",
+      "expect_empty": true
+    },
+    "struct-hasBrother-subOf-hasSibling": {
+      "description": "Every hasBrother pair must also appear as a hasSibling pair.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?b WHERE { ?p :hasBrother ?b . FILTER NOT EXISTS { ?p :hasSibling ?b . } }",
+      "expect_empty": true
+    },
+    "struct-hasHalfSibling-subOf-hasSibling": {
+      "description": "Every hasHalfSibling pair must also appear as a hasSibling pair (they share at least one parent).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasHalfSibling ?p2 . FILTER NOT EXISTS { ?p1 :hasSibling ?p2 . } }",
+      "expect_empty": true
+    },
+    "hasRelative-eliza": {
+      "description": "hasRelative is the symmetric root super-property of all family relationships. For eliza (carol's daughter): lineage (carol, azura, adam, eva, bob, helen, david), ceremonial (abel as godparent), and step (carl as step-parent via carol's partner). Verifies cross-category super-property aggregation.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?r WHERE { :eliza :hasRelative ?r . } ORDER BY ?r",
+      "expected": [
+        {
+          "r": ":abel"
+        },
+        {
+          "r": ":adam"
+        },
+        {
+          "r": ":azura"
+        },
+        {
+          "r": ":bob"
+        },
+        {
+          "r": ":carl"
+        },
+        {
+          "r": ":carol"
+        },
+        {
+          "r": ":david"
+        },
+        {
+          "r": ":eva"
+        },
+        {
+          "r": ":helen"
+        }
+      ]
+    }
+  }
+}

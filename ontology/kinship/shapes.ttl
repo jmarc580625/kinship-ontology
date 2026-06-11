@@ -1,0 +1,399 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kin:  <http://example.org/kinship#> .
+@prefix ksh:  <http://example.org/kinship/shapes#> .
+
+# ============================================================
+# Kinship Ontology — SHACL Consistency Shapes
+#
+# Purpose  : post-inference validation (Gates 7-8)
+# Scope    : violations detectable on materialized graph
+# Coverage : IRR, CON, CAR, CIR, TWI, PAR (all blocking categories)
+#            RED (quality warnings)
+#            TWI1 excluded — no OWL axiom, handled by pre-inference gates
+#
+# GraphDB  : load into <urn:family:shapes> named graph
+#            trigger via REST /rest/repositories/{id}/shacl/validate
+#            store report into <urn:family:validation>
+# ============================================================
+
+# Shared SPARQL prefix declarations
+ksh:KinPrefixes
+    sh:declare [
+        sh:prefix    "kin" ;
+        sh:namespace "http://example.org/kinship#"^^xsd:anyURI
+    ] ;
+    sh:declare [
+        sh:prefix    "ksh" ;
+        sh:namespace "http://example.org/kinship/shapes#"^^xsd:anyURI
+    ] .
+
+#---------------------------
+## IRR — Irreflexive self (Gate 1 equivalent)
+## Severity: Violation
+#---------------------------
+
+ksh:IrrShape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "IRR" ;
+    sh:description "Self-referential assertion on an irreflexive property." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "IRR: self-referential assertion on {?prop}" ;
+        sh:select """
+            SELECT $this ?prop WHERE {
+                VALUES ?prop {
+                    kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild
+                    kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent
+                    kin:hasPartner kin:hasSpouse kin:hasCivilPartner kin:hasLifePartner
+                    kin:hasTwin
+                }
+                $this ?prop $this .
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## CON3 — Gender conflict (Gate 1 equivalent)
+## Severity: Violation
+## Note: sh:maxCount is a native SHACL constraint — no SPARQL needed.
+#---------------------------
+
+ksh:Con3Shape a sh:PropertyShape ;
+    sh:targetClass kin:Person ;
+    sh:path kin:hasGender ;
+    sh:maxCount 1 ;
+    sh:severity sh:Violation ;
+    sh:name "CON3" ;
+    sh:message "CON3: person has more than one gender value." .
+
+#---------------------------
+## CON1 — Blood/adoptive type conflict (Gate 2 equivalent)
+## Severity: Violation
+## Covers all 4 assertion forms (parent/child perspective, mixed)
+#---------------------------
+
+ksh:Con1Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "CON1" ;
+    sh:description "Person is simultaneously biological and adoptive child of the same parent." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "CON1: person is both biological and adoptive child of the same parent ({?parent})." ;
+        sh:select """
+            SELECT $this ?parent WHERE {
+                {   $this kin:hasBloodParent    ?parent . $this kin:hasAdoptiveParent ?parent . } UNION
+                {   ?parent kin:hasBloodChild   $this  . ?parent kin:hasAdoptiveChild  $this  . } UNION
+                {   $this kin:hasBloodParent    ?parent . ?parent kin:hasAdoptiveChild  $this  . } UNION
+                {   ?parent kin:hasBloodChild   $this  . $this kin:hasAdoptiveParent  ?parent . }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## CAR1 — More than 2 blood parents (Gate 2 equivalent)
+## Severity: Violation
+## Covers both hasBloodParent and inverse hasBloodChild directions
+#---------------------------
+
+ksh:Car1Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "CAR1" ;
+    sh:description "Person has more than 2 blood parents." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "CAR1: person has {?nb} blood parents (max 2)." ;
+        sh:select """
+            SELECT $this ?nb WHERE {
+                {
+                    SELECT $this (COUNT(DISTINCT ?p) AS ?nb) WHERE {
+                        { $this kin:hasBloodParent ?p . } UNION
+                        { ?p kin:hasBloodChild     $this . }
+                    }
+                    GROUP BY $this
+                }
+                FILTER(?nb > 2)
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## CAR2 — More than 1 blood parent of same gender (Gate 2 equivalent)
+## Severity: Violation
+## Requires gender to be declared — silent otherwise
+#---------------------------
+
+ksh:Car2Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "CAR2" ;
+    sh:description "Person has more than 1 blood parent of the same gender." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "CAR2: person has {?nb} blood parents with gender {?gender}." ;
+        sh:select """
+            SELECT $this ?gender ?nb WHERE {
+                VALUES ?gender { kin:Male kin:Female }
+                {
+                    SELECT $this ?gender (COUNT(DISTINCT ?p) AS ?nb) WHERE {
+                        { $this kin:hasBloodParent ?p . } UNION
+                        { ?p kin:hasBloodChild     $this . }
+                        ?p kin:hasGender ?gender .
+                    }
+                    GROUP BY $this ?gender
+                }
+                FILTER(?nb > 1)
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## CON2 — Simultaneous child and parent (Gate 3 equivalent)
+## Severity: Violation
+#---------------------------
+
+ksh:Con2Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "CON2" ;
+    sh:description "Person is simultaneously child and parent of the same individual." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "CON2: {$this} is simultaneously child and parent of {?other}." ;
+        sh:select """
+            SELECT $this ?other WHERE {
+                VALUES ?cp { kin:hasChild kin:hasBloodChild kin:hasAdoptiveChild }
+                VALUES ?pp { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent }
+                $this ?cp ?other .
+                $this ?pp ?other .
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## CIR — Generational cycle via transitive closure (Gate 3+5 equivalent)
+## Severity: Violation
+## NOTE: Simpler than pre-inference CIR1/CIR2 because hasSibling, hasDescendant,
+##       hasAncestor are materialized — no need for 8-form combinatorial queries.
+#---------------------------
+
+ksh:CirShape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "CIR" ;
+    sh:description "Self-ancestry via transitive closure of blood parent chain." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "CIR: {$this} is its own ancestor or descendant." ;
+        sh:select """
+            SELECT $this WHERE {
+                { $this kin:hasDescendant $this . } UNION
+                { $this kin:hasAncestor   $this . }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## TWI2 — Twin + generational conflict (Gate 4 equivalent / CON4)
+## Severity: Violation
+## Note: uses materialized hasSibling — direct query, no combinatorial forms needed
+#---------------------------
+
+ksh:Twi2Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "TWI2" ;
+    sh:description "Twin is also in a parent-child relationship with its twin." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "TWI2: {$this} is a twin and also parent or child of {?twin}." ;
+        sh:select """
+            SELECT $this ?twin WHERE {
+                $this kin:hasTwin ?twin .
+                VALUES ?rel { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent
+                              kin:hasChild  kin:hasBloodChild  kin:hasAdoptiveChild }
+                { $this ?rel ?twin . } UNION { ?twin ?rel $this . }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## PAR3 / TWI3 — Twin + partnership conflict (Gate 4 equivalent)
+## Severity: Violation
+#---------------------------
+
+ksh:Par3Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "PAR3" ;
+    sh:description "Twin is also in a partnership with its twin." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "PAR3: {$this} is a twin and also partner of {?twin}." ;
+        sh:select """
+            SELECT $this ?twin WHERE {
+                $this kin:hasTwin ?twin .
+                VALUES ?partner { kin:hasPartner kin:hasSpouse
+                                  kin:hasCivilPartner kin:hasLifePartner }
+                { $this ?partner ?twin . } UNION { ?twin ?partner $this . }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## PAR1 — Partnership + direct parental conflict (Gate 4 equivalent)
+## Severity: Violation
+## Note: post-inference hasSibling is available — PAR query is simpler
+#---------------------------
+
+ksh:Par1Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "PAR1" ;
+    sh:description "Person is both partner and direct parent/child of the same individual." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "PAR1: {$this} is both partner and parent/child of {?other}." ;
+        sh:select """
+            SELECT $this ?other WHERE {
+                VALUES ?partner { kin:hasPartner kin:hasSpouse
+                                  kin:hasCivilPartner kin:hasLifePartner }
+                VALUES ?cp  { kin:hasChild  kin:hasBloodChild  kin:hasAdoptiveChild  }
+                VALUES ?pp  { kin:hasParent kin:hasBloodParent kin:hasAdoptiveParent }
+                $this ?partner ?other .
+                { $this ?cp ?other . } UNION { $this ?pp ?other . } UNION
+                { ?other ?cp $this . } UNION { ?other ?pp $this . }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## PAR2 — Partnership + lineage conflict via transitive closure (Gate 5 equivalent)
+## Severity: Violation
+## NOTE: Uses materialized hasDescendant/hasAncestor — much simpler than
+##       the 8-form PARL pre-inference query
+#---------------------------
+
+ksh:Par2Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "PAR2" ;
+    sh:description "Person is both partner and lineage relative (ancestor/descendant) of the same individual." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "PAR2: {$this} is both partner and lineage relative of {?other}." ;
+        sh:select """
+            SELECT $this ?other WHERE {
+                VALUES ?partner { kin:hasPartner kin:hasSpouse
+                                  kin:hasCivilPartner kin:hasLifePartner }
+                $this ?partner ?other .
+                { $this kin:hasDescendant ?other . } UNION
+                { $this kin:hasAncestor   ?other . }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## RED1 — Superproperty + subproperty redundancy (Gate 6 equivalent)
+## Severity: Warning
+#---------------------------
+
+ksh:Red1Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Warning ;
+    sh:name "RED1" ;
+    sh:description "A subproperty and its superproperty are both asserted for the same pair." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "RED1: redundant explicit assertion of {?super} when {?sub} already asserts it." ;
+        sh:select """
+            SELECT $this ?other ?sub ?super WHERE {
+                VALUES (?sub ?super) {
+                    (kin:hasBloodChild     kin:hasChild)
+                    (kin:hasAdoptiveChild  kin:hasChild)
+                    (kin:hasBloodParent    kin:hasParent)
+                    (kin:hasAdoptiveParent kin:hasParent)
+                    (kin:hasSpouse         kin:hasPartner)
+                    (kin:hasCivilPartner   kin:hasPartner)
+                    (kin:hasLifePartner    kin:hasPartner)
+                }
+                $this ?sub   ?other .
+                $this ?super ?other .
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## RED2 — Inverse property redundancy (Gate 6 equivalent)
+## Severity: Warning
+#---------------------------
+
+ksh:Red2Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Warning ;
+    sh:name "RED2" ;
+    sh:description "Both a property and its inverse are explicitly asserted for the same pair." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "RED2: redundant explicit assertion — {?p} and its inverse {?q} both asserted." ;
+        sh:select """
+            SELECT $this ?other ?p ?q WHERE {
+                VALUES (?p ?q) {
+                    (kin:hasChild          kin:hasParent)
+                    (kin:hasBloodChild     kin:hasBloodParent)
+                    (kin:hasBloodChild     kin:hasParent)
+                    (kin:hasAdoptiveChild  kin:hasAdoptiveParent)
+                    (kin:hasAdoptiveChild  kin:hasParent)
+                    (kin:hasBloodParent    kin:hasChild)
+                    (kin:hasAdoptiveParent kin:hasChild)
+                }
+                $this ?p ?other .
+                ?other ?q $this .
+            }
+        """ ;
+    ] .
+
+#---------------------------
+## RED3 — Symmetric property both directions (Gate 6 equivalent)
+## Severity: Warning
+#---------------------------
+
+ksh:Red3Shape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Warning ;
+    sh:name "RED3" ;
+    sh:description "Both directions of a symmetric property are explicitly asserted." ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message "RED3: both directions of symmetric property {?prop} explicitly asserted with {?other}." ;
+        sh:select """
+            SELECT $this ?other ?prop WHERE {
+                VALUES ?prop {
+                    kin:hasPartner kin:hasSpouse
+                    kin:hasCivilPartner kin:hasLifePartner kin:hasTwin
+                }
+                $this ?prop ?other .
+                ?other ?prop $this .
+                FILTER(STR($this) < STR(?other))
+            }
+        """ ;
+    ] .

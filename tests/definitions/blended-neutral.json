@@ -1,0 +1,172 @@
+{
+  "module": "blended-neutral",
+  "ontologies": [
+    "ontology/kinship/blended-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl"
+  ],
+  "description": "Gender-neutral blended family relationships: step-child, step-parent, half-sibling, step-sibling",
+  "tests": {
+    "hasStepChild": {
+      "description": "Materialized via hasPartner (covers hasSpouse, hasCivilPartner, hasLifePartner) with FILTER NOT EXISTS to exclude shared biological children. No civil/life-partner children exist in this dataset so all results are via hasSpouse.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?sc WHERE { ?p :hasStepChild ?sc . } ORDER BY ?p ?sc",
+      "expected": [
+        {
+          "p": ":antoine",
+          "sc": ":bob"
+        },
+        {
+          "p": ":antoine",
+          "sc": ":carol"
+        },
+        {
+          "p": ":azura",
+          "sc": ":fiona"
+        },
+        {
+          "p": ":carl",
+          "sc": ":eliza"
+        },
+        {
+          "p": ":hathor",
+          "sc": ":iris"
+        },
+        {
+          "p": ":hera",
+          "sc": ":mars"
+        },
+        {
+          "p": ":re",
+          "sc": ":jay"
+        },
+        {
+          "p": ":zeus",
+          "sc": ":luna"
+        }
+      ]
+    },
+    "hasStepParent": {
+      "description": "OWL reasoning derives hasStepParent from inverseOf hasStepChild after materialization.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?c ?sp WHERE { ?c :hasStepParent ?sp . } ORDER BY ?c ?sp",
+      "expected": [
+        {
+          "c": ":bob",
+          "sp": ":antoine"
+        },
+        {
+          "c": ":carol",
+          "sp": ":antoine"
+        },
+        {
+          "c": ":eliza",
+          "sp": ":carl"
+        },
+        {
+          "c": ":fiona",
+          "sp": ":azura"
+        },
+        {
+          "c": ":iris",
+          "sp": ":hathor"
+        },
+        {
+          "c": ":jay",
+          "sp": ":re"
+        },
+        {
+          "c": ":luna",
+          "sp": ":zeus"
+        },
+        {
+          "c": ":mars",
+          "sp": ":hera"
+        }
+      ]
+    },
+    "hasHalfSibling": {
+      "description": "Materialized: pairs sharing one parent but not both, and not declared twins.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasHalfSibling ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":bob",
+          "p2": ":helen"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":helen"
+        },
+        {
+          "p1": ":fiona",
+          "p2": ":helen"
+        },
+        {
+          "p1": ":helen",
+          "p2": ":bob"
+        },
+        {
+          "p1": ":helen",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":hathor",
+          "p2": ":zeus"
+        },
+        {
+          "p1": ":helen",
+          "p2": ":fiona"
+        },
+        {
+          "p1": ":hera",
+          "p2": ":re"
+        },
+        {
+          "p1": ":re",
+          "p2": ":hera"
+        },
+        {
+          "p1": ":zeus",
+          "p2": ":hathor"
+        }
+      ]
+    },
+    "hasStepSibling": {
+      "description": "Materialized via hasPartner (covers all partner types): ?a hasChild ?x . ?b hasChild ?y . ?a hasPartner ?b, filtered against shared parents, hasSibling and hasHalfSibling. Includes civil/life-partner step-siblings: iris↔jay (via re hasLifePartner hathor) and luna↔mars (via hera hasCivilPartner zeus).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasStepSibling ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":bob",
+          "p2": ":fiona"
+        },
+        {
+          "p1": ":carol",
+          "p2": ":fiona"
+        },
+        {
+          "p1": ":fiona",
+          "p2": ":bob"
+        },
+        {
+          "p1": ":fiona",
+          "p2": ":carol"
+        },
+        {
+          "p1": ":iris",
+          "p2": ":jay"
+        },
+        {
+          "p1": ":jay",
+          "p2": ":iris"
+        },
+        {
+          "p1": ":luna",
+          "p2": ":mars"
+        },
+        {
+          "p1": ":mars",
+          "p2": ":luna"
+        }
+      ]
+    }
+  }
+}

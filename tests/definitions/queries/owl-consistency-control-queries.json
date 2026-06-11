@@ -1,0 +1,22 @@
+{
+  "Q-POST-IRR": {
+    "description": "Post-inference reflexive triples on inferred superproperties. OWL-RL propagates asserted reflexive triples (e.g. :x :hasChild :x) upward through the property hierarchy (hasRelative, hasLineageRelative, hasDescendant, etc.) and via inverseOf. Detects individuals whose self-referencing assertions survived inference.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x WHERE { VALUES ?p { kin:hasRelative kin:hasLineageRelative kin:hasDescendant kin:hasAncestor kin:hasChild kin:hasParent kin:hasBloodChild kin:hasBloodParent kin:hasSibling kin:hasPartner } ?x ?p ?x . }"
+  },
+  "Q-POST-CIR": {
+    "description": "Post-inference self-ancestry via transitive closure. OWL-RL expands hasBloodChild/hasBloodParent into hasDescendant/hasAncestor (transitive). Mutual parent/child cycles produce ?x hasDescendant ?x — a direct violation of hasDescendant IrreflexiveProperty.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x WHERE { ?x kin:hasDescendant ?x . }"
+  },
+  "Q-POST-DIS": {
+    "description": "Post-inference sibling plus parent/child cascade. After materialization of hasSibling and OWL-RL inference, detects individuals who are both sibling and parent/child of the same person — violates hasSibling propertyDisjointWith hasChild/hasParent.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y WHERE { ?x kin:hasSibling ?y . { ?x kin:hasParent ?y . } UNION { ?x kin:hasChild ?y . } FILTER(STR(?x) < STR(?y)) }"
+  },
+  "Q-POST-PAR": {
+    "description": "Post-inference partner plus lineage conflict. After OWL-RL expands blood-based relationships into hasDescendant/hasAncestor, detects partners who are also in a lineage relationship — violates hasPartner propertyDisjointWith hasDescendant/hasAncestor.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x ?y WHERE { ?x kin:hasPartner ?y . { ?x kin:hasDescendant ?y . } UNION { ?x kin:hasAncestor ?y . } FILTER(STR(?x) < STR(?y)) }"
+  },
+  "Q-POST-CAR": {
+    "description": "Post-inference dual gender class membership. OWL-RL GCI pattern infers MalePerson from hasGender Male and FemalePerson from hasGender Female. Detects individuals classified as both — violates MalePerson disjointWith FemalePerson. Note: with owlrl, maxQualifiedCardinality reasoning may trigger sameAs chains that propagate gender across identified individuals.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT DISTINCT ?x WHERE { ?x a kin:MalePerson . ?x a kin:FemalePerson . }"
+  }
+}

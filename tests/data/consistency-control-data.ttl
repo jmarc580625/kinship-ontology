@@ -1,0 +1,692 @@
+﻿@prefix : <http://example.org/kinship#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# ============================================================
+# Kinship Ontology — Consistency Control Test Data
+# Covers all patterns identified in consistency-control.md
+#
+# Conventions:
+#   - Each test case uses isolated individuals to prevent cross-contamination.
+#   - All individuals are instances of :Person.
+#   - Naming: :<SECTION><FORM>_<ROLE>
+#     where ROLE is p=parent, c=child, s=self, t=twin, x/y/z for generic roles.
+#   - Sub-properties are varied across test cases to validate VALUES clauses.
+# ============================================================
+
+#---------------------------
+## IRR - Irreflexive self
+#---------------------------
+# One individual per concrete property, each referencing itself.
+
+## IRR-C: self as child
+:irr_c1 a :Person ; :hasChild         :irr_c1 .
+:irr_c2 a :Person ; :hasBloodChild    :irr_c2 .
+:irr_c3 a :Person ; :hasAdoptiveChild :irr_c3 .
+
+## IRR-P: self as parent
+:irr_p1 a :Person ; :hasParent         :irr_p1 .
+:irr_p2 a :Person ; :hasBloodParent    :irr_p2 .
+:irr_p3 a :Person ; :hasAdoptiveParent :irr_p3 .
+
+## IRR-S: self as partner
+:irr_s1 a :Person ; :hasPartner       :irr_s1 .
+:irr_s2 a :Person ; :hasSpouse        :irr_s2 .
+:irr_s3 a :Person ; :hasCivilPartner  :irr_s3 .
+:irr_s4 a :Person ; :hasLifePartner   :irr_s4 .
+
+## IRR-T: self as twin
+:irr_t1 a :Person ; :hasTwin :irr_t1 .
+
+#---------------------------
+## RED1 - Superproperty + subproperty (direct)
+#---------------------------
+
+## RED1-1: hasBloodChild asserted alongside inferred hasChild
+:red1a_p a :Person .
+:red1a_c a :Person .
+:red1a_p :hasBloodChild :red1a_c .
+:red1a_p :hasChild      :red1a_c .
+
+## RED1-2: hasAdoptiveChild asserted alongside inferred hasChild
+:red1b_p a :Person .
+:red1b_c a :Person .
+:red1b_p :hasAdoptiveChild :red1b_c .
+:red1b_p :hasChild         :red1b_c .
+
+## RED1-3: hasBloodParent asserted alongside inferred hasParent
+:red1c_p a :Person .
+:red1c_c a :Person .
+:red1c_c :hasBloodParent :red1c_p .
+:red1c_c :hasParent      :red1c_p .
+
+## RED1-4: hasAdoptiveParent asserted alongside inferred hasParent
+:red1d_p a :Person .
+:red1d_c a :Person .
+:red1d_c :hasAdoptiveParent :red1d_p .
+:red1d_c :hasParent         :red1d_p .
+
+## RED1-5: hasSpouse asserted alongside inferred hasPartner
+:red1e_s1 a :Person .
+:red1e_s2 a :Person .
+:red1e_s1 :hasSpouse  :red1e_s2 .
+:red1e_s1 :hasPartner :red1e_s2 .
+
+## RED1-6: hasCivilPartner asserted alongside inferred hasPartner
+:red1f_s1 a :Person .
+:red1f_s2 a :Person .
+:red1f_s1 :hasCivilPartner :red1f_s2 .
+:red1f_s1 :hasPartner      :red1f_s2 .
+
+## RED1-7: hasLifePartner asserted alongside inferred hasPartner
+:red1g_s1 a :Person .
+:red1g_s2 a :Person .
+:red1g_s1 :hasLifePartner :red1g_s2 .
+:red1g_s1 :hasPartner     :red1g_s2 .
+
+#---------------------------
+## RED2 - Inverse assertion (indirect)
+#---------------------------
+
+## RED2-1: hasChild + hasParent (basic inverseOf)
+:red2a_p a :Person .
+:red2a_c a :Person .
+:red2a_p :hasChild  :red2a_c .
+:red2a_c :hasParent :red2a_p .
+
+## RED2-2: hasBloodChild + hasBloodParent (sub-property pair)
+:red2b_p a :Person .
+:red2b_c a :Person .
+:red2b_p :hasBloodChild  :red2b_c .
+:red2b_c :hasBloodParent :red2b_p .
+
+## RED2-3: hasBloodChild + hasParent (subproperty + superproperty inverse)
+:red2c_p a :Person .
+:red2c_c a :Person .
+:red2c_p :hasBloodChild :red2c_c .
+:red2c_c :hasParent     :red2c_p .
+
+## RED2-4: hasAdoptiveChild + hasAdoptiveParent
+:red2d_p a :Person .
+:red2d_c a :Person .
+:red2d_p :hasAdoptiveChild  :red2d_c .
+:red2d_c :hasAdoptiveParent :red2d_p .
+
+## RED2-5: hasAdoptiveChild + hasParent
+:red2e_p a :Person .
+:red2e_c a :Person .
+:red2e_p :hasAdoptiveChild :red2e_c .
+:red2e_c :hasParent        :red2e_p .
+
+## RED2-6: hasBloodParent + hasBloodChild (inverse direction first)
+:red2f_p a :Person .
+:red2f_c a :Person .
+:red2f_c :hasBloodParent :red2f_p .
+:red2f_p :hasBloodChild  :red2f_c .
+
+## RED2-7: hasBloodParent + hasChild (superproperty of inverse)
+:red2g_p a :Person .
+:red2g_c a :Person .
+:red2g_c :hasBloodParent :red2g_p .
+:red2g_p :hasChild       :red2g_c .
+
+## RED2-8: hasAdoptiveParent + hasAdoptiveChild
+:red2h_p a :Person .
+:red2h_c a :Person .
+:red2h_c :hasAdoptiveParent :red2h_p .
+:red2h_p :hasAdoptiveChild  :red2h_c .
+
+## RED2-9: hasAdoptiveParent + hasChild
+:red2i_p a :Person .
+:red2i_c a :Person .
+:red2i_c :hasAdoptiveParent :red2i_p .
+:red2i_p :hasChild          :red2i_c .
+
+## RED2-10: hasParent + hasChild (parent declares child)
+:red2j_p a :Person .
+:red2j_c a :Person .
+:red2j_c :hasParent :red2j_p .
+:red2j_p :hasChild  :red2j_c .
+
+#---------------------------
+## RED3 - Symmetric property both directions asserted
+#---------------------------
+
+## RED3-1: hasSpouse both directions
+:red3a_s1 a :Person .
+:red3a_s2 a :Person .
+:red3a_s1 :hasSpouse :red3a_s2 .
+:red3a_s2 :hasSpouse :red3a_s1 .
+
+## RED3-2: hasCivilPartner both directions
+:red3b_s1 a :Person .
+:red3b_s2 a :Person .
+:red3b_s1 :hasCivilPartner :red3b_s2 .
+:red3b_s2 :hasCivilPartner :red3b_s1 .
+
+## RED3-3: hasLifePartner both directions
+:red3c_s1 a :Person .
+:red3c_s2 a :Person .
+:red3c_s1 :hasLifePartner :red3c_s2 .
+:red3c_s2 :hasLifePartner :red3c_s1 .
+
+## RED3-4: hasPartner both directions
+:red3d_s1 a :Person .
+:red3d_s2 a :Person .
+:red3d_s1 :hasPartner :red3d_s2 .
+:red3d_s2 :hasPartner :red3d_s1 .
+
+## RED3-5: hasTwin both directions
+:red3e_t1 a :Person .
+:red3e_t2 a :Person .
+:red3e_t1 :hasTwin :red3e_t2 .
+:red3e_t2 :hasTwin :red3e_t1 .
+
+#---------------------------
+## CON1 - Child & parent type conflict
+#---------------------------
+
+## CON1-1: from parent perspective — hasBloodChild + hasAdoptiveChild
+:con1a_p a :Person .
+:con1a_c a :Person .
+:con1a_p :hasBloodChild    :con1a_c .
+:con1a_p :hasAdoptiveChild :con1a_c .
+
+## CON1-2: from child perspective — hasBloodParent + hasAdoptiveParent
+:con1b_p a :Person .
+:con1b_c a :Person .
+:con1b_c :hasBloodParent    :con1b_p .
+:con1b_c :hasAdoptiveParent :con1b_p .
+
+## CON1-3: mixed — hasBloodChild + hasAdoptiveParent
+:con1c_p a :Person .
+:con1c_c a :Person .
+:con1c_p :hasBloodChild     :con1c_c .
+:con1c_c :hasAdoptiveParent :con1c_p .
+
+## CON1-4: mixed — hasAdoptiveChild + hasBloodParent
+:con1d_p a :Person .
+:con1d_c a :Person .
+:con1d_p :hasAdoptiveChild :con1d_c .
+:con1d_c :hasBloodParent   :con1d_p .
+
+#---------------------------
+## CON2 - Role conflict (simultaneously child and parent)
+#---------------------------
+
+## CON2-1: hasChild + hasParent (generic)
+:con2a_x a :Person .
+:con2a_y a :Person .
+:con2a_x :hasChild  :con2a_y .
+:con2a_x :hasParent :con2a_y .
+
+## CON2-2: hasBloodChild + hasBloodParent (biological)
+:con2b_x a :Person .
+:con2b_y a :Person .
+:con2b_x :hasBloodChild  :con2b_y .
+:con2b_x :hasBloodParent :con2b_y .
+
+## CON2-3: hasAdoptiveChild + hasAdoptiveParent (adoptive)
+:con2c_x a :Person .
+:con2c_y a :Person .
+:con2c_x :hasAdoptiveChild  :con2c_y .
+:con2c_x :hasAdoptiveParent :con2c_y .
+
+## CON2-4: hasBloodChild + hasAdoptiveParent (mixed sub-properties)
+:con2d_x a :Person .
+:con2d_y a :Person .
+:con2d_x :hasBloodChild     :con2d_y .
+:con2d_x :hasAdoptiveParent :con2d_y .
+
+#---------------------------
+## CON3 - Gender conflict
+#---------------------------
+
+## CON3-1: hasGender Female + hasGender Male
+:con3_x1 a :Person .
+:con3_x1 :hasGender :Female .
+:con3_x1 :hasGender :Male .
+
+#---------------------------
+## CON4 - Twin generational conflict — 4 forms
+#---------------------------
+
+## CON4-1: t2 is parent of t1 (direct — t1 hasParent t2)
+:con4a_t1 a :Person .
+:con4a_t2 a :Person .
+:con4a_t1 :hasTwin      :con4a_t2 .
+:con4a_t1 :hasParent    :con4a_t2 .
+
+## CON4-2: t2 is parent of t1 (indirect — t2 hasChild t1)
+:con4b_t1 a :Person .
+:con4b_t2 a :Person .
+:con4b_t1 :hasTwin         :con4b_t2 .
+:con4b_t2 :hasBloodChild   :con4b_t1 .
+
+## CON4-3: t2 is child of t1 (direct — t1 hasChild t2)
+:con4c_t1 a :Person .
+:con4c_t2 a :Person .
+:con4c_t1 :hasTwin         :con4c_t2 .
+:con4c_t1 :hasAdoptiveChild :con4c_t2 .
+
+## CON4-4: t2 is child of t1 (indirect — t2 hasParent t1)
+:con4d_t1 a :Person .
+:con4d_t2 a :Person .
+:con4d_t1 :hasTwin        :con4d_t2 .
+:con4d_t2 :hasBloodParent :con4d_t1 .
+
+#---------------------------
+## CIR1 - Mutual parent/child (depth 1)
+#---------------------------
+
+## CIR1-1: mutually parent of each other - all hasChild 
+:cir1a_x a :Person .
+:cir1a_y a :Person .
+:cir1a_x :hasBloodChild :cir1a_y .
+:cir1a_y :hasBloodChild :cir1a_x .
+
+## CIR1-2: mutually child of each other - all hasParent
+:cir1b_x a :Person .
+:cir1b_y a :Person .
+:cir1b_x :hasBloodParent :cir1b_y .
+:cir1b_y :hasBloodParent :cir1b_x .
+
+#---------------------------
+## CIR2 - Generational cycle
+#---------------------------
+# Depth 2 — 8 forms
+# Semantic cycle: x is parent of y, y is parent of z, z is parent of x.
+# Each form uses a different combination of hasChild/hasParent assertions.
+
+## CIR2 form 1 — all hasChild (0 hasParent)
+:cir2f1_x a :Person .
+:cir2f1_y a :Person .
+:cir2f1_z a :Person .
+:cir2f1_x :hasChild :cir2f1_y .
+:cir2f1_y :hasChild :cir2f1_z .
+:cir2f1_z :hasChild :cir2f1_x .
+
+## CIR2 form 2 — all hasParent (0 hasChild)
+:cir2f2_x a :Person .
+:cir2f2_y a :Person .
+:cir2f2_z a :Person .
+:cir2f2_x :hasAdoptiveParent :cir2f2_y .
+:cir2f2_y :hasAdoptiveParent :cir2f2_z .
+:cir2f2_z :hasAdoptiveParent :cir2f2_x .
+
+## CIR2 form 3 — hasParent at edge 3 (z→x as x hasParent z)
+:cir2f3_x a :Person .
+:cir2f3_y a :Person .
+:cir2f3_z a :Person .
+:cir2f3_x :hasBloodChild  :cir2f3_y .  # x→y
+:cir2f3_y :hasBloodChild  :cir2f3_z .  # y→z
+:cir2f3_x :hasBloodParent :cir2f3_z .  # z→x (as x hasParent z)
+
+## CIR2 form 4 — hasParent at edge 2 (y→z as z hasParent y)
+:cir2f4_x a :Person .
+:cir2f4_y a :Person .
+:cir2f4_z a :Person .
+:cir2f4_x :hasChild  :cir2f4_y .       # x→y
+:cir2f4_z :hasParent :cir2f4_y .       # y→z (as z hasParent y)
+:cir2f4_z :hasChild  :cir2f4_x .       # z→x
+
+## CIR2 form 5 — hasParent at edges 2 and 3
+:cir2f5_x a :Person .
+:cir2f5_y a :Person .
+:cir2f5_z a :Person .
+:cir2f5_x :hasAdoptiveChild  :cir2f5_y .   # x→y
+:cir2f5_z :hasAdoptiveParent :cir2f5_y .   # y→z (as z hasParent y)
+:cir2f5_x :hasAdoptiveParent :cir2f5_z .   # z→x (as x hasParent z)
+
+## CIR2 form 6 — hasParent at edge 1 (x→y as y hasParent x)
+:cir2f6_x a :Person .
+:cir2f6_y a :Person .
+:cir2f6_z a :Person .
+:cir2f6_y :hasBloodParent :cir2f6_x .   # x→y (as y hasParent x)
+:cir2f6_y :hasBloodChild  :cir2f6_z .   # y→z
+:cir2f6_x :hasBloodParent :cir2f6_z .   # z→x (as x hasParent z)
+
+## CIR2 form 7 — hasParent at edges 1 and 3
+:cir2f7_x a :Person .
+:cir2f7_y a :Person .
+:cir2f7_z a :Person .
+:cir2f7_y :hasParent :cir2f7_x .        # x→y (as y hasParent x)
+:cir2f7_y :hasChild  :cir2f7_z .        # y→z
+:cir2f7_z :hasChild  :cir2f7_x .        # z→x
+
+## CIR2 form 8 — hasParent at edges 1 and 2
+:cir2f8_x a :Person .
+:cir2f8_y a :Person .
+:cir2f8_z a :Person .
+:cir2f8_x :hasAdoptiveParent :cir2f8_y .  # y→x
+:cir2f8_z :hasAdoptiveChild  :cir2f8_y .  # z→y
+:cir2f8_z :hasAdoptiveParent :cir2f8_x .  # x→z
+
+#---------------------------
+## CAR1 - More than 2 biological parents
+#---------------------------
+
+## CAR1-1: all via hasBloodParent
+:car1a_c  a :Person .
+:car1a_pa a :Person .
+:car1a_pb a :Person .
+:car1a_pc a :Person .
+:car1a_c :hasBloodParent :car1a_pa .
+:car1a_c :hasBloodParent :car1a_pb .
+:car1a_c :hasBloodParent :car1a_pc .
+
+## CAR1-2: all via hasBloodChild
+:car1b_c  a :Person .
+:car1b_pa a :Person .
+:car1b_pb a :Person .
+:car1b_pc a :Person .
+:car1b_pa :hasBloodChild :car1b_c .
+:car1b_pb :hasBloodChild :car1b_c .
+:car1b_pc :hasBloodChild :car1b_c .
+
+## CAR1-3: 2 via hasBloodChild + 1 via hasBloodParent
+:car1c_c  a :Person .
+:car1c_pa a :Person .
+:car1c_pb a :Person .
+:car1c_pc a :Person .
+:car1c_pa :hasBloodChild  :car1c_c .
+:car1c_pb :hasBloodChild  :car1c_c .
+:car1c_c  :hasBloodParent :car1c_pc .
+
+## CAR1-4: 1 via hasBloodChild + 2 via hasBloodParent
+:car1d_c  a :Person .
+:car1d_pa a :Person .
+:car1d_pb a :Person .
+:car1d_pc a :Person .
+:car1d_pa :hasBloodChild  :car1d_c .
+:car1d_c  :hasBloodParent :car1d_pb .
+:car1d_c  :hasBloodParent :car1d_pc .
+
+#---------------------------
+## CAR2 - Two male blood parents
+#---------------------------
+
+## CAR2-1: direct
+:car2ma_c  a :Person .
+:car2ma_pa a :Person ; :hasGender :Male .
+:car2ma_pb a :Person ; :hasGender :Male .
+:car2ma_c  :hasBloodParent :car2ma_pa .
+:car2ma_c  :hasBloodParent :car2ma_pb .
+
+## CAR2-2: indirect (both via hasBloodChild)
+:car2mb_c  a :Person .
+:car2mb_pa a :Person ; :hasGender :Male .
+:car2mb_pb a :Person ; :hasGender :Male .
+:car2mb_pa :hasBloodChild :car2mb_c .
+:car2mb_pb :hasBloodChild :car2mb_c .
+
+## CAR2-3: mixed
+:car2mc_c  a :Person .
+:car2mc_pa a :Person ; :hasGender :Male .
+:car2mc_pb a :Person ; :hasGender :Male .
+:car2mc_pa :hasBloodChild  :car2mc_c .
+:car2mc_c  :hasBloodParent :car2mc_pb .
+
+#---------------------------
+## CAR2 - Two female blood parents
+#---------------------------
+
+## CAR2-1: direct
+:car2fa_c  a :Person .
+:car2fa_pa a :Person ; :hasGender :Female .
+:car2fa_pb a :Person ; :hasGender :Female .
+:car2fa_c  :hasBloodParent :car2fa_pa .
+:car2fa_c  :hasBloodParent :car2fa_pb .
+
+## CAR2-2: indirect
+:car2fb_c  a :Person .
+:car2fb_pa a :Person ; :hasGender :Female .
+:car2fb_pb a :Person ; :hasGender :Female .
+:car2fb_pa :hasBloodChild :car2fb_c .
+:car2fb_pb :hasBloodChild :car2fb_c .
+
+## CAR2-3: mixed
+:car2fc_c  a :Person .
+:car2fc_pa a :Person ; :hasGender :Female .
+:car2fc_pb a :Person ; :hasGender :Female .
+:car2fc_pa :hasBloodChild  :car2fc_c .
+:car2fc_c  :hasBloodParent :car2fc_pb .
+
+#---------------------------
+## TWI1 - twins sharing no biological parent — 6 combinations
+#---------------------------
+
+## TWI1-1: all via hasBloodChild
+:twi1a_t1 a :Person . :twi1a_t2 a :Person .
+:twi1a_pa a :Person . :twi1a_pb a :Person .
+:twi1a_pc a :Person . :twi1a_pd a :Person .
+:twi1a_pa :hasBloodChild :twi1a_t1 .   # t1 parent 1
+:twi1a_pc :hasBloodChild :twi1a_t1 .   # t1 parent 2
+:twi1a_pb :hasBloodChild :twi1a_t2 .   # t2 parent 1
+:twi1a_pd :hasBloodChild :twi1a_t2 .   # t2 parent 2
+:twi1a_t1 :hasTwin :twi1a_t2 .
+
+## TWI1-2: all via hasBloodParent
+:twi1b_t1 a :Person . :twi1b_t2 a :Person .
+:twi1b_pa a :Person . :twi1b_pb a :Person .
+:twi1b_pc a :Person . :twi1b_pd a :Person .
+:twi1b_t1 :hasBloodParent :twi1b_pa .
+:twi1b_t1 :hasBloodParent :twi1b_pc .
+:twi1b_t2 :hasBloodParent :twi1b_pb .
+:twi1b_t2 :hasBloodParent :twi1b_pd .
+:twi1b_t1 :hasTwin :twi1b_t2 .
+
+## TWI1-3: t1 via hasBloodChild, t2 via hasBloodParent
+:twi1c_t1 a :Person . :twi1c_t2 a :Person .
+:twi1c_pa a :Person . :twi1c_pb a :Person .
+:twi1c_pc a :Person . :twi1c_pd a :Person .
+:twi1c_pa :hasBloodChild :twi1c_t1 .
+:twi1c_pc :hasBloodChild :twi1c_t1 .
+:twi1c_t2 :hasBloodParent :twi1c_pb .
+:twi1c_t2 :hasBloodParent :twi1c_pd .
+:twi1c_t1 :hasTwin :twi1c_t2 .
+
+## TWI1-4: t1 via hasBloodParent, t2 via hasBloodParent and hasBloodChild 
+:twi1d_t1 a :Person . :twi1d_t2 a :Person .
+:twi1d_pa a :Person . :twi1d_pb a :Person .
+:twi1d_pc a :Person . :twi1d_pd a :Person .
+:twi1d_t1 :hasBloodParent :twi1d_pa .
+:twi1d_t1 :hasBloodParent :twi1d_pc .
+:twi1d_t2 :hasBloodParent :twi1d_pb  .
+:twi1d_pd :hasBloodChild :twi1d_t2 .
+:twi1d_t1 :hasTwin :twi1d_t2 .
+
+## TWI1-5: t1 via hasBloodChild, t2 via hasBloodChild and hasBloodParent
+:twi1e_t1 a :Person . :twi1e_t2 a :Person .
+:twi1e_pa a :Person . :twi1e_pb a :Person .
+:twi1e_pc a :Person . :twi1e_pd a :Person .
+:twi1e_pa :hasBloodChild :twi1e_t1 .
+:twi1e_pc :hasBloodChild :twi1e_t1 .
+:twi1e_pb :hasBloodChild :twi1e_t2 .
+:twi1e_t2 :hasBloodParent :twi1e_pd .
+:twi1e_t1 :hasTwin :twi1e_t2 .
+
+## TWI1-6: t1 and t2 both via hasBloodChild and hasBloodParent
+:twi1f_t1 a :Person . :twi1f_t2 a :Person .
+:twi1f_pa a :Person . :twi1f_pb a :Person .
+:twi1f_pc a :Person . :twi1f_pd a :Person .
+:twi1f_pa :hasBloodChild :twi1f_t1 .
+:twi1f_t1 :hasBloodParent :twi1f_pc .
+:twi1f_pb :hasBloodChild :twi1f_t2 .
+:twi1f_t2 :hasBloodParent :twi1f_pd .
+:twi1f_t1 :hasTwin :twi1f_t2 .
+
+#---------------------------
+## TWI2 - twins sharing exactly one biological parent — 6 combinations
+# pa = shared parent, pb = t1 only, pc = t2 only
+#---------------------------
+
+## TWI2-1: all via hasBloodChild
+:twi2a_t1 a :Person . :twi2a_t2 a :Person .
+:twi2a_pa a :Person . :twi2a_pb a :Person . :twi2a_pc a :Person .
+:twi2a_pa :hasBloodChild :twi2a_t1 .
+:twi2a_pb :hasBloodChild :twi2a_t1 .
+:twi2a_pa :hasBloodChild :twi2a_t2 .
+:twi2a_pc :hasBloodChild :twi2a_t2 .
+:twi2a_t1 :hasTwin :twi2a_t2 .
+
+## TWI2-2: all via hasBloodParent
+:twi2b_t1 a :Person . :twi2b_t2 a :Person .
+:twi2b_pa a :Person . :twi2b_pb a :Person . :twi2b_pc a :Person .
+:twi2b_t1 :hasBloodParent :twi2b_pa .
+:twi2b_t1 :hasBloodParent :twi2b_pb .
+:twi2b_t2 :hasBloodParent :twi2b_pa .
+:twi2b_t2 :hasBloodParent :twi2b_pc .
+:twi2b_t1 :hasTwin :twi2b_t2 .
+
+## TWI2-3: t1 via hasBloodParent  + t2 hasBloodChild
+:twi2c_t1 a :Person . :twi2c_t2 a :Person .
+:twi2c_pa a :Person . :twi2c_pb a :Person . :twi2c_pc a :Person .
+:twi2c_t1 :hasBloodParent :twi2c_pa  .
+:twi2c_t1 :hasBloodParent :twi2c_pb .
+:twi2c_pa :hasBloodChild  :twi2c_t2 .
+:twi2c_pc :hasBloodChild  :twi2c_t2 .
+:twi2c_t1 :hasTwin :twi2c_t2 .
+
+## TWI2-4: t1 via hasBloodParent  + t2 hasBloodParent and hasBloodChild
+:twi2d_t1 a :Person . :twi2d_t2 a :Person .
+:twi2d_pa a :Person . :twi2d_pb a :Person . :twi2d_pc a :Person .
+:twi2d_t1 :hasBloodParent :twi2d_pa .
+:twi2d_t1 :hasBloodParent :twi2d_pb .
+:twi2d_t2 :hasBloodParent :twi2d_pa .
+:twi2d_pc :hasBloodChild  :twi2d_t2 .
+:twi2d_t1 :hasTwin :twi2d_t2 .
+
+## TWI2-5: t1 via hasBloodChild  + t2 hasBloodChild and t2 hasBloodParent
+:twi2e_t1 a :Person . :twi2e_t2 a :Person .
+:twi2e_pa a :Person . :twi2e_pb a :Person . :twi2e_pc a :Person .
+:twi2e_pa :hasBloodChild  :twi2e_t1 .
+:twi2e_pb :hasBloodChild  :twi2e_t1 .
+:twi2e_pa :hasBloodChild  :twi2e_t2 .
+:twi2e_t2 :hasBloodParent :twi2e_pc .
+:twi2e_t1 :hasTwin :twi2e_t2 .
+
+## TWI2-6: t1 and t2 both via hasBloodChild and t2 hasBloodParent
+:twi2f_t1 a :Person . :twi2f_t2 a :Person .
+:twi2f_pa a :Person . :twi2f_pb a :Person . :twi2f_pc a :Person .
+:twi2f_pa :hasBloodChild  :twi2f_t1 .
+:twi2f_t1 :hasBloodParent :twi2f_pb .
+:twi2f_pa :hasBloodChild  :twi2f_t2 .
+:twi2f_t2 :hasBloodParent :twi2f_pc .
+:twi2f_t1 :hasTwin :twi2f_t2 .
+
+#---------------------------
+## PAR1 - Partnership + direct parental
+#---------------------------
+
+## PAR1-1: partner of his child (direct)
+:par1a_x a :Person .
+:par1a_y a :Person .
+:par1a_x :hasSpouse        :par1a_y .
+:par1a_x :hasBloodChild    :par1a_y .
+
+## PAR1-2: partner of his parent (direct)
+:par1b_x a :Person .
+:par1b_y a :Person .
+:par1b_x :hasCivilPartner   :par1b_y .
+:par1b_x :hasAdoptiveParent :par1b_y .
+
+## PAR1-3: partner of his parent (indirect)
+:par1c_x a :Person .
+:par1c_y a :Person .
+:par1c_x :hasLifePartner :par1c_y .
+:par1c_y :hasChild       :par1c_x .
+
+## PAR1-4: partner of his child (indirect)
+:par1d_x a :Person .
+:par1d_y a :Person .
+:par1d_x :hasSpouse      :par1d_y .
+:par1d_y :hasBloodParent :par1d_x .
+
+#---------------------------
+## PAR2 - Partnership + lineage conflict depth 2
+#---------------------------
+
+## PAR2-1: partner of his grandparent (z is x's parent, y is z's parent)
+:par2a_x a :Person .
+:par2a_y a :Person .
+:par2a_z a :Person .
+:par2a_x :hasSpouse        :par2a_y .
+:par2a_x :hasBloodParent   :par2a_z .
+:par2a_z :hasBloodParent   :par2a_y .
+
+## PAR2-2: partner of his grandchild (z is x's child, y is z's child)
+:par2b_x a :Person .
+:par2b_y a :Person .
+:par2b_z a :Person .
+:par2b_x :hasCivilPartner  :par2b_y .
+:par2b_x :hasBloodChild    :par2b_z .
+:par2b_z :hasBloodChild    :par2b_y .
+
+## PAR2-3: grandparent — form 1 (y expressed via y hasChild z)
+:par2c_x a :Person .
+:par2c_y a :Person .
+:par2c_z a :Person .
+:par2c_x :hasSpouse  :par2c_y .
+:par2c_x :hasParent  :par2c_z .   # z is x's parent
+:par2c_y :hasChild   :par2c_z .   # y is parent of z (y hasChild z) → y is x's grandparent
+
+## PAR2-4: grandparent — form 2 (x expressed via z hasChild x)
+:par2d_x a :Person .
+:par2d_y a :Person .
+:par2d_z a :Person .
+:par2d_x :hasCivilPartner  :par2d_y .
+:par2d_z :hasBloodChild   :par2d_x .   # z is x's parent (z hasChild x)
+:par2d_z :hasBloodParent  :par2d_y .   # y is z's parent (z hasParent y)
+
+## PAR2-5: grandparent — form 3 (both edges via hasChild)
+:par2e_x a :Person .
+:par2e_y a :Person .
+:par2e_z a :Person .
+:par2e_x :hasSpouse        :par2e_y .
+:par2e_z :hasAdoptiveChild :par2e_x .   # z is x's parent
+:par2e_y :hasAdoptiveChild :par2e_z .   # y is z's parent
+
+## PAR2-6: grandchild — form 1 (y expressed via y hasParent z)
+:par2f_x a :Person .
+:par2f_y a :Person .
+:par2f_z a :Person .
+:par2f_x :hasSpouse        :par2f_y .
+:par2f_x :hasBloodChild    :par2f_z .   # z is x's child
+:par2f_y :hasBloodParent   :par2f_z .   # z is y's parent (y hasParent z)
+
+## PAR2-7: grandchild — form 2 (x expressed via z hasParent x)
+:par2g_x a :Person .
+:par2g_y a :Person .
+:par2g_z a :Person .
+:par2g_x :hasCivilPartner  :par2g_y .
+:par2g_z :hasParent        :par2g_x .   # x is z's parent (z hasParent x)
+:par2g_z :hasBloodChild    :par2g_y .   # z is y's parent
+
+## PAR2-8: grandchild — form 3 (both edges via hasParent)
+:par2h_x a :Person .
+:par2h_y a :Person .
+:par2h_z a :Person .
+:par2h_x :hasLifePartner   :par2h_y .
+:par2h_z :hasAdoptiveParent :par2h_x .  # x is z's parent (z hasParent x)
+:par2h_y :hasAdoptiveParent :par2h_z .  # z is y's parent (y hasParent z)
+
+#---------------------------
+## PAR3 - Twin + partnership conflict — 2 forms
+#---------------------------
+
+## PAR3-1: direct — t1 asserts partnership toward t2
+:par3a_t1 a :Person .
+:par3a_t2 a :Person .
+:par3a_t1 :hasTwin   :par3a_t2 .
+:par3a_t1 :hasSpouse :par3a_t2 .
+
+## PAR3-2: indirect — t2 asserts partnership toward t1
+:par3b_t1 a :Person .
+:par3b_t2 a :Person .
+:par3b_t1 :hasTwin          :par3b_t2 .
+:par3b_t2 :hasCivilPartner  :par3b_t1 .
+
+
+
+

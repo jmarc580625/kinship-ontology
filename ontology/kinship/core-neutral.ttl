@@ -1,0 +1,216 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/core-neutral> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/core-neutral/1.0.0> ;
+    owl:imports <http://example.org/kinship/foundation> ;
+    rdfs:label "Core Family Relationships Gender-Neutral Module of the Kinship Ontology"@en ;
+    rdfs:comment "Core gender-neutral family relationships: spouse, parent, child, sibling, adoptive, and partner relationships."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Core gender-neutral family relationships
+#---------------------------
+
+## Partnership-based relationships
+
+### Partner - generic parental partnership 
+:hasPartner a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Partner"@en ;
+    rdfs:comment "Abstract superproperty for all couple relationships regardless of legal form. Usage: assert a specific subproperty when the form is known; assert :hasPartner directly only when genuinely unknown."@en ;    
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
+    :crossesAlliance true .
+
+### spouse
+:hasSpouse a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPartner ;
+    rdfs:label "Has Spouse"@en ;
+    rdfs:comment "Formal marriage between two persons. Usage: use :hasPartner when the legal form is unknown or irrelevant."@en ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+
+### civil partner
+:hasCivilPartner a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPartner ;
+    rdfs:label "Has Civil Partner"@en ;
+    rdfs:comment "Legal civil union distinct from marriage (e.g. PACS, UK civil partnership)."@en ;    
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+
+### life partner
+:hasLifePartner a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasPartner ;
+    rdfs:label "Has Life Partner"@en ;
+    rdfs:comment "Stable couple relationship with no legal formalization."@en ;    
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+
+## Blood-based relationships
+
+### descendant
+:hasDescendant a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Descendant"@en ;
+    rdfs:comment """Blood-only closure over :hasBloodChild. 
+    Design: adoption excluded — :hasAdoptiveChild is not a subproperty of this."""@en ;
+    owl:inverseOf :hasAncestor ;
+    owl:propertyDisjointWith :hasAncestor ;        # ←  protection cycle
+    a owl:TransitiveProperty , owl:IrreflexiveProperty .
+
+### ancestor
+:hasAncestor a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Ancestor"@en ;
+    rdfs:comment """Blood-only closure over :hasBloodParent. 
+    Design: adoption excluded — :hasAdoptiveParent is not a subproperty of this."""@en ;
+    owl:inverseOf :hasDescendant ;
+    owl:propertyDisjointWith :hasDescendant ;        # ←  protection cycle
+    a owl:TransitiveProperty , owl:IrreflexiveProperty.
+
+### child
+:hasChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Child"@en ;
+    rdfs:comment """Biological or adoptive child — inclusive superproperty. 
+    Design: not a subproperty of :hasDescendant; blood lineage inference requires :hasBloodChild explicitly. 
+    Usage: assert when type is unknown."""@en ;
+    owl:inverseOf :hasParent .
+
+### biological child
+:hasBloodChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasChild ;                 # ← hiérarchie inclusive
+    rdfs:subPropertyOf :hasDescendant ;            # ← ancre la transitivité de sang
+    rdfs:label "Has Biological Child"@en ;
+    rdfs:comment """Biological child with confirmed birth parentage. 
+    Usage: use :hasChild when the biological nature is unknown or irrelevant."""@en ;
+    owl:inverseOf :hasBloodParent .
+
+### adoptive child
+:hasAdoptiveChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasChild ;
+    rdfs:label "Has Adoptive Child"@en ;
+    rdfs:comment "Child through legal adoption, not birth. Design: excluded from :hasDescendant — adoption creates no blood lineage."@en ;
+    owl:inverseOf :hasAdoptiveParent ;
+    :crossesAdoption true .
+
+### parent
+:hasParent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Parent"@en ;
+    rdfs:comment """Biological or adoptive parent — inclusive superproperty. 
+    Design: not a subproperty of :hasAncestor. 
+    Usage: assert when type is unknown."""@en ;
+    owl:inverseOf :hasChild .
+
+### biological parent
+:hasBloodParent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasParent ;                # ← hiérarchie inclusive
+    rdfs:subPropertyOf :hasAncestor ;              # ← ancre la transitivité de sang
+    rdfs:label "Has Biological Parent"@en ;
+    rdfs:comment "Biological parent with confirmed birth parentage. Usage: use :hasParent when the biological nature is unknown or irrelevant."@en ;
+    owl:inverseOf :hasBloodChild .
+
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasBloodParent ;
+    owl:maxCardinality "2"^^xsd:nonNegativeInteger
+] .
+
+# At most 1 male biological parent
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasBloodParent ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass :MalePerson
+] .
+
+# At most 1 female biological parent
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasBloodParent ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass :FemalePerson
+] .
+
+### adoptive parent
+:hasAdoptiveParent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasParent ;
+    rdfs:label "Has Adoptive Parent"@en ;
+    rdfs:comment "Parent through legal adoption, not birth. Design: excluded from :hasAncestor — adoption creates no blood lineage."@en ;
+    owl:inverseOf :hasAdoptiveChild ;
+    :crossesAdoption true .
+
+### sibling
+:hasSibling a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Sibling"@en ;
+    rdfs:comment "Shares at least one parent (biological or adoptive) — half-siblings included, step-siblings and cousins excluded."@en ;
+    :MaterializationReason :IrreflexivePropertyLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?person1 :hasSibling ?person2 . # owrl reasoner infers symmetric relationship
+        }
+        WHERE {
+            ?parent :hasChild ?person1 .
+            ?parent :hasChild ?person2 .
+            FILTER(?person1 != ?person2) # Exclude reflexive relationships
+        }
+    """ ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+
+### twin
+:hasTwin a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSibling ;
+    rdfs:label "Has Twin"@en ;
+    rdfs:comment """Sibling born in the same birth event. 
+    Usage: assert directly — birth date evidence is required, which is outside this ontology's scope."""@en ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+
+#---------------------------
+# Property disjointness axioms
+#---------------------------
+
+:hasChild         owl:propertyDisjointWith :hasParent .
+# Universal impossibility regardless of link type (biological, adoptive, or unknown): a person cannot simultaneously be the child and the parent of the same individual.
+
+:hasDescendant    owl:propertyDisjointWith :hasAncestor .
+# Universal impossibility: a person cannot be both ancestor and descendant of the same individual — would imply a generational cycle.
+
+:hasSibling       owl:propertyDisjointWith :hasChild .
+# Legal/social convention: biologically possible in extreme consanguineous cases but outside the scope of this ontology.
+# Move to validation module if historical data requires it.
+
+:hasSibling       owl:propertyDisjointWith :hasParent .
+# Legal/social convention: biologically possible in extreme consanguineous cases but outside the scope of this ontology.
+# Move to validation module if historical data requires it.
+
+:hasBloodChild    owl:propertyDisjointWith :hasAdoptiveChild .
+# Modelling convention: link type is declared exclusively.
+# A person who is both biological and legal adoptive child of the same parent must be modelled as :hasBloodChild only.
+
+:hasBloodParent   owl:propertyDisjointWith :hasAdoptiveParent .
+# Modelling convention: link type is declared exclusively.
+# A person who is both biological and legal adoptive parent of the same child must be modelled as :hasBloodParent only.
+
+:hasPartner owl:propertyDisjointWith :hasChild .
+# Legal/social convention: a person cannot simultaneously be the partner and the child of the same individual.
+
+:hasPartner owl:propertyDisjointWith :hasParent .
+# Legal/social convention: a person cannot simultaneously be the partner and the parent of the same individual.
+# Explicit declaration needed: OWL-RL does not infer disjointness via inverseOf from hasChild.
+
+:hasPartner owl:propertyDisjointWith :hasDescendant .
+# Covers blood descendants beyond direct child level (via hasBloodChild transitivity).
+
+:hasPartner owl:propertyDisjointWith :hasAncestor .
+# Needed separately: hasPartner is SymmetricProperty — the ancestor-side violation is not caught by ⊥ hasDescendant alone.

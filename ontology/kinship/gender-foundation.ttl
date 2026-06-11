@@ -1,0 +1,82 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/gender-foundation> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/gender-foundation/1.0.0> ;
+    rdfs:label "Gender Foundation Module of the Kinship Ontology"@en ;
+    rdfs:comment "Person, gender, and gender-specific person class definitions."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+
+#---------------------------
+# Gender Definitions
+#---------------------------
+
+## Gender class
+## Gender is a value, not a class membership
+:hasGender a owl:ObjectProperty ;
+    rdfs:label  "has gender"@en ;
+    rdfs:comment """Single source of truth for gender. 
+    Design: never derived from relationship properties — asserting a gendered property cannot corrupt this value. 
+    Usage: assert explicitly and optionally; absence is valid."""@en ;
+    rdfs:domain :Person ;
+    rdfs:range  :GenderIdentity .
+
+:GenderIdentity a owl:Class ;
+    rdfs:label "Gender Identity"@en .
+
+:Female a :GenderIdentity, owl:NamedIndividual ;
+    rdfs:label "Female"@en .
+:Male   a :GenderIdentity, owl:NamedIndividual ;
+    rdfs:label "Male"@en .
+
+[] a owl:AllDifferent ;
+   owl:distinctMembers ( :Female :Male ) .
+
+## Person class
+:Person a owl:Class ;
+    rdfs:label "Person"@en ;
+    rdfs:comment "A person (base class for all individuals)."@en ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty :hasGender ;
+        owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onClass :GenderIdentity
+    ] .
+
+## Convenience classes : one-directional GCI pattern
+## preserves firewall : FemalePerson does NOT force :hasGender inference
+:FemalePerson a owl:Class ;
+    rdfs:subClassOf :Person ;
+    rdfs:label "Female Person"@en ;
+    rdfs:comment "Design: GCI pattern (one-directional) — :hasGender :Female infers membership, but membership does not infer :hasGender. Prevents rdfs:range from corrupting the gender firewall."@en .
+
+[ a owl:Restriction ;
+  owl:onProperty :hasGender ;
+  owl:hasValue :Female ]
+    rdfs:subClassOf :FemalePerson .
+
+:MalePerson a owl:Class ;
+    rdfs:subClassOf :Person ;
+    rdfs:label "Male Person"@en ;
+    rdfs:comment "Design: GCI pattern (one-directional) — :hasGender :Male infers membership, but membership does not infer :hasGender. Prevents rdfs:range from corrupting the gender firewall."@en .
+
+[ a owl:Restriction ;
+  owl:onProperty :hasGender ;
+  owl:hasValue :Male ]
+    rdfs:subClassOf :MalePerson .
+
+## Disjointness
+:MalePerson owl:disjointWith :FemalePerson .

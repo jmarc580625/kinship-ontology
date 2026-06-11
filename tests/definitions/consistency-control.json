@@ -1,0 +1,640 @@
+{
+  "module": "consistency-control",
+  "query_library": "tests/definitions/queries/consistency-control-queries.json",
+  "ontologies": [
+    "ontology/kinship/core-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/consistency-control-data.ttl"
+  ],
+  "abox_only": true,
+  "description": "Consistency-control query validation suite - validates blocking anomaly and warning detection queries against the documented ABox-only test dataset.",
+  "tests": {
+    "Q-IRR": {
+      "expected": [
+        {
+          "x": ":irr_c1",
+          "p": ":hasChild"
+        },
+        {
+          "x": ":irr_c2",
+          "p": ":hasBloodChild"
+        },
+        {
+          "x": ":irr_c3",
+          "p": ":hasAdoptiveChild"
+        },
+        {
+          "x": ":irr_p1",
+          "p": ":hasParent"
+        },
+        {
+          "x": ":irr_p2",
+          "p": ":hasBloodParent"
+        },
+        {
+          "x": ":irr_p3",
+          "p": ":hasAdoptiveParent"
+        },
+        {
+          "x": ":irr_s1",
+          "p": ":hasPartner"
+        },
+        {
+          "x": ":irr_s2",
+          "p": ":hasSpouse"
+        },
+        {
+          "x": ":irr_s3",
+          "p": ":hasCivilPartner"
+        },
+        {
+          "x": ":irr_s4",
+          "p": ":hasLifePartner"
+        },
+        {
+          "x": ":irr_t1",
+          "p": ":hasTwin"
+        }
+      ]
+    },
+    "Q-RED1": {
+      "expected": [
+        {
+          "x": ":red1a_p",
+          "y": ":red1a_c",
+          "sub": ":hasBloodChild",
+          "super": ":hasChild"
+        },
+        {
+          "x": ":red1b_p",
+          "y": ":red1b_c",
+          "sub": ":hasAdoptiveChild",
+          "super": ":hasChild"
+        },
+        {
+          "x": ":red1c_c",
+          "y": ":red1c_p",
+          "sub": ":hasBloodParent",
+          "super": ":hasParent"
+        },
+        {
+          "x": ":red1d_c",
+          "y": ":red1d_p",
+          "sub": ":hasAdoptiveParent",
+          "super": ":hasParent"
+        },
+        {
+          "x": ":red1e_s1",
+          "y": ":red1e_s2",
+          "sub": ":hasSpouse",
+          "super": ":hasPartner"
+        },
+        {
+          "x": ":red1f_s1",
+          "y": ":red1f_s2",
+          "sub": ":hasCivilPartner",
+          "super": ":hasPartner"
+        },
+        {
+          "x": ":red1g_s1",
+          "y": ":red1g_s2",
+          "sub": ":hasLifePartner",
+          "super": ":hasPartner"
+        }
+      ]
+    },
+    "Q-RED2": {
+      "expected": [
+        {
+          "x": ":red2a_p",
+          "y": ":red2a_c",
+          "p": ":hasChild",
+          "q": ":hasParent"
+        },
+        {
+          "x": ":red2b_p",
+          "y": ":red2b_c",
+          "p": ":hasBloodChild",
+          "q": ":hasBloodParent"
+        },
+        {
+          "x": ":red2c_p",
+          "y": ":red2c_c",
+          "p": ":hasBloodChild",
+          "q": ":hasParent"
+        },
+        {
+          "x": ":red2d_p",
+          "y": ":red2d_c",
+          "p": ":hasAdoptiveChild",
+          "q": ":hasAdoptiveParent"
+        },
+        {
+          "x": ":red2e_p",
+          "y": ":red2e_c",
+          "p": ":hasAdoptiveChild",
+          "q": ":hasParent"
+        },
+        {
+          "x": ":red2f_p",
+          "y": ":red2f_c",
+          "p": ":hasBloodChild",
+          "q": ":hasBloodParent"
+        },
+        {
+          "x": ":red2g_c",
+          "y": ":red2g_p",
+          "p": ":hasBloodParent",
+          "q": ":hasChild"
+        },
+        {
+          "x": ":red2h_p",
+          "y": ":red2h_c",
+          "p": ":hasAdoptiveChild",
+          "q": ":hasAdoptiveParent"
+        },
+        {
+          "x": ":red2i_c",
+          "y": ":red2i_p",
+          "p": ":hasAdoptiveParent",
+          "q": ":hasChild"
+        },
+        {
+          "x": ":red2j_p",
+          "y": ":red2j_c",
+          "p": ":hasChild",
+          "q": ":hasParent"
+        }
+      ]
+    },
+    "Q-RED3": {
+      "expected": [
+        {
+          "x": ":red3a_s1",
+          "y": ":red3a_s2",
+          "p": ":hasSpouse"
+        },
+        {
+          "x": ":red3b_s1",
+          "y": ":red3b_s2",
+          "p": ":hasCivilPartner"
+        },
+        {
+          "x": ":red3c_s1",
+          "y": ":red3c_s2",
+          "p": ":hasLifePartner"
+        },
+        {
+          "x": ":red3d_s1",
+          "y": ":red3d_s2",
+          "p": ":hasPartner"
+        },
+        {
+          "x": ":red3e_t1",
+          "y": ":red3e_t2",
+          "p": ":hasTwin"
+        }
+      ]
+    },
+    "Q-CON1": {
+      "expected": [
+        {
+          "p": ":con1a_p",
+          "c": ":con1a_c"
+        },
+        {
+          "p": ":con1b_p",
+          "c": ":con1b_c"
+        },
+        {
+          "p": ":con1c_p",
+          "c": ":con1c_c"
+        },
+        {
+          "p": ":con1d_p",
+          "c": ":con1d_c"
+        }
+      ]
+    },
+    "Q-CON2": {
+      "expected": [
+        {
+          "x": ":con2a_x",
+          "y": ":con2a_y",
+          "cp": ":hasChild",
+          "pp": ":hasParent"
+        },
+        {
+          "x": ":con2b_x",
+          "y": ":con2b_y",
+          "cp": ":hasBloodChild",
+          "pp": ":hasBloodParent"
+        },
+        {
+          "x": ":con2c_x",
+          "y": ":con2c_y",
+          "cp": ":hasAdoptiveChild",
+          "pp": ":hasAdoptiveParent"
+        },
+        {
+          "x": ":con2d_x",
+          "y": ":con2d_y",
+          "cp": ":hasBloodChild",
+          "pp": ":hasAdoptiveParent"
+        }
+      ]
+    },
+    "Q-CON3": {
+      "expected": [
+        {
+          "x": ":con3_x1"
+        }
+      ]
+    },
+    "Q-CON4": {
+      "expected": [
+        {
+          "t1": ":con4a_t1",
+          "t2": ":con4a_t2"
+        },
+        {
+          "t1": ":con4b_t1",
+          "t2": ":con4b_t2"
+        },
+        {
+          "t1": ":con4c_t1",
+          "t2": ":con4c_t2"
+        },
+        {
+          "t1": ":con4d_t1",
+          "t2": ":con4d_t2"
+        }
+      ]
+    },
+    "Q-CIR1": {
+      "expected": [
+        {
+          "x": ":cir1a_x",
+          "y": ":cir1a_y"
+        },
+        {
+          "x": ":cir1b_x",
+          "y": ":cir1b_y"
+        }
+      ]
+    },
+    "Q-CIR2": {
+      "expected": [
+        {
+          "x": ":cir2f1_x",
+          "y": ":cir2f1_y",
+          "z": ":cir2f1_z"
+        },
+        {
+          "x": ":cir2f1_y",
+          "y": ":cir2f1_z",
+          "z": ":cir2f1_x"
+        },
+        {
+          "x": ":cir2f1_z",
+          "y": ":cir2f1_x",
+          "z": ":cir2f1_y"
+        },
+        {
+          "x": ":cir2f2_x",
+          "y": ":cir2f2_y",
+          "z": ":cir2f2_z"
+        },
+        {
+          "x": ":cir2f2_y",
+          "y": ":cir2f2_z",
+          "z": ":cir2f2_x"
+        },
+        {
+          "x": ":cir2f2_z",
+          "y": ":cir2f2_x",
+          "z": ":cir2f2_y"
+        },
+        {
+          "x": ":cir2f3_x",
+          "y": ":cir2f3_y",
+          "z": ":cir2f3_z"
+        },
+        {
+          "x": ":cir2f3_y",
+          "y": ":cir2f3_z",
+          "z": ":cir2f3_x"
+        },
+        {
+          "x": ":cir2f3_z",
+          "y": ":cir2f3_x",
+          "z": ":cir2f3_y"
+        },
+        {
+          "x": ":cir2f4_x",
+          "y": ":cir2f4_y",
+          "z": ":cir2f4_z"
+        },
+        {
+          "x": ":cir2f4_y",
+          "y": ":cir2f4_z",
+          "z": ":cir2f4_x"
+        },
+        {
+          "x": ":cir2f4_z",
+          "y": ":cir2f4_x",
+          "z": ":cir2f4_y"
+        },
+        {
+          "x": ":cir2f5_x",
+          "y": ":cir2f5_y",
+          "z": ":cir2f5_z"
+        },
+        {
+          "x": ":cir2f5_z",
+          "y": ":cir2f5_y",
+          "z": ":cir2f5_x"
+        },
+        {
+          "x": ":cir2f5_z",
+          "y": ":cir2f5_x",
+          "z": ":cir2f5_y"
+        },
+        {
+          "x": ":cir2f6_x",
+          "y": ":cir2f6_y",
+          "z": ":cir2f6_z"
+        },
+        {
+          "x": ":cir2f6_y",
+          "y": ":cir2f6_z",
+          "z": ":cir2f6_x"
+        },
+        {
+          "x": ":cir2f6_x",
+          "y": ":cir2f6_z",
+          "z": ":cir2f6_y"
+        },
+        {
+          "x": ":cir2f7_x",
+          "y": ":cir2f7_y",
+          "z": ":cir2f7_z"
+        },
+        {
+          "x": ":cir2f7_y",
+          "y": ":cir2f7_z",
+          "z": ":cir2f7_x"
+        },
+        {
+          "x": ":cir2f7_z",
+          "y": ":cir2f7_x",
+          "z": ":cir2f7_y"
+        },
+        {
+          "x": ":cir2f8_x",
+          "y": ":cir2f8_y",
+          "z": ":cir2f8_z"
+        },
+        {
+          "x": ":cir2f8_z",
+          "y": ":cir2f8_y",
+          "z": ":cir2f8_x"
+        },
+        {
+          "x": ":cir2f8_x",
+          "y": ":cir2f8_z",
+          "z": ":cir2f8_y"
+        }
+      ]
+    },
+    "Q-CAR1": {
+      "expected": [
+        {
+          "c": ":car1a_c",
+          "nb": "3"
+        },
+        {
+          "c": ":car1b_c",
+          "nb": "3"
+        },
+        {
+          "c": ":car1c_c",
+          "nb": "3"
+        },
+        {
+          "c": ":car1d_c",
+          "nb": "3"
+        }
+      ]
+    },
+    "Q-CAR2": {
+      "expected": [
+        {
+          "c": ":car2ma_c",
+          "gender": ":Male",
+          "nb": "2"
+        },
+        {
+          "c": ":car2mb_c",
+          "gender": ":Male",
+          "nb": "2"
+        },
+        {
+          "c": ":car2mc_c",
+          "gender": ":Male",
+          "nb": "2"
+        },
+        {
+          "c": ":car2fa_c",
+          "gender": ":Female",
+          "nb": "2"
+        },
+        {
+          "c": ":car2fb_c",
+          "gender": ":Female",
+          "nb": "2"
+        },
+        {
+          "c": ":car2fc_c",
+          "gender": ":Female",
+          "nb": "2"
+        }
+      ]
+    },
+    "Q-TWI1": {
+      "expected": [
+        {
+          "t1": ":con4a_t1",
+          "t2": ":con4a_t2"
+        },
+        {
+          "t1": ":con4b_t1",
+          "t2": ":con4b_t2"
+        },
+        {
+          "t1": ":con4c_t1",
+          "t2": ":con4c_t2"
+        },
+        {
+          "t1": ":con4d_t1",
+          "t2": ":con4d_t2"
+        },
+        {
+          "t1": ":red3e_t1",
+          "t2": ":red3e_t2"
+        },
+        {
+          "t1": ":twi1a_t1",
+          "t2": ":twi1a_t2"
+        },
+        {
+          "t1": ":twi1b_t1",
+          "t2": ":twi1b_t2"
+        },
+        {
+          "t1": ":twi1c_t1",
+          "t2": ":twi1c_t2"
+        },
+        {
+          "t1": ":twi1d_t1",
+          "t2": ":twi1d_t2"
+        },
+        {
+          "t1": ":twi1e_t1",
+          "t2": ":twi1e_t2"
+        },
+        {
+          "t1": ":twi1f_t1",
+          "t2": ":twi1f_t2"
+        },
+        {
+          "t1": ":par3a_t1",
+          "t2": ":par3a_t2"
+        },
+        {
+          "t1": ":par3b_t1",
+          "t2": ":par3b_t2"
+        }
+      ]
+    },
+    "Q-TWI2": {
+      "expected": [
+        {
+          "t1": ":twi2a_t1",
+          "t2": ":twi2a_t2",
+          "sharedParents": "1"
+        },
+        {
+          "t1": ":twi2b_t1",
+          "t2": ":twi2b_t2",
+          "sharedParents": "1"
+        },
+        {
+          "t1": ":twi2c_t1",
+          "t2": ":twi2c_t2",
+          "sharedParents": "1"
+        },
+        {
+          "t1": ":twi2d_t1",
+          "t2": ":twi2d_t2",
+          "sharedParents": "1"
+        },
+        {
+          "t1": ":twi2e_t1",
+          "t2": ":twi2e_t2",
+          "sharedParents": "1"
+        },
+        {
+          "t1": ":twi2f_t1",
+          "t2": ":twi2f_t2",
+          "sharedParents": "1"
+        }
+      ]
+    },
+    "Q-PAR1": {
+      "expected": [
+        {
+          "x": ":par1a_x",
+          "y": ":par1a_y",
+          "partner": ":hasSpouse",
+          "rel": ":hasBloodChild"
+        },
+        {
+          "x": ":par1b_x",
+          "y": ":par1b_y",
+          "partner": ":hasCivilPartner",
+          "rel": ":hasAdoptiveParent"
+        },
+        {
+          "x": ":par1c_x",
+          "y": ":par1c_y",
+          "partner": ":hasLifePartner",
+          "rel": ":hasChild"
+        },
+        {
+          "x": ":par1d_x",
+          "y": ":par1d_y",
+          "partner": ":hasSpouse",
+          "rel": ":hasBloodParent"
+        }
+      ]
+    },
+    "Q-PAR2": {
+      "expected": [
+        {
+          "x": ":par2a_x",
+          "y": ":par2a_y",
+          "z": ":par2a_z"
+        },
+        {
+          "x": ":par2b_x",
+          "y": ":par2b_y",
+          "z": ":par2b_z"
+        },
+        {
+          "x": ":par2c_x",
+          "y": ":par2c_y",
+          "z": ":par2c_z"
+        },
+        {
+          "x": ":par2d_x",
+          "y": ":par2d_y",
+          "z": ":par2d_z"
+        },
+        {
+          "x": ":par2e_x",
+          "y": ":par2e_y",
+          "z": ":par2e_z"
+        },
+        {
+          "x": ":par2f_x",
+          "y": ":par2f_y",
+          "z": ":par2f_z"
+        },
+        {
+          "x": ":par2g_x",
+          "y": ":par2g_y",
+          "z": ":par2g_z"
+        },
+        {
+          "x": ":par2h_x",
+          "y": ":par2h_y",
+          "z": ":par2h_z"
+        }
+      ]
+    },
+    "Q-PAR3": {
+      "expected": [
+        {
+          "t1": ":par3a_t1",
+          "t2": ":par3a_t2"
+        },
+        {
+          "t1": ":par3b_t1",
+          "t2": ":par3b_t2"
+        }
+      ]
+    }
+  }
+}

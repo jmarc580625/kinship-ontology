@@ -1,0 +1,15 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# anchored-data.ttl
+# Ceremonial / family-anchored overlay: godparent assertions only.
+# Must be loaded together with core-data.ttl.
+# Used by: anchor-neutral, gender-specific test suites.
+# =============================================================================
+
+## Godparent relationships (asserted as hasGodchild from godparent's perspective)
+:adam  :hasGodchild :zela .    # adam  (M) → godfather of zela  (F) → adam  hasGoddaughter zela   [♂→♀]
+:eva   :hasGodchild :david .   # eva   (F) → godmother of david (M) → eva   hasGodson      david  [♀→♂]
+:abel  :hasGodchild :eliza .   # abel  (M) → godfather of eliza (F) → abel  hasGoddaughter eliza  [♂→♀]
+:bob   :hasGodchild :jay .     # bob   (M) → godfather of jay   (M) → bob   hasGodson      jay    [♂→♂]
+:carol :hasGodchild :iris .    # carol (F) → godmother of iris  (F) → carol hasGoddaughter iris   [♀→♀]

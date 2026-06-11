@@ -1,0 +1,309 @@
+"""
+GraphDB backend for testing with full OWL2-RL reasoning.
+"""
+
+import re
+import requests
+import time
+from typing import List, Dict, Any, Union
+from pathlib import Path
+
+
+TBOX_GRAPH = "urn:tbox"
+
+
+class GraphDBBackend:
+    """GraphDB backend with REST API integration."""
+
+    def __init__(
+        self,
+        ontology_files: Union[str, List[str]],
+        data_files: List[str] = None,
+        graphdb_url: str = "http://localhost:7200",
+        repository_id: str = "family-ontology-test",
+        ruleset: str = "owl2-rl",
+    ):
+        """
+        Initialize GraphDB backend.
+
+        Parameters
+        ----------
+        ontology_files:
+            One or more TTL files that form the TBox.  A single string is
+            also accepted for backward compatibility.
+        data_files:
+            TTL files that form the ABox (instance/assertion data).
+        graphdb_url:
+            GraphDB server URL.
+        repository_id:
+            Repository name.
+        ruleset:
+            Inference ruleset (owl2-rl, rdfs, etc.).
+        """
+        if isinstance(ontology_files, str):
+            ontology_files = [ontology_files]
+        self.ontology_files: List[str] = ontology_files
+        self.data_files: List[str] = data_files or []
+        self.graphdb_url = graphdb_url.rstrip('/')
+        self.repository_id = repository_id
+        self.ruleset = ruleset
+        self.repo_url = f"{self.graphdb_url}/repositories/{self.repository_id}"
+        
+    def _wait_for_graphdb(self, timeout: int = 60):
+        """Wait for GraphDB to be ready."""
+        print(f"Waiting for GraphDB at {self.graphdb_url}...")
+        start_time = time.time()
+        
+        while time.time() - start_time < timeout:
+            try:
+                response = requests.get(f"{self.graphdb_url}/rest/repositories", timeout=5)
+                if response.status_code == 200:
+                    print("✓ GraphDB is ready")
+                    return True
+            except requests.exceptions.RequestException:
+                pass
+            time.sleep(2)
+        
+        raise TimeoutError(f"GraphDB not ready after {timeout} seconds")
+    
+    def _repository_exists(self) -> bool:
+        """Check if repository exists."""
+        try:
+            response = requests.get(f"{self.graphdb_url}/rest/repositories/{self.repository_id}")
+            return response.status_code == 200
+        except requests.exceptions.RequestException:
+            return False
+    
+    def _delete_repository(self):
+        """Delete existing repository."""
+        if self._repository_exists():
+            print(f"Deleting repository: {self.repository_id}")
+            response = requests.delete(f"{self.graphdb_url}/rest/repositories/{self.repository_id}")
+            if response.status_code in [200, 204]:
+                print("✓ Repository deleted")
+                time.sleep(2)  # Wait for deletion to complete
+            else:
+                raise RuntimeError(f"Failed to delete repository: {response.status_code} {response.text}")
+    
+    def _create_repository(self):
+        """Create new repository with specified ruleset."""
+        print(f"Creating repository: {self.repository_id} with ruleset: {self.ruleset}")
+        
+        # Repository configuration in JSON format for GraphDB 10.x REST API
+        config = {
+            "id": self.repository_id,
+            "title": "Family Ontology Test Repository",
+            "type": "graphdb",
+            "params": {
+                "ruleset": {
+                    "label": "Ruleset",
+                    "name": "ruleset",
+                    "value": self.ruleset
+                },
+                "baseURL": {
+                    "label": "Base URL",
+                    "name": "baseURL",
+                    "value": "http://example.org/family#"
+                },
+                "defaultNS": {
+                    "label": "Default namespaces for imports(';' delimited)",
+                    "name": "defaultNS",
+                    "value": ""
+                },
+                "imports": {
+                    "label": "Imported RDF files(';' delimited)",
+                    "name": "imports",
+                    "value": ""
+                }
+            }
+        }
+        
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(
+            f"{self.graphdb_url}/rest/repositories",
+            json=config,
+            headers=headers
+        )
+        
+        if response.status_code in [200, 201]:
+            print("✓ Repository created")
+            time.sleep(2)  # Wait for creation to complete
+        else:
+            raise RuntimeError(f"Failed to create repository: {response.status_code} {response.text}")
+    
+    def _load_file(self, file_path: str, context: str = None):
+        """Load RDF file into repository."""
+        if not Path(file_path).exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        print(f"Loading: {file_path}" + (f" → <{context}>" if context else ""))
+
+        with open(file_path, 'rb') as f:
+            data = f.read()
+
+        headers = {'Content-Type': 'text/turtle'}
+        params = {}
+        if context:
+            params['context'] = f"<{context}>"
+
+        response = requests.post(
+            f"{self.repo_url}/statements",
+            data=data,
+            headers=headers,
+            params=params
+        )
+
+        if response.status_code in [200, 204]:
+            print(f"✓ Loaded: {Path(file_path).name}")
+        else:
+            raise RuntimeError(f"Failed to load file: {response.status_code} {response.text}")
+
+    def _get_size(self) -> int:
+        """Return current total triple count in the repository."""
+        try:
+            response = requests.get(f"{self.repo_url}/size")
+            if response.status_code == 200:
+                return int(response.text)
+        except Exception:
+            pass
+        return 0
+    
+    def initialize(self):
+        """Initialize GraphDB repository and load data."""
+        self._wait_for_graphdb()
+        self._delete_repository()
+        self._create_repository()
+
+        # TBox -- named graph only.
+        # GraphDB reasons globally across all graphs, so OWL-RL inferences
+        # (inverseOf, propertyChain, etc.) are derived from TBox axioms here
+        # even though they are not in the default graph.
+        for ontology_file in self.ontology_files:
+            self._load_file(ontology_file, TBOX_GRAPH)
+
+        # ABox -- default graph only.
+        # execute_query() (no FROM) sees: default graph (ABox) + implicit
+        # graph (all inferences).  execute_tbox_query() targets <urn:tbox>.
+        for data_file in self.data_files:
+            self._load_file(data_file)
+
+        time.sleep(2)  # let reasoner settle
+
+        stats = self.get_stats()
+        print(f"✓ Repository initialized with {stats.get('total_statements', '?')} statements")
+    
+    def execute_tbox_query(self, sparql_query: str) -> List[Dict[str, Any]]:
+        """
+        Execute a SPARQL SELECT query against the TBox only (pre-reasoning).
+
+        Injects a ``FROM <urn:tbox>`` clause so that only explicitly loaded
+        ontology triples are queried (no ABox data, no inferred triples).
+        """
+        modified = re.sub(
+            r'\bWHERE\b',
+            f'FROM <{TBOX_GRAPH}> WHERE',
+            sparql_query,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        return self.execute_query(modified)
+
+    def execute_abox_query(self, sparql_query: str) -> List[Dict[str, Any]]:
+        """
+        Execute a SPARQL SELECT query against the ABox only (no inference).
+
+        Injects ``FROM <http://www.ontotext.com/explicit>`` — the GraphDB
+        virtual graph that contains **only** explicitly asserted triples.
+        OWL-RL inferred triples (including inverseOf derivations) are
+        structurally absent from this graph, so no ``includeInferred``
+        parameter is needed.
+        """
+        _EXPLICIT = 'http://www.ontotext.com/explicit'
+        modified = re.sub(
+            r'\bWHERE\b',
+            f'FROM <{_EXPLICIT}> WHERE',
+            sparql_query,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+        return self.execute_query(modified)
+
+    def execute_query(self, sparql_query: str) -> List[Dict[str, Any]]:
+        """
+        Execute SPARQL SELECT or ASK query and return results.
+
+        Returns
+        -------
+        List of result bindings as dictionaries.  ASK queries return
+        ``[{"result": True/False}]``.
+        """
+        headers = {
+            'Accept': 'application/sparql-results+json',
+            'Content-Type': 'application/sparql-query',
+        }
+
+        response = requests.post(
+            self.repo_url,
+            data=sparql_query.encode('utf-8'),
+            headers=headers
+        )
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Query failed: {response.status_code} {response.text}")
+
+        result = response.json()
+
+        if 'boolean' in result:
+            return [{'result': result['boolean']}]
+
+        if 'results' in result and 'bindings' in result['results']:
+            return [
+                {var: binding[var]['value'] for var in binding}
+                for binding in result['results']['bindings']
+            ]
+
+        return []
+    
+    def execute_update(self, sparql_update: str) -> int:
+        """
+        Execute SPARQL UPDATE query and return number of triples added.
+
+        Returns
+        -------
+        Number of triples added (negative if triples were deleted on net).
+        """
+        before = self._get_size()
+
+        headers = {'Content-Type': 'application/sparql-update'}
+        response = requests.post(
+            f"{self.repo_url}/statements",
+            data=sparql_update.encode('utf-8'),
+            headers=headers
+        )
+
+        if response.status_code not in [200, 204]:
+            raise RuntimeError(f"Update failed: {response.status_code} {response.text}")
+
+        added = self._get_size() - before
+        print(f"✓ Update executed (+{added} triples)")
+        return added
+    
+    def reset(self):
+        """Reset repository (delete and reload data)."""
+        self.initialize()
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get repository statistics."""
+        total = self._get_size()
+        return {
+            "backend":          "graphdb",
+            "repository":       self.repository_id,
+            "total_statements": total,
+            "working":          total,
+            "url":              self.graphdb_url,
+        }
+    
+    def cleanup(self):
+        """Cleanup resources (optionally delete repository)."""
+        # Keep repository for inspection unless explicitly deleted
+        pass

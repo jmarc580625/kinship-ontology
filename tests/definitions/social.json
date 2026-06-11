@@ -1,0 +1,54 @@
+{
+  "module": "social",
+  "ontologies": [
+    "ontology/kinship/social.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl",
+    "tests/data/social-data.ttl"
+  ],
+  "description": "Social relationships: friendship (standalone module)",
+  "tests": {
+    "hasFriend": {
+      "description": "hasCloseFriend rdfs:subPropertyOf hasFriend; both are symmetric. Asserted adam hasCloseFriend re and azura hasFriend hathor.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasFriend ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":adam",
+          "p2": ":re"
+        },
+        {
+          "p1": ":azura",
+          "p2": ":hathor"
+        },
+        {
+          "p1": ":hathor",
+          "p2": ":azura"
+        },
+        {
+          "p1": ":re",
+          "p2": ":adam"
+        }
+      ]
+    },
+    "hasCloseFriend": {
+      "description": "adam hasCloseFriend re (asserted); hasCloseFriend is SymmetricProperty → re hasCloseFriend adam inferred. hasCloseFriend ⊆ hasFriend but NOT the reverse: azura hasFriend hathor does NOT produce hasCloseFriend.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p1 ?p2 WHERE { ?p1 :hasCloseFriend ?p2 . } ORDER BY ?p1 ?p2",
+      "expected": [
+        {
+          "p1": ":adam",
+          "p2": ":re"
+        },
+        {
+          "p1": ":re",
+          "p2": ":adam"
+        }
+      ]
+    },
+    "neg-closefriend-not-promoted": {
+      "description": "azura hasFriend hathor (asserted at hasFriend level only). The sub-property hierarchy runs downward only: hasCloseFriend ⊆ hasFriend, never the reverse. azura must NOT have hasCloseFriend hathor.",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :azura :hasCloseFriend :hathor . BIND(:hathor AS ?x) }",
+      "expect_empty": true
+    }
+  }
+}

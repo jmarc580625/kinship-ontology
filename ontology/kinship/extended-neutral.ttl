@@ -1,0 +1,126 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/extended-neutral> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/extended-neutral/1.0.0> ;
+    owl:imports <http://example.org/kinship/core-neutral> ;
+    rdfs:label "Extended Family Relationships Gender-Neutral Module of the Kinship Ontology"@en ;
+    rdfs:comment "Extended gender-neutral family relationships: grandparent, nibling, cousin, great-grandparent, and ancestor/descendant relationships."@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Extended gender-neutral family relationships
+#---------------------------
+
+## Direct lineage relationships
+
+### grandchild (OWL property chain: hasChild ∘ hasChild)
+:hasGrandchild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Grandchild"@en ;
+    rdfs:comment "Child's child — inclusive (biological or adoptive at each step)."@en ;
+    owl:propertyChainAxiom (
+        :hasChild
+        :hasChild
+    ) .
+
+### grandparent (OWL inverse of hasGrandchild)
+:hasGrandparent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Grandparent"@en ;
+    rdfs:comment "Parent's parent — inclusive (biological or adoptive at each step)."@en ;
+    owl:inverseOf :hasGrandchild .
+
+### great-grandchild 
+:hasGreatGrandchild a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Great-Grandchild"@en ;
+    rdfs:comment "Grandchild's child — inclusive at each step."@en ;
+    owl:propertyChainAxiom (
+        :hasGrandchild
+        :hasChild
+    ) ;
+    owl:inverseOf :hasGreatGrandparent .
+
+### great-grandparent
+:hasGreatGrandparent a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Great-Grandparent"@en ;
+    rdfs:comment "Parent's grandparent — inclusive (biological or adoptive at each step)."@en ;
+    owl:inverseOf :hasGreatGrandchild .
+
+## Indirect lineage relationships
+
+### niblings (niece/nephew)
+:hasNibling a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Nibling"@en ;
+    rdfs:comment """Niece or nephew — superproperty covering both :hasSiblingNibling (via own siblings) and :hasNiblingInLaw (via partner's siblings)."""@en ;
+    owl:inverseOf :hasUncleAunt .
+
+:hasSiblingNibling a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasNibling, :hasLineageRelative ;
+    rdfs:label "Has Sibling's Nibling"@en ;
+    rdfs:comment """Nibling through siblings (biological or adoptive). 
+    Design: distinguished from :hasNiblingInLaw by path, not by blood."""@en ;
+    owl:propertyChainAxiom (
+        :hasSibling
+        :hasChild
+    ) ;
+    owl:inverseOf :hasSiblingUncleAunt .
+
+:hasNiblingInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasNibling ;
+    rdfs:label "Has Nibling In Law"@en ;
+    rdfs:comment """Child of a partner's sibling — no blood or adoptive link to ego."""@en ;
+    owl:propertyChainAxiom (
+        :hasPartner
+        :hasSibling
+        :hasChild
+    ) ;
+    owl:inverseOf :hasUncleAuntInLaw ;
+    :crossesAlliance true .
+
+### uncle/aunt
+:hasUncleAunt a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "Has Uncle/Aunt"@en ;
+    rdfs:comment """Parent's sibling or partner's parent's sibling — superproperty covering :hasSiblingUncleAunt and :hasUncleAuntInLaw."""@en ;
+    owl:inverseOf :hasNibling .
+
+:hasSiblingUncleAunt a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasUncleAunt, :hasLineageRelative ;
+    rdfs:label "Has Sibling Uncle/Aunt"@en ;
+    rdfs:comment """Parent's sibling (biological or adoptive at each step)."""@en ;
+    owl:inverseOf :hasSiblingNibling .
+
+:hasUncleAuntInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasUncleAunt ;
+    rdfs:label "Has Uncle/Aunt In Law"@en ;
+    rdfs:comment """Partner's parent's sibling — no blood or adoptive link to ego."""@en ;
+    owl:inverseOf :hasNiblingInLaw ;
+    :crossesAlliance true .
+
+### cousin
+:hasCousin a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "Has Cousin"@en ;
+    rdfs:comment "Child of a parent's sibling — inclusive (biological or adoptive at each step)."@en ;
+    owl:propertyChainAxiom (
+        :hasSiblingUncleAunt
+        :hasChild
+    ) ;
+    rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty .
+

@@ -1,0 +1,28 @@
+{
+  "module": "boundary",
+  "ontologies": [
+    "ontology/kinship/gendered.ttl"
+  ],
+  "data_files": [
+    "tests/data/core-data.ttl",
+    "tests/data/boundary-data.ttl"
+  ],
+  "description": "Boundary tests verifying no cross-family relationship leakage when a second disconnected family is loaded",
+  "tests": {
+    "boundary-no-sibling-crossing": {
+      "description": "With both families loaded, adam and mike must NOT be siblings (they share no parent).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?x WHERE { :adam :hasSibling :mike . BIND(:mike AS ?x) }",
+      "expect_empty": true
+    },
+    "boundary-no-grandchild-crossing": {
+      "description": "adam must NOT have any grandchild belonging to the boundary family (mike/sue/tom/lucy/nina).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?gc WHERE { :adam :hasGrandchild ?gc . FILTER(?gc IN (:mike, :sue, :tom, :lucy, :nina)) }",
+      "expect_empty": true
+    },
+    "boundary-no-hasRelative-crossing": {
+      "description": "hasRelative is the root super-property of every family relationship. No member of the main family (adam…zeus) should be inferred as a hasRelative of any boundary-family member (mike, sue, tom, lucy, nina).",
+      "query": "PREFIX : <http://example.org/kinship#> SELECT ?p ?q WHERE { ?p :hasRelative ?q . FILTER(?p IN (:adam,:eva,:azura,:antoine,:abel,:ada,:bob,:carol,:helen,:fiona,:zela,:carl,:david,:eliza,:frank,:grace,:re,:hathor,:hera,:zeus) && ?q IN (:mike,:sue,:tom,:lucy,:nina)) }",
+      "expect_empty": true
+    }
+  }
+}

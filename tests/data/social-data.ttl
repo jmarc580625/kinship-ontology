@@ -1,0 +1,13 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# social-data.ttl
+# Social (non-family-anchored) overlay: friendship assertions only.
+# Must be loaded together with core-data.ttl (and optionally
+# anchored-data.ttl for ceremonial context).
+# Used by: social test suite.
+# =============================================================================
+
+## Friendship
+:azura :hasFriend      :hathor .
+:adam  :hasCloseFriend :re .

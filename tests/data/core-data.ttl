@@ -1,0 +1,125 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# =============================================================================
+# core-data.ttl
+# Base family dataset: individuals (with gender), core family relations,
+# in-law supporting data, and partner relations.
+# Loaded by all test suites; combine with anchored-data.ttl and/or
+# social-data.ttl for ceremonial and social tests.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Individuals – Generation 1
+# ---------------------------------------------------------------------------
+:adam  :hasGender :Male .
+:eva   :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# Individuals – Generation 2
+# ---------------------------------------------------------------------------
+:azura   :hasGender :Female .
+:antoine :hasGender :Male .
+:abel    :hasGender :Male .
+:ada     :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# Individuals – Generation 3
+# ---------------------------------------------------------------------------
+:fiona :hasGender :Female .
+:bob   :hasGender :Male .
+:carol :hasGender :Female .
+:carl  :hasGender :Male .
+:zela  :hasGender :Female .
+:helen :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# Individuals – Generation 4
+# ---------------------------------------------------------------------------
+:david :hasGender :Male .
+:eliza :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# In-law supporting parents (for hasParentInLaw tests)
+# ---------------------------------------------------------------------------
+:frank :hasGender :Male .
+:grace :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# Social individuals (needed for partner and friend assertions)
+# ---------------------------------------------------------------------------
+:re     :hasGender :Male .
+:hathor :hasGender :Female .
+:hera   :hasGender :Female .
+:zeus   :hasGender :Male .
+
+# =============================================================================
+# Core family relations
+# =============================================================================
+
+## Gen 1 — couple
+:adam :hasSpouse :eva .
+
+## Gen 1 → 2
+:adam :hasBloodChild    :azura .
+:eva  :hasBloodChild    :azura .
+:adam :hasAdoptiveChild :abel .
+:eva  :hasAdoptiveChild :abel .
+
+## Gen 2 — couples
+:azura :hasSpouse :antoine .
+:abel  :hasSpouse :ada .
+
+## Gen 2 → 3
+#   azura+antoine share helen; bob and carol are azura-only (step for antoine)
+#   fiona is antoine-only (step for azura)
+:azura   :hasBloodChild :bob .
+:azura   :hasBloodChild :carol .
+:azura   :hasBloodChild :helen .
+:carol   :hasTwin       :bob .      # carol and bob are twins
+:antoine :hasBloodChild :fiona .
+:antoine :hasBloodChild :helen .
+:abel    :hasBloodChild :zela .
+:ada     :hasBloodChild :zela .
+
+## Gen 3 — couple
+:carol :hasSpouse :carl .
+
+## Gen 3 → 4
+:bob   :hasBloodChild :david .
+:carol :hasBloodChild :eliza .
+
+## In-law supporting data — ada's parents
+:frank :hasBloodChild :ada .
+:grace :hasBloodChild :ada .
+
+## Partners (non-spouse)
+:re   :hasLifePartner  :hathor .
+:hera :hasCivilPartner :zeus .
+
+## Children of non-spouse partners
+#   iris — child of re only  (hathor becomes step-parent via hasLifePartner)
+#   jay  — child of hathor only (re becomes step-parent via hasLifePartner)
+#   luna — child of hera only (zeus becomes step-parent via hasCivilPartner)
+#   mars — child of zeus only (hera becomes step-parent via hasCivilPartner)
+:iris :hasGender :Female .
+:jay  :hasGender :Male .
+:luna :hasGender :Female .
+:mars :hasGender :Male .
+
+:re     :hasBloodChild :iris .
+:hathor :hasBloodChild :jay .
+:hera   :hasBloodChild :luna .
+:zeus   :hasBloodChild :mars .
+
+## Parents of non-spouse partners — creates re↔hera and hathor↔zeus sibling bonds
+#   nana♀: mother of re and hera → re hasSibling hera (hasSiblingInLaw + hasNiblingInLaw via hasLifePartner/hasCivilPartner)
+#   papa♂: father of hathor and zeus → hathor hasSibling zeus
+#   No own partner added → no extra step-parent cascade
+:nana :hasGender :Female .
+:papa :hasGender :Male .
+:nana :hasBloodChild :re .
+:nana :hasBloodChild :hera .
+:papa :hasBloodChild :hathor .
+:papa :hasBloodChild :zeus .

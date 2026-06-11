@@ -1,0 +1,780 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+
+#---------------------------
+# Module Declaration
+#---------------------------
+
+<http://example.org/kinship/gendered> a owl:Ontology ;
+    owl:versionInfo "1.0.0" ;
+    owl:versionIRI <http://example.org/kinship/gendered/1.0.0> ;
+    owl:imports <http://example.org/kinship/extended-neutral> ;
+    owl:imports <http://example.org/kinship/allied-neutral> ;
+    owl:imports <http://example.org/kinship/blended-neutral> ;
+    owl:imports <http://example.org/kinship/anchored-neutral> ;
+    rdfs:label "Gendered Family Relationships Module of the Kinship Ontology"@en ;
+    rdfs:comment """All gender-specific family relationships across core, extended, allied, blended and anchored layers.
+        Materialization scripts consistently query the gender-neutral parent property (forward direction)
+        rather than its OWL-inferred inverse, making execution order independent of OWL reasoning timing."""@en ;
+    dc:creator "Kinship Ontology Project" ;
+    dc:date "2026-01-03"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> .
+
+#---------------------------
+# Gender-specific relationships
+#---------------------------
+
+## Gender-specific spouse relationships
+
+### wife (female spouse)
+:hasWife a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSpouse ;
+    rdfs:label "Has Wife"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female spouse. 
+    Usage: use :hasSpouse for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?spouse :hasWife ?wife .
+        }
+        WHERE {
+            ?wife :hasSpouse ?spouse .
+            ?wife :hasGender :Female .
+        }
+    """ .
+
+### husband (male spouse)
+:hasHusband a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSpouse ;
+    rdfs:label "Has Husband"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male spouse. 
+    Usage: use :hasSpouse for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?spouse :hasHusband ?husband .
+        }
+        WHERE {
+            ?husband :hasSpouse ?spouse .
+            ?husband :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific parent relationships
+
+### mother (female parent)
+:hasMother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasParent ;
+    rdfs:label "Has Mother"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female parent — inclusive (biological and adoptive). 
+    Usage: use :hasParent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?child :hasMother ?parent .
+        }
+        WHERE {
+            ?child :hasParent ?parent  .
+            ?parent :hasGender :Female .
+        }
+    """ .
+
+### father (male parent)
+:hasFather a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasParent ;
+    rdfs:label "Has Father"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male parent — inclusive (biological and adoptive). 
+    Usage: use :hasParent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?child :hasFather ?parent .
+        }
+        WHERE {
+            ?child :hasParent ?parent .
+            ?parent :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific child relationships
+
+### daughter (female child)
+:hasDaughter a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasChild ;
+    rdfs:label "Has Daughter"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female child — inclusive (biological and adoptive). 
+    Usage: use :hasChild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?parent :hasDaughter ?child .
+        }
+        WHERE {
+            ?parent :hasChild ?child .
+            ?child :hasGender :Female .
+        }
+    """ .
+
+### son (male child)
+:hasSon a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasChild ;
+    rdfs:label "Has Son"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male child — inclusive (biological and adoptive). 
+    Usage: use :hasChild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?parent :hasSon ?child .
+        }
+        WHERE {
+            ?parent :hasChild ?child .
+            ?child :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific sibling relationships
+
+### sister (female sibling)
+:hasSister a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSibling ;
+    rdfs:label "Has Sister"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female sibling — shares at least one parent. 
+    Usage: use :hasSibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?otherSibling :hasSister ?sibling .
+        }
+        WHERE {
+            ?sibling :hasSibling ?otherSibling .
+            ?sibling :hasGender :Female .
+        }
+    """ .
+
+### brother (male sibling)
+:hasBrother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSibling ;
+    rdfs:label "Has Brother"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male sibling — shares at least one parent. 
+    Usage: use :hasSibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?otherSibling :hasBrother ?sibling .
+        }
+        WHERE {
+            ?sibling :hasSibling ?otherSibling .
+            ?sibling :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific grandparent relationships
+
+### grandmother (female grandparent)
+:hasGrandmother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGrandparent ;
+    rdfs:label "Has Grandmother"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female grandparent. 
+    Usage: use :hasGrandparent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?grandchild :hasGrandmother ?grandparent .
+        }
+        WHERE {
+            ?grandchild :hasGrandparent ?grandparent .
+            ?grandparent :hasGender :Female .
+        }
+    """ .
+
+### grandfather (male grandparent)
+:hasGrandfather a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGrandparent ;
+    rdfs:label "Has Grandfather"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male grandparent. 
+    Usage: use :hasGrandparent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?grandchild :hasGrandfather ?grandparent .
+        }
+        WHERE {
+            ?grandchild :hasGrandparent ?grandparent .
+            ?grandparent :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific grandchild relationships
+
+### granddaughter (female grandchild)
+:hasGranddaughter a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGrandchild ;
+    rdfs:label "Has Granddaughter"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female grandchild. 
+    Usage: use :hasGrandchild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?grandparent :hasGranddaughter ?grandchild .
+        }
+        WHERE {
+            ?grandparent :hasGrandchild ?grandchild .
+            ?grandchild :hasGender :Female .
+        }
+    """ .
+
+### grandson (male grandchild)
+:hasGrandson a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGrandchild ;
+    rdfs:label "Has Grandson"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male grandchild. 
+    Usage: use :hasGrandchild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?grandparent :hasGrandson ?grandchild .
+        }
+        WHERE {
+            ?grandparent :hasGrandchild ?grandchild .
+            ?grandchild :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific uncle/aunt relationships
+
+### aunt (female uncle/aunt)
+:hasAunt a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasUncleAunt ;
+    rdfs:label "Has Aunt"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female parent's sibling. 
+    Usage: use :hasUncleAunt for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?nibling :hasAunt ?uncleAunt .
+        }
+        WHERE {
+            ?nibling :hasUncleAunt ?uncleAunt .
+            ?uncleAunt :hasGender :Female .
+        }
+    """ .
+
+### uncle (male uncle/aunt)
+:hasUncle a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasUncleAunt ;
+    rdfs:label "Has Uncle"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male parent's sibling. 
+    Usage: use :hasUncleAunt for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?nibling :hasUncle ?uncleAunt .
+        }
+        WHERE {
+            ?nibling :hasUncleAunt ?uncleAunt .
+            ?uncleAunt :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific nibling relationships
+
+### niece (female nibling)
+:hasNiece a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasNibling ;
+    rdfs:label "Has Niece"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female sibling's child (or partner's sibling's child). 
+    Usage: use :hasNibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?uncleAunt :hasNiece ?nibling .
+        }
+        WHERE {
+            ?uncleAunt :hasNibling ?nibling .
+            ?nibling :hasGender :Female .
+        }
+    """ .
+
+### nephew (male nibling)
+:hasNephew a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasNibling ;
+    rdfs:label "Has Nephew"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male sibling's child (or partner's sibling's child). 
+    Usage: use :hasNibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?uncleAunt :hasNephew ?nibling .
+        }
+        WHERE {
+            ?uncleAunt :hasNibling ?nibling .
+            ?nibling :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific cousin relationships
+
+### female cousin
+:hasFemaleCousin a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasCousin ;
+    rdfs:label "Has Female Cousin"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female cousin — child of a parent's sibling. 
+    Usage: use :hasCousin for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?otherCousin :hasFemaleCousin ?cousin .
+        }
+        WHERE {
+            ?cousin :hasCousin ?otherCousin .
+            ?cousin :hasGender :Female .
+        }
+    """ .
+
+### male cousin
+:hasMaleCousin a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasCousin ;
+    rdfs:label "Has Male Cousin"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male cousin — child of a parent's sibling. 
+    Usage: use :hasCousin for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?otherCousin :hasMaleCousin ?cousin .
+        }
+        WHERE {
+            ?cousin :hasCousin ?otherCousin .
+            ?cousin :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific great-grandparent relationships
+
+### great-grandmother (female great-grandparent)
+:hasGreatGrandmother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGreatGrandparent ;
+    rdfs:label "Has Great-Grandmother"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female great-grandparent. 
+    Usage: use :hasGreatGrandparent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?greatGrandchild :hasGreatGrandmother ?greatGrandmother .
+        }
+        WHERE {
+            ?greatGrandchild :hasGreatGrandparent ?greatGrandmother .
+            ?greatGrandmother :hasGender :Female .
+        }
+    """ .
+
+### great-grandfather (male great-grandparent)
+:hasGreatGrandfather a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGreatGrandparent ;
+    rdfs:label "Has Great-Grandfather"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male great-grandparent. 
+    Usage: use :hasGreatGrandparent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?greatGrandchild :hasGreatGrandfather ?greatGrandfather .
+        }
+        WHERE {
+            ?greatGrandchild :hasGreatGrandparent ?greatGrandfather .
+            ?greatGrandfather :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific great-grandchild relationships
+
+### great-granddaughter (female great-grandchild)
+:hasGreatGranddaughter a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGreatGrandchild ;
+    rdfs:label "Has Great-Granddaughter"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female great-grandchild. 
+    Usage: use :hasGreatGrandchild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?greatGrandparent :hasGreatGranddaughter ?greatGrandchild .
+        }
+        WHERE {
+            ?greatGrandparent :hasGreatGrandchild ?greatGrandchild .
+            ?greatGrandchild :hasGender :Female .
+        }
+    """ .
+
+### great-grandson (male great-grandchild)
+:hasGreatGrandson a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGreatGrandchild ;
+    rdfs:label "Has Great-Grandson"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male great-grandchild. 
+    Usage: use :hasGreatGrandchild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?greatGrandparent :hasGreatGrandson ?greatGrandchild .
+        }
+        WHERE {
+            ?greatGrandparent :hasGreatGrandchild ?greatGrandchild .
+            ?greatGrandchild :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific in-law relationships
+
+### mother-in-law (female parent-in-law)
+:hasMotherInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasParentInLaw ;
+    rdfs:label "Has Mother-In-Law"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female parent-in-law. 
+    Usage: use :hasParentInLaw for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?childInLaw :hasMotherInLaw ?parentInLaw .
+        }
+        WHERE {
+            ?childInLaw  :hasParentInLaw ?parentInLaw .
+            ?parentInLaw :hasGender :Female .
+        }
+    """ .
+
+### father-in-law (male parent-in-law)
+:hasFatherInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasParentInLaw ;
+    rdfs:label "Has Father-In-Law"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male parent-in-law. 
+    Usage: use :hasParentInLaw for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?childInLaw :hasFatherInLaw ?parentInLaw .
+        }
+        WHERE {
+            ?childInLaw :hasParentInLaw ?parentInLaw .
+            ?parentInLaw :hasGender :Male .
+        }
+    """ .
+
+### daughter-in-law (female child-in-law)
+:hasDaughterInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasChildInLaw ;
+    rdfs:label "Has Daughter-In-Law"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female child-in-law. 
+    Usage: use :hasChildInLaw for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?parentInLaw :hasDaughterInLaw ?childInLaw .
+        }
+        WHERE {
+            ?parentInLaw :hasChildInLaw ?childInLaw .
+            ?childInLaw :hasGender :Female .
+        }
+    """ .
+
+### son-in-law (male child-in-law)
+:hasSonInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasChildInLaw ;
+    rdfs:label "Has Son-In-Law"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male child-in-law. 
+    Usage: use :hasChildInLaw for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?parentInLaw :hasSonInLaw ?childInLaw .
+        }
+        WHERE {
+            ?parentInLaw :hasChildInLaw ?childInLaw .
+            ?childInLaw :hasGender :Male .
+        }
+    """ .
+
+### sister-in-law (female sibling-in-law)
+:hasSisterInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSiblingInLaw ;
+    rdfs:label "Has Sister-In-Law"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female sibling-in-law. 
+    Usage: use :hasSiblingInLaw for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?otherSiblingInLaw :hasSisterInLaw ?siblingInLaw .
+        }
+        WHERE {
+            ?siblingInLaw :hasSiblingInLaw ?otherSiblingInLaw .
+            ?siblingInLaw :hasGender :Female .
+        }
+    """ .
+
+### brother-in-law (male sibling-in-law)
+:hasBrotherInLaw a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasSiblingInLaw ;
+    rdfs:label "Has Brother-In-Law"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male sibling-in-law. 
+    Usage: use :hasSiblingInLaw for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?otherSiblingInLaw :hasBrotherInLaw ?siblingInLaw .
+        }
+        WHERE {
+            ?siblingInLaw :hasSiblingInLaw ?otherSiblingInLaw .
+            ?siblingInLaw :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific step relationships
+
+### step-mother (female step-parent)
+:hasStepMother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasStepParent ;
+    rdfs:label "Has Step-Mother"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female step-parent. 
+    Usage: use :hasStepParent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?stepChild :hasStepMother ?stepParent .
+        }
+        WHERE {
+            ?stepChild :hasStepParent ?stepParent .
+            ?stepParent :hasGender :Female .
+        }
+    """ .
+
+### step-father (male step-parent)
+:hasStepFather a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasStepParent ;
+    rdfs:label "Has Step-Father"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male step-parent. 
+    Usage: use :hasStepParent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?stepChild :hasStepFather ?stepParent .
+        }
+        WHERE {
+            ?stepChild :hasStepParent ?stepParent .
+            ?stepParent :hasGender :Male .
+        }
+    """ .
+
+### step-daughter (female step-child)
+:hasStepDaughter a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasStepChild ;
+    rdfs:label "Has Step-Daughter"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female step-child. 
+    Usage: use :hasStepChild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?stepParent :hasStepDaughter ?stepChild .
+        }
+        WHERE {
+            ?stepParent :hasStepChild ?stepChild .
+            ?stepChild :hasGender :Female .
+        }
+    """ .
+
+### step-son (male step-child)
+:hasStepSon a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasStepChild ;
+    rdfs:label "Has Step-Son"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male step-child. 
+    Usage: use :hasStepChild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?stepParent :hasStepSon ?stepChild .
+        }
+        WHERE {
+            ?stepParent :hasStepChild ?stepChild .
+            ?stepChild :hasGender :Male .
+        }
+    """ .
+
+### step-sister (female step-sibling)
+:hasStepSister a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasStepSibling ;
+    rdfs:label "Has Step-Sister"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female step-sibling. 
+    Usage: use :hasStepSibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?person :hasStepSister ?stepSib .
+        }
+        WHERE {
+            ?stepSib :hasStepSibling ?person .
+            ?stepSib :hasGender :Female .
+        }
+    """ .
+
+### step-brother (male step-sibling)
+:hasStepBrother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasStepSibling ;
+    rdfs:label "Has Step-Brother"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male step-sibling. 
+    Usage: use :hasStepSibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?person :hasStepBrother ?stepSib .
+        }
+        WHERE {
+            ?stepSib :hasStepSibling ?person .
+            ?stepSib :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific half-sibling relationships
+
+### half-sister (female half-sibling)
+:hasHalfSister a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasHalfSibling ;
+    rdfs:label "Has Half-Sister"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female half-sibling. 
+    Usage: use :hasHalfSibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?person :hasHalfSister ?halfSib .
+        }
+        WHERE {
+            ?halfSib :hasHalfSibling ?person .
+            ?halfSib :hasGender :Female .
+        }
+    """ .
+
+### half-brother (male half-sibling)
+:hasHalfBrother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasHalfSibling ;
+    rdfs:label "Has Half-Brother"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male half-sibling. 
+    Usage: use :hasHalfSibling for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?person :hasHalfBrother ?halfSib .
+        }
+        WHERE {
+            ?halfSib :hasHalfSibling ?person .
+            ?halfSib :hasGender :Male .
+        }
+    """ .
+
+## Gender-specific family-anchored relationships
+
+### godmother (female godparent)
+:hasGodmother a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGodparent ;
+    rdfs:label "Has Godmother"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female godparent. 
+    Usage: use :hasGodparent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?godchild :hasGodmother ?godparent .
+        }
+        WHERE {
+            ?godchild :hasGodparent ?godparent .
+            ?godparent :hasGender :Female .
+        }
+    """ .
+
+### godfather (male godparent)
+:hasGodfather a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGodparent ;
+    rdfs:label "Has Godfather"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male godparent. 
+    Usage: use :hasGodparent for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?godchild :hasGodfather ?godparent .
+        }
+        WHERE {
+            ?godchild :hasGodparent ?godparent .
+            ?godparent :hasGender :Male .
+        }
+    """ .
+
+### goddaughter (female godchild)
+:hasGoddaughter a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGodchild ;
+    rdfs:label "Has Goddaughter"@en ;
+    rdfs:range :FemalePerson ;
+    rdfs:comment """Female godchild. 
+    Usage: use :hasGodchild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?godparent :hasGoddaughter ?godchild .
+        }
+        WHERE {
+            ?godparent :hasGodchild ?godchild .
+            ?godchild :hasGender :Female .
+        }
+    """ .
+
+### godson (male godchild)
+:hasGodson a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasGodchild ;
+    rdfs:label "Has Godson"@en ;
+    rdfs:range :MalePerson ;
+    rdfs:comment """Male godchild. 
+    Usage: use :hasGodchild for gender-neutral queries."""@en ;
+    :MaterializationReason :GenderFirewallLimitation ;
+    :MaterializationScript """
+        INSERT {
+            ?godparent :hasGodson ?godchild .
+        }
+        WHERE {
+            ?godparent :hasGodchild ?godchild .
+            ?godchild :hasGender :Male .
+        }
+    """ .
