@@ -2,6 +2,7 @@
 GraphDB backend for testing with full OWL2-RL reasoning.
 """
 
+import platform
 import re
 import requests
 import time
@@ -51,20 +52,53 @@ class GraphDBBackend:
         
     def _wait_for_graphdb(self, timeout: int = 60):
         """Wait for GraphDB to be ready."""
-        print(f"Waiting for GraphDB at {self.graphdb_url}...")
+        print(f"Waiting for GraphDB at {self.graphdb_url} (timeout {timeout}s)...")
         start_time = time.time()
-        
-        while time.time() - start_time < timeout:
+
+        while True:
+            elapsed = int(time.time() - start_time)
             try:
-                response = requests.get(f"{self.graphdb_url}/rest/repositories", timeout=5)
+                response = requests.get(
+                    f"{self.graphdb_url}/rest/repositories", timeout=5,
+                )
                 if response.status_code == 200:
                     print("✓ GraphDB is ready")
                     return True
             except requests.exceptions.RequestException:
                 pass
+
+            if elapsed >= timeout:
+                break
+            remaining = timeout - elapsed
+            print(f"  … no response ({remaining}s remaining)", flush=True)
             time.sleep(2)
-        
-        raise TimeoutError(f"GraphDB not ready after {timeout} seconds")
+
+        self._print_graphdb_help()
+        raise SystemExit(1)
+
+    @staticmethod
+    def _print_graphdb_help():
+        """Print platform-specific instructions for starting GraphDB."""
+        os_name = platform.system()
+        print()
+        print("=" * 70)
+        print("ERROR: GraphDB is not reachable.")
+        print("=" * 70)
+        print()
+        print("1. Install Docker Desktop (if not already installed):")
+        if os_name == "Windows":
+            print("     https://docs.docker.com/desktop/setup/install/windows-install/")
+        elif os_name == "Darwin":
+            print("     https://docs.docker.com/desktop/setup/install/mac-install/")
+        else:
+            print("     https://docs.docker.com/desktop/setup/install/linux-install/")
+        print()
+        print("2. Start the GraphDB container from the project root:")
+        print("     docker compose up -d")
+        print()
+        print("3. Re-run the tests once GraphDB is healthy:")
+        print("     python tests/test_runner.py --all --backend graphdb")
+        print()
     
     def _repository_exists(self) -> bool:
         """Check if repository exists."""
