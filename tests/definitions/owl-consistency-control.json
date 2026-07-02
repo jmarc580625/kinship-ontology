@@ -75,18 +75,6 @@
     },
     "Q-POST-CAR": {
       "expected": [
-        { "x": ":car2fa_pa" },
-        { "x": ":car2fa_pb" },
-        { "x": ":car2fb_pa" },
-        { "x": ":car2fb_pb" },
-        { "x": ":car2fc_pa" },
-        { "x": ":car2fc_pb" },
-        { "x": ":car2ma_pa" },
-        { "x": ":car2ma_pb" },
-        { "x": ":car2mb_pa" },
-        { "x": ":car2mb_pb" },
-        { "x": ":car2mc_pa" },
-        { "x": ":car2mc_pb" },
         { "x": ":con3_x1" }
       ]
     }

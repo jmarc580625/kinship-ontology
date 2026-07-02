@@ -1,0 +1,70 @@
+{
+  "MQ-FATS-MEMBERS": {
+    "description": "Meta-query: enumerate all properties classified as FATS.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?p WHERE { ?p kin:assertionSet kin:FATS . }"
+  },
+  "MQ-MATS-MEMBERS": {
+    "description": "Meta-query: enumerate all properties classified as MATS.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?p WHERE { ?p kin:assertionSet kin:MATS . }"
+  },
+  "MQ-OATS-MEMBERS": {
+    "description": "Meta-query: enumerate all properties classified as OATS.",
+    "query": "PREFIX kin: <http://example.org/kinship#> SELECT ?p WHERE { ?p kin:assertionSet kin:OATS . }"
+  },
+  "MQ-MATS-IRR": {
+    "description": "Meta-query: irreflexive or asymmetric properties in MATS (IRR generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE { { ?p a owl:IrreflexiveProperty . } UNION { ?p a owl:AsymmetricProperty . } ?p kin:assertionSet kin:MATS . }"
+  },
+  "MQ-OATS-IRR": {
+    "description": "Meta-query: irreflexive or asymmetric properties in OATS (IRR generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE { { ?p a owl:IrreflexiveProperty . } UNION { ?p a owl:AsymmetricProperty . } ?p kin:assertionSet kin:OATS . }"
+  },
+  "MQ-MATS-RED1": {
+    "description": "Meta-query: subproperty/superproperty pairs within MATS (RED1 generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?sub ?super WHERE { ?sub rdfs:subPropertyOf+ ?super . ?sub kin:assertionSet kin:MATS . ?super kin:assertionSet kin:MATS . FILTER(?sub != ?super) }"
+  },
+  "MQ-OATS-RED1": {
+    "description": "Meta-query: subproperty/superproperty pairs within OATS (RED1 generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT ?sub ?super WHERE { ?sub rdfs:subPropertyOf+ ?super . ?sub kin:assertionSet kin:OATS . ?super kin:assertionSet kin:OATS . FILTER(?sub != ?super) }"
+  },
+  "MQ-MATS-RED2": {
+    "description": "Meta-query: inverse sub/super/property pairs within MATS (RED2 generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT DISTINCT ?p ?q WHERE { { ?p owl:inverseOf ?q . } UNION { ?p owl:inverseOf ?pInverse . { ?pInverse rdfs:subPropertyOf ?q } UNION { ?q rdfs:subPropertyOf ?pInverse } FILTER(?pInverse != ?q) } ?p kin:assertionSet kin:MATS . ?q kin:assertionSet kin:MATS . FILTER(STR(?p) < STR(?q)) }"
+  },
+  "MQ-OATS-RED2": {
+    "description": "Meta-query: inverse sub/super/property pairs within OATS (RED2 generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT DISTINCT ?p ?q WHERE { { ?p owl:inverseOf ?q . } UNION { ?p owl:inverseOf ?pInverse . { ?pInverse rdfs:subPropertyOf ?q } UNION { ?q rdfs:subPropertyOf ?pInverse } FILTER(?pInverse != ?q) } ?p kin:assertionSet kin:OATS . ?q kin:assertionSet kin:OATS . FILTER(STR(?p) < STR(?q)) }"
+  },
+  "MQ-MATS-RED3": {
+    "description": "Meta-query: symmetric properties in MATS (RED3 generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE { ?p a owl:SymmetricProperty ; kin:assertionSet kin:MATS . }"
+  },
+  "MQ-OATS-RED3": {
+    "description": "Meta-query: symmetric properties in OATS (RED3 generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE { ?p a owl:SymmetricProperty ; kin:assertionSet kin:OATS . }"
+  },
+  "MQ-MATS-CIR1": {
+    "description": "Meta-query: asymmetric generational properties in MATS (CIR1 generation — mutual same-property).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE { ?p a owl:AsymmetricProperty ; kin:assertionSet kin:MATS ; kin:generationalDirection ?dir . }"
+  },
+  "MQ-OATS-CIR1": {
+    "description": "Meta-query: asymmetric generational properties in OATS (CIR1 generation — mutual same-property).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?p WHERE { ?p a owl:AsymmetricProperty ; kin:assertionSet kin:OATS ; kin:generationalDirection ?dir . }"
+  },
+  "MQ-MATS-CON": {
+    "description": "Meta-query: ascending/descending property conflict pairs within MATS (CON generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?asc ?desc ?ascDepth ?descDepth ?nature WHERE { ?asc kin:generationalDirection kin:Ascending ; kin:generationalDepth ?ascDepth ; kin:assertionSet kin:MATS . ?desc kin:generationalDirection kin:Descending ; kin:generationalDepth ?descDepth ; kin:assertionSet kin:MATS . BIND(IF(EXISTS { ?asc owl:inverseOf ?desc }, kin:UniversalImpossibility, kin:LegalConvention) AS ?nature) }"
+  },
+  "MQ-OATS-CON": {
+    "description": "Meta-query: ascending/descending property conflict pairs within OATS (CON generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?asc ?desc ?ascDepth ?descDepth ?nature WHERE { ?asc kin:generationalDirection kin:Ascending ; kin:generationalDepth ?ascDepth ; kin:assertionSet kin:OATS . ?desc kin:generationalDirection kin:Descending ; kin:generationalDepth ?descDepth ; kin:assertionSet kin:OATS . BIND(IF(EXISTS { ?asc owl:inverseOf ?desc }, kin:UniversalImpossibility, kin:LegalConvention) AS ?nature) }"
+  },
+  "MQ-MATS-CAR": {
+    "description": "Meta-query: cardinality restrictions on MATS properties (CAR generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?prop ?inverse ?max ?onClass WHERE { ?restriction a owl:Restriction ; owl:onProperty ?prop . ?prop kin:assertionSet kin:MATS . { ?restriction owl:maxCardinality ?max } UNION { ?restriction owl:maxQualifiedCardinality ?max ; owl:onClass ?onClass } OPTIONAL { ?prop owl:inverseOf ?inverse } }"
+  },
+  "MQ-OATS-CAR": {
+    "description": "Meta-query: cardinality restrictions on OATS properties (CAR generation).",
+    "query": "PREFIX kin: <http://example.org/kinship#> PREFIX owl: <http://www.w3.org/2002/07/owl#> SELECT ?prop ?inverse ?max ?onClass WHERE { ?restriction a owl:Restriction ; owl:onProperty ?prop . ?prop kin:assertionSet kin:OATS . { ?restriction owl:maxCardinality ?max } UNION { ?restriction owl:maxQualifiedCardinality ?max ; owl:onClass ?onClass } OPTIONAL { ?prop owl:inverseOf ?inverse } }"
+  }
+}

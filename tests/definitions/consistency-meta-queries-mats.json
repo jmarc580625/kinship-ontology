@@ -1,0 +1,116 @@
+{
+  "module": "consistency-meta-queries-mats",
+  "query_library": "tests/definitions/queries/consistency-meta-queries.json",
+  "ontologies": [
+    "ontology/kinship/kinship-consistency.ttl",
+    "ontology/kinship/gendered.ttl"
+  ],
+  "data_files": [],
+  "description": "Meta-query validation — MATS assertion set. Validates IRR, RED1, RED2, RED3, CON, and CAR meta-queries against the TBox only.",
+  "tests": {
+    "MQ-MATS-MEMBERS": {
+      "expected": [
+        { "p": ":Person" },
+        { "p": ":hasGender" },
+        { "p": ":hasPartner" },
+        { "p": ":hasSpouse" },
+        { "p": ":hasCivilPartner" },
+        { "p": ":hasLifePartner" },
+        { "p": ":hasChild" },
+        { "p": ":hasParent" },
+        { "p": ":hasBloodChild" },
+        { "p": ":hasBloodParent" },
+        { "p": ":hasAdoptiveChild" },
+        { "p": ":hasAdoptiveParent" },
+        { "p": ":hasTwin" },
+        { "p": ":hasGodparent" },
+        { "p": ":hasGodchild" },
+        { "p": ":hasWitness" },
+        { "p": ":hasWitnessed" }
+      ]
+    },
+    "MQ-MATS-IRR": {
+      "expected": [
+        { "p": ":hasPartner" },
+        { "p": ":hasSpouse" },
+        { "p": ":hasCivilPartner" },
+        { "p": ":hasLifePartner" },
+        { "p": ":hasTwin" },
+        { "p": ":hasChild" },
+        { "p": ":hasParent" },
+        { "p": ":hasBloodChild" },
+        { "p": ":hasBloodParent" },
+        { "p": ":hasAdoptiveChild" },
+        { "p": ":hasAdoptiveParent" },
+        { "p": ":hasGodchild" },
+        { "p": ":hasGodparent" },
+        { "p": ":hasWitness" },
+        { "p": ":hasWitnessed" }
+      ]
+    },
+    "MQ-MATS-RED1": {
+      "expected": [
+        { "sub": ":hasSpouse", "super": ":hasPartner" },
+        { "sub": ":hasCivilPartner", "super": ":hasPartner" },
+        { "sub": ":hasLifePartner", "super": ":hasPartner" },
+        { "sub": ":hasBloodChild", "super": ":hasChild" },
+        { "sub": ":hasAdoptiveChild", "super": ":hasChild" },
+        { "sub": ":hasBloodParent", "super": ":hasParent" },
+        { "sub": ":hasAdoptiveParent", "super": ":hasParent" }
+      ]
+    },
+    "MQ-MATS-RED2": {
+      "expected": [
+        { "p": ":hasChild", "q": ":hasParent" },
+        { "p": ":hasAdoptiveChild", "q": ":hasAdoptiveParent" },
+        { "p": ":hasAdoptiveChild", "q": ":hasParent" },
+        { "p": ":hasAdoptiveParent", "q": ":hasChild" },
+        { "p": ":hasBloodChild", "q": ":hasBloodParent" },
+        { "p": ":hasBloodChild", "q": ":hasParent" },
+        { "p": ":hasBloodParent", "q": ":hasChild" },
+        { "p": ":hasGodchild", "q": ":hasGodparent" },
+        { "p": ":hasWitness", "q": ":hasWitnessed" }
+      ]
+    },
+    "MQ-MATS-RED3": {
+      "expected": [
+        { "p": ":hasPartner" },
+        { "p": ":hasSpouse" },
+        { "p": ":hasCivilPartner" },
+        { "p": ":hasLifePartner" },
+        { "p": ":hasTwin" }
+      ]
+    },
+    "MQ-MATS-CIR1": {
+      "expected": [
+        { "p": ":hasChild" },
+        { "p": ":hasParent" },
+        { "p": ":hasBloodChild" },
+        { "p": ":hasBloodParent" },
+        { "p": ":hasAdoptiveChild" },
+        { "p": ":hasAdoptiveParent" }
+      ]
+    },
+    "MQ-MATS-CON": {
+      "expected": [
+        { "asc": ":hasParent", "desc": ":hasChild", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasParent", "desc": ":hasBloodChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasParent", "desc": ":hasAdoptiveChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasBloodParent", "desc": ":hasChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasBloodParent", "desc": ":hasBloodChild", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasBloodParent", "desc": ":hasAdoptiveChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasAdoptiveParent", "desc": ":hasChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasAdoptiveParent", "desc": ":hasBloodChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasAdoptiveParent", "desc": ":hasAdoptiveChild", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" }
+      ]
+    },
+    "MQ-MATS-CAR": {
+      "expected": [
+        { "prop": ":hasBloodParent", "inverse": ":hasBloodChild", "max": "2" },
+        { "prop": ":hasBloodParent", "inverse": ":hasBloodChild", "max": "1", "onClass": ":MalePerson" },
+        { "prop": ":hasBloodParent", "inverse": ":hasBloodChild", "max": "1", "onClass": ":FemalePerson" },
+        { "prop": ":hasGender", "max": "1", "onClass": ":GenderIdentity" }
+      ]
+    }
+  }
+}

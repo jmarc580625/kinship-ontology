@@ -143,7 +143,7 @@ def _load_definitions(definitions_folder: Path,
             continue
         mod_name = mod_def.get("module")
         if not mod_name:
-            print(f"[WARN] {path.name} has no 'module' key — skipped",
+            print(f"[WARN] {path.name} has no 'module' key - skipped",
                   file=sys.stderr)
             continue
         _resolve_query_library(mod_def, effective_root)
@@ -158,9 +158,11 @@ def _load_definitions(definitions_folder: Path,
 _KINSHIP_NS = "http://example.org/kinship#"
 
 
-def _normalise_value(v: str) -> str:
-    """Convert a full URI to a prefixed form so it matches JSON expected values."""
-    if v.startswith(_KINSHIP_NS):
+def _normalise_value(v):
+    """Convert a full URI to a prefixed form. Handles list values recursively."""
+    if isinstance(v, list):
+        return [_normalise_value(item) for item in v]
+    if isinstance(v, str) and v.startswith(_KINSHIP_NS):
         return ":" + v[len(_KINSHIP_NS):]
     return v
 
@@ -169,17 +171,49 @@ def _normalise_row(row: Dict[str, str]) -> Dict[str, str]:
     return {k: _normalise_value(v) for k, v in row.items()}
 
 
-def _rows_match(actual: List[Dict], expected: List[Dict]) -> bool:
-    """Order-insensitive comparison of result rows."""
+def _compare_cycles(val):
+    """Transform cycle list to canonical tuple for rotation-invariant comparison."""
+    if not isinstance(val, list):
+        return val  # Not a list, return as-is
+    if len(val) <= 1:
+        return tuple(val)
+    min_idx = val.index(min(val))
+    rotated = val[min_idx:] + val[:min_idx]
+    return tuple(rotated)
+
+
+def _rows_match(actual: List[Dict], expected: List[Dict],
+                compare_fn=None) -> bool:
+    """Order-insensitive comparison with optional value comparison function."""
     def _key(r: Dict) -> tuple:
         return tuple(sorted(r.items()))
 
-    return sorted(_key(r) for r in actual) == sorted(_key(r) for r in expected)
+    # Default comparison without helper
+    if compare_fn is None:
+        return sorted(_key(r) for r in actual) == sorted(_key(r) for r in expected)
+
+    # With helper: transform values before comparison
+    def _transform_row(row: Dict) -> Dict:
+        return {k: compare_fn(v) for k, v in row.items()}
+
+    actual_transformed = [_transform_row(r) for r in actual]
+    expected_transformed = [_transform_row(r) for r in expected]
+
+    return sorted(_key(r) for r in actual_transformed) == \
+           sorted(_key(r) for r in expected_transformed)
 
 
 # ---------------------------------------------------------------------------
 # Single-test execution
 # ---------------------------------------------------------------------------
+
+def _call_test_function(spec: str, backend) -> List[Dict]:
+    """Import and call 'module.path:function_name' for test_function tests."""
+    import importlib
+    mod_path, func_name = spec.rsplit(":", 1)
+    module = importlib.import_module(mod_path)
+    fn = getattr(module, func_name)
+    return fn(backend)
 
 def _run_test(backend, test_id: str, test_def: Dict,
               abox_only: bool = False) -> Tuple[str, str]:
@@ -196,15 +230,28 @@ def _run_test(backend, test_id: str, test_def: Dict,
     -------
     (status, detail) where status is 'PASS', 'FAIL', or 'ERROR'.
     """
-    query = test_def.get("query", "")
     expect_empty = test_def.get("expect_empty", False)
     expected = test_def.get("expected", [])
+    compare_fn_name = test_def.get("expected_comparison_function", None)
+
+    # Resolve comparison function
+    compare_fn = None
+    if compare_fn_name:
+        if compare_fn_name == "_compare_cycles":
+            compare_fn = _compare_cycles
+        else:
+            return "ERROR", f"Unknown comparison function: {compare_fn_name}"
 
     try:
-        if abox_only and hasattr(backend, "execute_abox_query"):
-            raw = backend.execute_abox_query(query)
+        # Get raw results via test_function or SPARQL query
+        if "test_function" in test_def:
+            raw = _call_test_function(test_def["test_function"], backend)
         else:
-            raw = backend.execute_query(query)
+            query = test_def.get("query", "")
+            if abox_only and hasattr(backend, "execute_abox_query"):
+                raw = backend.execute_abox_query(query)
+            else:
+                raw = backend.execute_query(query)
         actual = [_normalise_row(r) for r in raw]
     except Exception as exc:
         return "ERROR", str(exc)
@@ -214,12 +261,19 @@ def _run_test(backend, test_id: str, test_def: Dict,
             return "PASS", ""
         return "FAIL", f"Expected empty result but got {len(actual)} row(s): {actual[:3]}"
 
-    if _rows_match(actual, expected):
+    if _rows_match(actual, expected, compare_fn=compare_fn):
         return "PASS", ""
 
     # Build a diff-style detail message
-    exp_set = set(tuple(sorted(r.items())) for r in expected)
-    act_set = set(tuple(sorted(r.items())) for r in actual)
+    if compare_fn:
+        # Use transformed values for diff when compare_fn is present
+        def _transform_row(row: Dict) -> Dict:
+            return {k: compare_fn(v) for k, v in row.items()}
+        exp_set = set(tuple(sorted(_transform_row(r).items())) for r in expected)
+        act_set = set(tuple(sorted(_transform_row(r).items())) for r in actual)
+    else:
+        exp_set = set(tuple(sorted(r.items())) for r in expected)
+        act_set = set(tuple(sorted(r.items())) for r in actual)
     missing  = [dict(r) for r in exp_set - act_set]
     spurious = [dict(r) for r in act_set - exp_set]
     parts = []
@@ -312,17 +366,21 @@ def run(
         target_modules = module_order[:]
 
     # ---- Build suite list -------------------------------------------------
-    # Each suite: (label, onto_names, ttl_chain, data_files, test_ids, tests_dict, abox_only)
-    # onto_names: basenames of the declared ontology entry-points (for display)
-    # abox_only:  when True, queries route to execute_abox_query() (no inference)
-    suites: List[Tuple[str, List[str], List[str], List[str], List[str], Dict, bool]] = []
+    # Each suite: (label, onto_names, ttl_chain, data_files, test_ids,
+    #              tests_dict, abox_only, shacl_shapes)
+    # onto_names:   basenames of the declared ontology entry-points (for display)
+    # abox_only:    when True, queries route to execute_abox_query() (no inference)
+    # shacl_shapes: optional path to SHACL shapes file for pySHACL validation
+    suites: List[Tuple[str, List[str], List[str], List[str], List[str], Dict, bool, Optional[str]]] = []
 
     for mod in target_modules:
         if mod not in module_defs:
-            print(f"[WARN] No definition file found for module '{mod}' \u2014 skipped",
+            print(f"[WARN] No definition file found for module '{mod}' - skipped",
                   file=sys.stderr)
             continue
         md = module_defs[mod]
+        shacl_rel = md.get("shacl_shapes")
+        shacl_abs = str(root / shacl_rel) if shacl_rel else None
         suites.append((
             mod,
             [Path(f).name for f in md["ontologies"]],
@@ -331,46 +389,62 @@ def run(
             list(md["tests"].keys()),
             md["tests"],
             md.get("abox_only", False),
+            shacl_abs,
         ))
 
     # ---- Run each suite ---------------------------------------------------
     total_pass = total_fail = total_error = total_skip = 0
 
-    for suite_name, onto_names, ttl_list, dfiles, ids, tests_dict, abox_only in suites:
+    for suite_name, onto_names, ttl_list, dfiles, ids, tests_dict, abox_only, shacl_shapes in suites:
         print(f"\n{'='*70}")
         print(f"Suite:      {suite_name.upper()}")
         print(f"Ontologies: {onto_names}")
         print(f"Data:       {[Path(f).name for f in dfiles]}")
+        if shacl_shapes:
+            print(f"SHACL:      {Path(shacl_shapes).name}")
         print(f"Tests:      {len(ids)}")
         print("="*70)
 
         # Initialise backend
-        backend = _make_backend(backend_name, ttl_list, dfiles, config, root)
+        backend = _make_backend(backend_name, ttl_list, dfiles, config, root,
+                                shacl_shapes=shacl_shapes)
 
-        # Run MaterializationManager
-        try:
-            from lib.materialization_manager import MaterializationManager
-            mgr = MaterializationManager(
-                backend,
-                namespace="http://example.org/kinship#",
-            )
-            def _on_script(r):
-                if r["status"] == "ok":
-                    line = f"  :{r['property']:<32} +{r['triples_added']} triples"
-                    if r["reasoning_triggered"] and r["inferred_triples"] > 0:
-                        line += f"  -> reasoning +{r['inferred_triples']} inferred"
-                    print(line)
-                elif r["status"].startswith("error"):
-                    print(f"  :{r['property']:<32} ERROR: {r['status']}")
+        # Run MaterializationManager (only when ABox data is present)
+        if dfiles:
+            try:
+                from lib.materialization_manager import MaterializationManager
+                mgr = MaterializationManager(
+                    backend,
+                    namespace="http://example.org/kinship#",
+                )
+                def _on_script(r):
+                    if r["status"] == "ok":
+                        line = f"  :{r['property']:<32} +{r['triples_added']} triples"
+                        if r["reasoning_triggered"] and r["inferred_triples"] > 0:
+                            line += f"  -> reasoning +{r['inferred_triples']} inferred"
+                        print(line)
+                    elif r["status"].startswith("error"):
+                        print(f"  :{r['property']:<32} ERROR: {r['status']}")
 
-            print("Materialization:")
-            mat_results = mgr.execute(on_script=_on_script)
-            scripts_run = sum(1 for r in mat_results if r["status"] == "ok")
-            print(f"  {scripts_run}/{len(mat_results)} scripts executed.\n")
-        except Exception as exc:
-            print(f"[ERROR] MaterializationManager failed: {exc}", file=sys.stderr)
-            total_error += len(ids)
-            continue
+                print("Materialization:")
+                mat_results = mgr.execute(on_script=_on_script)
+                scripts_run = sum(1 for r in mat_results if r["status"] == "ok")
+                print(f"  {scripts_run}/{len(mat_results)} scripts executed.\n")
+            except Exception as exc:
+                print(f"[ERROR] MaterializationManager failed: {exc}", file=sys.stderr)
+                total_error += len(ids)
+                continue
+        else:
+            print("  (no data files — materialization skipped)\n")
+
+        # Run SHACL validation (if shapes are declared)
+        if shacl_shapes and hasattr(backend, "run_shacl_validation"):
+            try:
+                backend.run_shacl_validation()
+            except Exception as exc:
+                print(f"[ERROR] SHACL validation failed: {exc}", file=sys.stderr)
+                total_error += len(ids)
+                continue
 
         # Execute tests
         for tid in ids:
@@ -380,16 +454,16 @@ def run(
 
             if status == "PASS":
                 total_pass += 1
-                print(f"  \u2713 {tid}")
+                print(f"  [PASS] {tid}")
             elif status == "FAIL":
                 total_fail += 1
-                print(f"  \u2717 {tid}")
+                print(f"  [FAIL] {tid}")
                 if verbose and tdef.get("description"):
                     print(f"      {tdef['description']}")
                 print(f"      {detail}")
             else:
                 total_error += 1
-                print(f"  ! {tid}")
+                print(f"  [ERROR] {tid}")
                 if tdef.get("description"):
                     print(f"      {tdef['description']}")
                 print(f"      ERROR: {detail}")
@@ -407,9 +481,9 @@ def run(
 
     failures = total_fail + total_error
     if failures:
-        print(f"\n\u274c {failures} test(s) did not pass.")
+        print(f"\n[FAIL] {failures} test(s) did not pass.")
     else:
-        print("\n\u2705 All tests passed.")
+        print("\n[PASS] All tests passed.")
 
     return failures
 
@@ -419,19 +493,22 @@ def run(
 # ---------------------------------------------------------------------------
 
 def _make_backend(name: str, ttl_files: List[str], data_files: List[str],
-                  config: Dict, root: Path):
+                  config: Dict, root: Path, *,
+                  shacl_shapes: Optional[str] = None):
     """
     Create and initialise a backend.
 
     *ttl_files* is the ordered DFS-resolved list of ontology (TBox) TTL files.
     *data_files* is the list of ABox (instance data) TTL files.
+    *shacl_shapes* is an optional path to a SHACL shapes TTL file.
     """
     if name == "rdflib":
         try:
             from backends.rdflib_backend import RDFLibBackend
         except ImportError as e:
             sys.exit(f"RDFLibBackend not available: {e}")
-        b = RDFLibBackend(ontology_files=ttl_files, data_files=data_files)
+        b = RDFLibBackend(ontology_files=ttl_files, data_files=data_files,
+                          shacl_shapes=shacl_shapes)
         b.initialize()
         return b
 
@@ -447,6 +524,7 @@ def _make_backend(name: str, ttl_files: List[str], data_files: List[str],
             graphdb_url=gdb.get("url", "http://localhost:7200"),
             repository_id=gdb.get("repository", "kinship-ontology-test"),
             ruleset=gdb.get("ruleset", "owl2-rl"),
+            shacl_shapes=shacl_shapes,
         )
         b.initialize()
         return b

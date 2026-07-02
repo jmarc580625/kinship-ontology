@@ -26,10 +26,11 @@
 
 ### step-child
 :hasStepChild a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasRelative ;
+    rdfs:subPropertyOf :hasStepRelative ;
     rdfs:label "Has Step-Child"@en ;
     rdfs:comment "Partner's child who is not one's own child — no blood or adoptive link to ego."@en ;
     owl:inverseOf :hasStepParent ;
+    a owl:AsymmetricProperty ;
     :MaterializationReason :ComplexPathLimitation ;
     :MaterializationScript """
         INSERT {
@@ -47,15 +48,16 @@
 
 ### step-parent
 :hasStepParent a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasRelative ;
+    rdfs:subPropertyOf :hasStepRelative ;
     rdfs:label "Has Step-Parent"@en ;
     rdfs:comment "Parent's partner who is not one's own parent — no blood or adoptive link to ego."@en ;
     owl:inverseOf :hasStepChild ;
+    a owl:AsymmetricProperty ;
     :crossesAlliance true .
 
 ### step-sibling
 :hasStepSibling a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasRelative ;
+    rdfs:subPropertyOf :hasStepRelative ;
     rdfs:label "Has Step-Sibling"@en ;
     rdfs:comment "Shares a step-parent but no common parent (biological or adoptive)."@en ;
     rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
@@ -79,7 +81,7 @@
 
 ### half-sibling
 :hasHalfSibling a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasSibling ;
+    rdfs:subPropertyOf :hasSibling, :hasCollateralRelative ;
     rdfs:label "Has Half-Sibling"@en ;
     rdfs:comment "Shares exactly one parent (biological or adoptive) — distinguished from full sibling (two shared parents) and step-sibling (no shared parent)."@en ;
     rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
@@ -102,11 +104,3 @@
             }
         }
     """ .
-
-#---------------------------
-# Property disjointness axioms (blended)
-#---------------------------
-
-:hasChild owl:propertyDisjointWith :hasStepChild .
-:hasParent owl:propertyDisjointWith :hasStepParent .
-:hasSibling owl:propertyDisjointWith :hasStepSibling .

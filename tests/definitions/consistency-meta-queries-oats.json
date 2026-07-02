@@ -1,0 +1,137 @@
+{
+  "module": "consistency-meta-queries-oats",
+  "query_library": "tests/definitions/queries/consistency-meta-queries.json",
+  "ontologies": [
+    "ontology/kinship/kinship-consistency.ttl",
+    "ontology/kinship/gendered.ttl"
+  ],
+  "data_files": [],
+  "description": "Meta-query validation — OATS assertion set. Validates IRR, RED1, RED2, RED3, and CON meta-queries against the TBox only.",
+  "tests": {
+    "MQ-OATS-MEMBERS": {
+      "expected": [
+        { "p": ":hasSibling" },
+        { "p": ":hasHalfSibling" },
+        { "p": ":hasCousin" },
+        { "p": ":hasSiblingNibling" },
+        { "p": ":hasSiblingUncleAunt" },
+        { "p": ":hasGrandparent" },
+        { "p": ":hasGrandchild" },
+        { "p": ":hasGreatGrandparent" },
+        { "p": ":hasGreatGrandchild" },
+        { "p": ":hasChildInLaw" },
+        { "p": ":hasParentInLaw" },
+        { "p": ":hasNiblingInLaw" },
+        { "p": ":hasUncleAuntInLaw" },
+        { "p": ":hasSiblingInLaw" },
+        { "p": ":hasStepChild" },
+        { "p": ":hasStepParent" },
+        { "p": ":hasStepSibling" }
+      ]
+    },
+    "MQ-OATS-IRR": {
+      "expected": [
+        { "p": ":hasSibling" },
+        { "p": ":hasHalfSibling" },
+        { "p": ":hasCousin" },
+        { "p": ":hasStepSibling" },
+        { "p": ":hasSiblingInLaw" },
+        { "p": ":hasGrandchild" },
+        { "p": ":hasGrandparent" },
+        { "p": ":hasGreatGrandchild" },
+        { "p": ":hasGreatGrandparent" },
+        { "p": ":hasSiblingNibling" },
+        { "p": ":hasSiblingUncleAunt" },
+        { "p": ":hasNiblingInLaw" },
+        { "p": ":hasUncleAuntInLaw" },
+        { "p": ":hasChildInLaw" },
+        { "p": ":hasParentInLaw" },
+        { "p": ":hasStepChild" },
+        { "p": ":hasStepParent" }
+      ]
+    },
+    "MQ-OATS-RED1": {
+      "expected": [
+        { "sub": ":hasHalfSibling", "super": ":hasSibling" }
+      ]
+    },
+    "MQ-OATS-RED2": {
+      "expected": [
+        { "p": ":hasChildInLaw", "q": ":hasParentInLaw" },
+        { "p": ":hasGrandchild", "q": ":hasGrandparent" },
+        { "p": ":hasGreatGrandchild", "q": ":hasGreatGrandparent" },
+        { "p": ":hasNiblingInLaw", "q": ":hasUncleAuntInLaw" },
+        { "p": ":hasSiblingNibling", "q": ":hasSiblingUncleAunt" },
+        { "p": ":hasStepChild", "q": ":hasStepParent" }
+      ]
+    },
+    "MQ-OATS-RED3": {
+      "expected": [
+        { "p": ":hasSibling" },
+        { "p": ":hasHalfSibling" },
+        { "p": ":hasCousin" },
+        { "p": ":hasStepSibling" },
+        { "p": ":hasSiblingInLaw" }
+      ]
+    },
+    "MQ-OATS-CIR1": {
+      "expected": [
+        { "p": ":hasGrandchild" },
+        { "p": ":hasGrandparent" },
+        { "p": ":hasGreatGrandchild" },
+        { "p": ":hasGreatGrandparent" },
+        { "p": ":hasSiblingNibling" },
+        { "p": ":hasSiblingUncleAunt" },
+        { "p": ":hasNiblingInLaw" },
+        { "p": ":hasUncleAuntInLaw" },
+        { "p": ":hasChildInLaw" },
+        { "p": ":hasParentInLaw" },
+        { "p": ":hasStepChild" },
+        { "p": ":hasStepParent" }
+      ]
+    },
+    "MQ-OATS-CON": {
+      "expected": [
+        { "asc": ":hasSiblingUncleAunt", "desc": ":hasSiblingNibling", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasSiblingUncleAunt", "desc": ":hasGrandchild", "ascDepth": "1", "descDepth": "2", "nature": ":LegalConvention" },
+        { "asc": ":hasSiblingUncleAunt", "desc": ":hasGreatGrandchild", "ascDepth": "1", "descDepth": "3", "nature": ":LegalConvention" },
+        { "asc": ":hasSiblingUncleAunt", "desc": ":hasChildInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasSiblingUncleAunt", "desc": ":hasNiblingInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasSiblingUncleAunt", "desc": ":hasStepChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGrandparent", "desc": ":hasSiblingNibling", "ascDepth": "2", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGrandparent", "desc": ":hasGrandchild", "ascDepth": "2", "descDepth": "2", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasGrandparent", "desc": ":hasGreatGrandchild", "ascDepth": "2", "descDepth": "3", "nature": ":LegalConvention" },
+        { "asc": ":hasGrandparent", "desc": ":hasChildInLaw", "ascDepth": "2", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGrandparent", "desc": ":hasNiblingInLaw", "ascDepth": "2", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGrandparent", "desc": ":hasStepChild", "ascDepth": "2", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGreatGrandparent", "desc": ":hasSiblingNibling", "ascDepth": "3", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGreatGrandparent", "desc": ":hasGrandchild", "ascDepth": "3", "descDepth": "2", "nature": ":LegalConvention" },
+        { "asc": ":hasGreatGrandparent", "desc": ":hasGreatGrandchild", "ascDepth": "3", "descDepth": "3", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasGreatGrandparent", "desc": ":hasChildInLaw", "ascDepth": "3", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGreatGrandparent", "desc": ":hasNiblingInLaw", "ascDepth": "3", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasGreatGrandparent", "desc": ":hasStepChild", "ascDepth": "3", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasParentInLaw", "desc": ":hasSiblingNibling", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasParentInLaw", "desc": ":hasGrandchild", "ascDepth": "1", "descDepth": "2", "nature": ":LegalConvention" },
+        { "asc": ":hasParentInLaw", "desc": ":hasGreatGrandchild", "ascDepth": "1", "descDepth": "3", "nature": ":LegalConvention" },
+        { "asc": ":hasParentInLaw", "desc": ":hasChildInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasParentInLaw", "desc": ":hasNiblingInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasParentInLaw", "desc": ":hasStepChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasUncleAuntInLaw", "desc": ":hasSiblingNibling", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasUncleAuntInLaw", "desc": ":hasGrandchild", "ascDepth": "1", "descDepth": "2", "nature": ":LegalConvention" },
+        { "asc": ":hasUncleAuntInLaw", "desc": ":hasGreatGrandchild", "ascDepth": "1", "descDepth": "3", "nature": ":LegalConvention" },
+        { "asc": ":hasUncleAuntInLaw", "desc": ":hasChildInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasUncleAuntInLaw", "desc": ":hasNiblingInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" },
+        { "asc": ":hasUncleAuntInLaw", "desc": ":hasStepChild", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasStepParent", "desc": ":hasSiblingNibling", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasStepParent", "desc": ":hasGrandchild", "ascDepth": "1", "descDepth": "2", "nature": ":LegalConvention" },
+        { "asc": ":hasStepParent", "desc": ":hasGreatGrandchild", "ascDepth": "1", "descDepth": "3", "nature": ":LegalConvention" },
+        { "asc": ":hasStepParent", "desc": ":hasChildInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasStepParent", "desc": ":hasNiblingInLaw", "ascDepth": "1", "descDepth": "1", "nature": ":LegalConvention" },
+        { "asc": ":hasStepParent", "desc": ":hasStepChild", "ascDepth": "1", "descDepth": "1", "nature": ":UniversalImpossibility" }
+      ]
+    },
+    "MQ-OATS-CAR": {
+      "expect_empty": true
+    }
+  }
+}

@@ -48,13 +48,7 @@
 ## Person class
 :Person a owl:Class ;
     rdfs:label "Person"@en ;
-    rdfs:comment "A person (base class for all individuals)."@en ;
-    rdfs:subClassOf [
-        a owl:Restriction ;
-        owl:onProperty :hasGender ;
-        owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-        owl:onClass :GenderIdentity
-    ] .
+    rdfs:comment "A person (base class for all individuals)."@en .
 
 ## Convenience classes : one-directional GCI pattern
 ## preserves firewall : FemalePerson does NOT force :hasGender inference

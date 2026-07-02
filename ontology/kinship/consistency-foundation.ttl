@@ -1,0 +1,144 @@
+@prefix : <http://example.org/kinship#> .
+@prefix kin: <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#---------------------------
+# Ontology header
+#---------------------------
+
+<http://example.org/kinship/consistency-foundation> a owl:Ontology ;
+    owl:versionIRI <http://example.org/kinship/consistency-foundation/1.0.0> ;
+    owl:versionInfo "1.0.0" ;
+    rdfs:label "Kinship Ontology – Consistency Foundation Module"@en ;
+    rdfs:comment """Vocabulary supporting automatic generation of consistency
+    control queries (IRR, RED, CON, CIR, PAR) from the ontology structure
+    rather than from a hand-maintained pattern catalog.
+    Does not annotate any property directly — see kinship-consistency.ttl
+    for the application of this vocabulary to the hasRelative hierarchy."""@en .
+
+#---------------------------
+# Assertion set classification (FATS / MATS / OATS)
+#---------------------------
+
+:assertionSet
+    a owl:AnnotationProperty ;
+    rdfs:label "assertion set"@en ;
+    rdfs:comment """Classifies a property by its role in the data lifecycle.
+    Drives query generation targeting: which named graph a generated query
+    runs against (asserted MATS graph, OATS quarantine graph), and which
+    properties trigger FATS rejection at ingestion.
+    Expected to be functional in practice — exactly one value per property —
+    though not enforced as an OWL cardinality restriction, since annotation
+    properties are not subject to cardinality reasoning in OWL 2 DL."""@en .
+
+:AssertionSetValue a owl:Class ;
+    rdfs:label "Assertion Set Value"@en .
+
+:FATS a :AssertionSetValue, owl:NamedIndividual ;
+    rdfs:label "Forbidden Assertion Type Set"@en ;
+    rdfs:comment "Must never appear in the ABox, under any circumstances."@en .
+
+:MATS a :AssertionSetValue, owl:NamedIndividual ;
+    rdfs:label "Minimal Assertion Type Set"@en ;
+    rdfs:comment "Non-inferable core from which the full kinship network is derived."@en .
+
+:OATS a :AssertionSetValue, owl:NamedIndividual ;
+    rdfs:label "Optional Assertion Type Set"@en ;
+    rdfs:comment "Normally inferred from MATS, occasionally asserted directly."@en .
+
+[] a owl:AllDifferent ;
+   owl:distinctMembers ( :FATS :MATS :OATS ) .
+
+#---------------------------
+# Generational position (depth + direction)
+#---------------------------
+
+:generationalDepth
+    a owl:AnnotationProperty ;
+    rdfs:label "generational depth"@en ;
+    rdfs:range xsd:nonNegativeInteger ;
+    rdfs:comment """Number of generations separating the subject and object
+    of a property, when that property encodes a vertical (ascending or
+    descending) kinship relation. Absent on horizontal relations (siblings,
+    cousins, partners, twins) and on properties with no fixed generational
+    distance.
+    Drives generic role-conflict detection: two properties asserted on the
+    same pair, with directions implying incompatible relative positions
+    (regardless of matching depth), signal a contradiction."""@en .
+
+:generationalDirection
+    a owl:AnnotationProperty ;
+    rdfs:label "generational direction"@en ;
+    rdfs:comment """Direction of the generational shift the property
+    encodes, relative to the subject. Used together with
+    :generationalDepth to detect role conflicts and cross-depth conflicts
+    generically, without enumerating every property pair by hand."""@en .
+
+:GenerationalDirectionValue a owl:Class ;
+    rdfs:label "Generational Direction Value"@en .
+
+:Ascending a :GenerationalDirectionValue, owl:NamedIndividual ;
+    rdfs:label "Ascending"@en ;
+    rdfs:comment "The object is an earlier generation relative to the subject."@en .
+
+:Descending a :GenerationalDirectionValue, owl:NamedIndividual ;
+    rdfs:label "Descending"@en ;
+    rdfs:comment "The object is a later generation relative to the subject."@en .
+
+[] a owl:AllDifferent ;
+   owl:distinctMembers ( :Ascending :Descending ) .
+
+#---------------------------
+# Disjointness nature (for diagnostic message generation)
+#---------------------------
+
+:disjointnessNature
+    a owl:AnnotationProperty ;
+    rdfs:label "disjointness nature"@en ;
+    rdfs:comment """Annotates an owl:propertyDisjointWith axiom (via RDF-star)
+    with the nature of the impossibility it expresses. Drives the severity
+    and wording of generated diagnostic messages, and signals which axioms
+    are candidates for relocation to an optional validation module when
+    historical or culturally diverse datasets are in scope.
+    For role-conflict pairs detectable via the generic generational-position
+    rule, this annotation is only required when the pair is NOT a true
+    owl:inverseOf pair — true inverse pairs are classified as
+    :UniversalImpossibility automatically, without needing this annotation,
+    since their generational positions are necessarily and permanently
+    incompatible regardless of context."""@en .
+
+:DisjointnessNatureValue a owl:Class ;
+    rdfs:label "Disjointness Nature Value"@en .
+
+:UniversalImpossibility a :DisjointnessNatureValue, owl:NamedIndividual ;
+    rdfs:label "Universal Impossibility"@en ;
+    rdfs:comment "True in every context, link type, and culture."@en .
+
+:LegalConvention a :DisjointnessNatureValue, owl:NamedIndividual ;
+    rdfs:label "Legal or Social Convention"@en ;
+    rdfs:comment """Holds under contemporary legal systems in most
+    jurisdictions, but not a strict impossibility — documented exceptions
+    exist in some historical or cultural contexts (e.g. consanguineous
+    marriage, royal lineages)."""@en .
+
+:ModellingConvention a :DisjointnessNatureValue, owl:NamedIndividual ;
+    rdfs:label "Modelling Convention"@en ;
+    rdfs:comment """A choice made by this ontology's design, unrelated to
+    biology or law — e.g. the requirement that a child/parent link be
+    declared exclusively as blood or adoptive, never both."""@en .
+
+:Definitional a :DisjointnessNatureValue, owl:NamedIndividual ;
+    rdfs:label "Definitional"@en ;
+    rdfs:comment """Follows directly from how one of the two properties is
+    defined — e.g. a step-sibling relation is defined as sharing no common
+    parent, making it definitionally incompatible with a sibling relation
+    on the same pair, independent of legal or cultural convention."""@en .
+
+[] a owl:AllDifferent ;
+   owl:distinctMembers (
+       :UniversalImpossibility :LegalConvention
+       :ModellingConvention :Definitional
+   ) .

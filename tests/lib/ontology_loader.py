@@ -12,7 +12,7 @@ scan_folder(folder)
 
 resolve_import_chain(entry_file, iri_to_file)
     Depth-first traversal of ``owl:imports`` starting at *entry_file*.
-    Returns an ordered ``List[Path]`` — imports first, entry last.
+    Returns an ordered ``List[Path]`` - imports first, entry last.
     Diamond dependencies are handled correctly (each file loaded once).
 
 load_chain_for(entry_file, folder)
@@ -32,6 +32,52 @@ _OWL_IMPORTS    = "http://www.w3.org/2002/07/owl#imports"
 _RDF_TYPE       = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 
+def _parse_ttl(file_path: str) -> "rdflib.Graph":
+    """Parse a Turtle file, falling back to stripping RDF-star if needed."""
+    import re
+    import warnings
+    from io import StringIO
+    import rdflib
+
+    g = rdflib.Graph()
+    _rdflib_logger = logging.getLogger("rdflib.term")
+    _prev_level = _rdflib_logger.level
+    try:
+        _rdflib_logger.setLevel(logging.ERROR)
+        g.parse(file_path, format="turtle")
+        return g
+    except Exception as orig_exc:
+        pass
+    finally:
+        _rdflib_logger.setLevel(_prev_level)
+
+    # Check for RDF-star syntax and retry without it
+    with open(file_path, "r", encoding="utf-8") as f:
+        raw = f.read()
+    if "<<" not in raw:
+        raise orig_exc
+
+    # Strip RDF-star quoted-triple statements
+    out_lines = []
+    inside_star = False
+    for line in raw.splitlines(keepends=True):
+        if inside_star:
+            if re.search(r"\.\s*$", line):
+                inside_star = False
+            continue
+        if re.match(r"\s*<<", line):
+            if not re.search(r"\.\s*$", line):
+                inside_star = True
+            continue
+        out_lines.append(line)
+
+    cleaned = "".join(out_lines)
+    g.parse(StringIO(cleaned), format="turtle")
+    log.info("_parse_ttl: %s parsed with RDF-star annotations stripped",
+             Path(file_path).name)
+    return g
+
+
 def scan_folder(folder: Path) -> Dict[str, Path]:
     """
     Scan all ``.ttl`` files in *folder* (non-recursive) and return a
@@ -46,10 +92,9 @@ def scan_folder(folder: Path) -> Dict[str, Path]:
     iri_to_file: Dict[str, Path] = {}
     for ttl in sorted(folder.glob("*.ttl")):
         try:
-            g = rdflib.Graph()
-            g.parse(str(ttl), format="turtle")
+            g = _parse_ttl(str(ttl))
         except Exception as exc:
-            log.warning("scan_folder: could not parse %s — %s", ttl.name, exc)
+            log.warning("scan_folder: could not parse %s - %s", ttl.name, exc)
             continue
 
         owl_onto = rdflib.URIRef(_OWL_ONTOLOGY)
@@ -104,10 +149,9 @@ def resolve_import_chain(
     _visited.add(entry_str)
 
     try:
-        g = rdflib.Graph()
-        g.parse(entry_str, format="turtle")
+        g = _parse_ttl(entry_str)
     except Exception as exc:
-        log.warning("resolve_import_chain: cannot parse %s — %s", entry_file.name, exc)
+        log.warning("resolve_import_chain: cannot parse %s - %s", entry_file.name, exc)
         return [entry_file.resolve()]
 
     owl_imports = rdflib.URIRef(_OWL_IMPORTS)
@@ -140,14 +184,14 @@ def scan_folders(folders: List[Path]) -> Dict[str, Path]:
     merged: Dict[str, Path] = {}
     for folder in folders:
         if not folder.is_dir():
-            log.warning("scan_folders: %s is not a directory — skipped", folder)
+            log.warning("scan_folders: %s is not a directory - skipped", folder)
             continue
         for iri, path in scan_folder(folder).items():
             if iri not in merged:
                 merged[iri] = path
             else:
                 log.warning(
-                    "scan_folders: duplicate IRI <%s> in %s — keeping %s",
+                    "scan_folders: duplicate IRI <%s> in %s - keeping %s",
                     iri, folder.name, merged[iri].name,
                 )
     return merged
@@ -169,7 +213,7 @@ def load_chain_for(entry_file: Path, folder_or_folders) -> List[Path]:
 
     Returns
     -------
-    Ordered ``List[Path]`` — base modules first, *entry_file* last.
+    Ordered ``List[Path]`` - base modules first, *entry_file* last.
     """
     if isinstance(folder_or_folders, list):
         iri_to_file = scan_folders(folder_or_folders)

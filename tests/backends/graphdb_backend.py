@@ -6,8 +6,11 @@ import platform
 import re
 import requests
 import time
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
+
+_URN_ASSERTED   = "urn:kinship:asserted"
+_URN_VALIDATION = "urn:kinship:validation"
 
 
 TBOX_GRAPH = "urn:tbox"
@@ -23,6 +26,7 @@ class GraphDBBackend:
         graphdb_url: str = "http://localhost:7200",
         repository_id: str = "family-ontology-test",
         ruleset: str = "owl2-rl",
+        shacl_shapes: Optional[str] = None,
     ):
         """
         Initialize GraphDB backend.
@@ -40,11 +44,16 @@ class GraphDBBackend:
             Repository name.
         ruleset:
             Inference ruleset (owl2-rl, rdfs, etc.).
+        shacl_shapes:
+            Optional path to a SHACL shapes TTL file.  When provided the
+            backend also loads ABox data into <urn:kinship:asserted> and
+            exposes run_shacl_validation().
         """
         if isinstance(ontology_files, str):
             ontology_files = [ontology_files]
         self.ontology_files: List[str] = ontology_files
         self.data_files: List[str] = data_files or []
+        self.shacl_shapes: Optional[str] = shacl_shapes
         self.graphdb_url = graphdb_url.rstrip('/')
         self.repository_id = repository_id
         self.ruleset = ruleset
@@ -62,7 +71,7 @@ class GraphDBBackend:
                     f"{self.graphdb_url}/rest/repositories", timeout=5,
                 )
                 if response.status_code == 200:
-                    print("✓ GraphDB is ready")
+                    print("[OK] GraphDB is ready")
                     return True
             except requests.exceptions.RequestException:
                 pass
@@ -70,7 +79,7 @@ class GraphDBBackend:
             if elapsed >= timeout:
                 break
             remaining = timeout - elapsed
-            print(f"  … no response ({remaining}s remaining)", flush=True)
+            print(f"  ... no response ({remaining}s remaining)", flush=True)
             time.sleep(2)
 
         self._print_graphdb_help()
@@ -114,7 +123,7 @@ class GraphDBBackend:
             print(f"Deleting repository: {self.repository_id}")
             response = requests.delete(f"{self.graphdb_url}/rest/repositories/{self.repository_id}")
             if response.status_code in [200, 204]:
-                print("✓ Repository deleted")
+                print("[OK] Repository deleted")
                 time.sleep(2)  # Wait for deletion to complete
             else:
                 raise RuntimeError(f"Failed to delete repository: {response.status_code} {response.text}")
@@ -160,7 +169,7 @@ class GraphDBBackend:
         )
         
         if response.status_code in [200, 201]:
-            print("✓ Repository created")
+            print("[OK] Repository created")
             time.sleep(2)  # Wait for creation to complete
         else:
             raise RuntimeError(f"Failed to create repository: {response.status_code} {response.text}")
@@ -188,7 +197,7 @@ class GraphDBBackend:
         )
 
         if response.status_code in [200, 204]:
-            print(f"✓ Loaded: {Path(file_path).name}")
+            print(f"[OK] Loaded: {Path(file_path).name}")
         else:
             raise RuntimeError(f"Failed to load file: {response.status_code} {response.text}")
 
@@ -221,10 +230,16 @@ class GraphDBBackend:
         for data_file in self.data_files:
             self._load_file(data_file)
 
+        # When SHACL shapes are declared, also load ABox into a named graph
+        # so that SPARQL constraints can use GRAPH <urn:kinship:asserted>.
+        if self.shacl_shapes:
+            for data_file in self.data_files:
+                self._load_file(data_file, context=_URN_ASSERTED)
+
         time.sleep(2)  # let reasoner settle
 
         stats = self.get_stats()
-        print(f"✓ Repository initialized with {stats.get('total_statements', '?')} statements")
+        print(f"[OK] Repository initialized with {stats.get('total_statements', '?')} statements")
     
     def execute_tbox_query(self, sparql_query: str) -> List[Dict[str, Any]]:
         """
@@ -319,7 +334,7 @@ class GraphDBBackend:
             raise RuntimeError(f"Update failed: {response.status_code} {response.text}")
 
         added = self._get_size() - before
-        print(f"✓ Update executed (+{added} triples)")
+        print(f"[OK] Update executed (+{added} triples)")
         return added
     
     def reset(self):
@@ -337,6 +352,83 @@ class GraphDBBackend:
             "url":              self.graphdb_url,
         }
     
+    def run_shacl_validation(self):
+        """Run SHACL validation via GraphDB bulk validation REST API.
+
+        Uploads the shapes file, receives the validation report as Turtle,
+        and stores it in <urn:kinship:validation>.
+        """
+        if not self.shacl_shapes or not Path(self.shacl_shapes).exists():
+            raise RuntimeError(
+                f"SHACL shapes file not found: {self.shacl_shapes}"
+            )
+
+        # Clear previous validation report
+        clear_query = f"CLEAR GRAPH <{_URN_VALIDATION}>"
+        headers = {'Content-Type': 'application/sparql-update'}
+        resp = requests.post(
+            f"{self.repo_url}/statements",
+            data=clear_query.encode('utf-8'),
+            headers=headers,
+        )
+        if resp.status_code not in [200, 204]:
+            print(f"  Warning: could not clear validation graph: {resp.status_code}")
+
+        # Bulk validation via file upload
+        print(f"Running SHACL validation with {self.shacl_shapes}...")
+        with open(self.shacl_shapes, 'rb') as f:
+            resp = requests.post(
+                f"{self.graphdb_url}/rest/repositories/"
+                f"{self.repository_id}/validate/file",
+                files={'file': (Path(self.shacl_shapes).name, f,
+                                'text/turtle')},
+                headers={'Accept': 'text/turtle'},
+            )
+
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"SHACL validation failed: {resp.status_code} "
+                f"{resp.text[:500]}"
+            )
+
+        # Replace GraphDB built-in rdf4j:nil with standard rdf:nil
+        # so the report can be stored as regular data.
+        # Handle both full-URI and prefixed forms.
+        report_turtle = resp.text
+        report_turtle = report_turtle.replace(
+            '<http://rdf4j.org/schema/rdf4j#nil>',
+            '<http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>')
+        report_turtle = re.sub(
+            r'\brdf4j:nil\b', 'rdf:nil', report_turtle)
+
+        # Store the validation report in <urn:kinship:validation>
+        store_resp = requests.post(
+            f"{self.repo_url}/statements",
+            data=report_turtle.encode('utf-8'),
+            headers={'Content-Type': 'text/turtle'},
+            params={'context': f'<{_URN_VALIDATION}>'},
+        )
+        if store_resp.status_code not in [200, 204]:
+            raise RuntimeError(
+                f"Failed to store validation report: {store_resp.status_code} "
+                f"{store_resp.text[:500]}"
+            )
+
+        # Count results
+        count_query = (
+            "PREFIX sh: <http://www.w3.org/ns/shacl#> "
+            f"SELECT (COUNT(?r) AS ?cnt) WHERE {{ "
+            f"GRAPH <{_URN_VALIDATION}> {{ "
+            f"?r a sh:ValidationResult . }} }}"
+        )
+        count_result = self.execute_query(count_query)
+        result_count = int(count_result[0].get('cnt', '0')) if count_result else 0
+        conforms = result_count == 0
+        status = "conforms" if conforms else f"{result_count} violation(s)"
+        print(f"  SHACL validation: {status}")
+
+        return conforms, result_count
+
     def cleanup(self):
         """Cleanup resources (optionally delete repository)."""
         # Keep repository for inspection unless explicitly deleted

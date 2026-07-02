@@ -1,0 +1,392 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#---------------------------
+# Ontology header
+#---------------------------
+
+<http://example.org/kinship/kinship-consistency> a owl:Ontology ;
+    owl:versionIRI <http://example.org/kinship/kinship-consistency/1.0.0> ;
+    owl:versionInfo "1.0.0" ;
+    owl:imports <http://example.org/kinship/consistency-foundation> ;
+    owl:imports <http://example.org/kinship/gendered> ;
+    rdfs:label "Kinship Ontology – Consistency Overview Module"@en ;
+    rdfs:comment """Single consolidated view of every consistency-relevant
+    declaration across all FATS/MATS/OATS-classified properties,
+    independent of their position in the property hierarchy:
+    assertion-set classification, generational position, property
+    disjointness, and cardinality restrictions.
+
+    Design: these annotations and axioms are kept separate from the
+    property definitions themselves (core-neutral, extended-neutral,
+    inlaw-neutral, blended-neutral, anchor-neutral) for the same reason
+    materialization.ttl is kept separate — they serve the consistency
+    control pipeline, not the semantic definition of the relationship.
+
+    Caution: some owl:propertyDisjointWith axioms and cardinality
+    restrictions listed here may already exist inline in the property
+    modules from earlier ontology iterations. A deduplication pass against
+    the current state of those files is required before this module is
+    integrated — duplicate declarations of the same axiom are harmless to
+    a reasoner, but should be removed from the property modules in favour
+    of this single source of truth."""@en .
+
+#============================================================
+# SECTION 1a — MATS Class assertion (Minimal Assertion Type Set)
+#============================================================
+
+:Person    :assertionSet :MATS .
+
+#============================================================
+# SECTION 1b — MATS properties (Minimal Assertion Type Set)
+#============================================================
+
+## Gender
+
+:hasGender :assertionSet :MATS .
+
+### Partnership
+
+:hasPartner      :assertionSet :MATS .
+:hasSpouse       :assertionSet :MATS .
+:hasCivilPartner :assertionSet :MATS .
+:hasLifePartner  :assertionSet :MATS .
+
+### Filiation (inclusive)
+
+:hasChild  :assertionSet :MATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasParent :assertionSet :MATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+
+### Filiation (blood)
+
+:hasBloodChild  :assertionSet :MATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasBloodParent :assertionSet :MATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+
+### Filiation (adoptive)
+
+:hasAdoptiveChild  :assertionSet :MATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasAdoptiveParent :assertionSet :MATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+
+### Twinship
+
+:hasTwin :assertionSet :MATS .
+#— Note: hasTwin is classified MATS even though its superproperty hasSibling
+#— is classified OATS below. assertionSet is per-property, not inherited via
+#— rdfs:subPropertyOf — twin status cannot be derived, it is always asserted.
+
+### Ceremonial
+
+:hasGodparent :assertionSet :MATS .
+:hasGodchild  :assertionSet :MATS .
+:hasWitness   :assertionSet :MATS .
+:hasWitnessed :assertionSet :MATS .
+
+#============================================================
+# SECTION 2 — OATS properties (Optional Assertion Type Set)
+#============================================================
+
+### Collateral — horizontal
+
+:hasSibling     :assertionSet :OATS .
+:hasHalfSibling :assertionSet :OATS .
+:hasCousin      :assertionSet :OATS .
+
+### Collateral — vertical (via sibling)
+
+:hasSiblingNibling   :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasSiblingUncleAunt :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+
+### Collateral — direct vertical, depth 2 and 3
+
+:hasGrandparent      :assertionSet :OATS ; :generationalDepth 2 ; :generationalDirection :Ascending .
+:hasGrandchild       :assertionSet :OATS ; :generationalDepth 2 ; :generationalDirection :Descending .
+:hasGreatGrandparent :assertionSet :OATS ; :generationalDepth 3 ; :generationalDirection :Ascending .
+:hasGreatGrandchild  :assertionSet :OATS ; :generationalDepth 3 ; :generationalDirection :Descending .
+
+### In-law — vertical
+
+:hasChildInLaw     :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasParentInLaw    :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+:hasNiblingInLaw   :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasUncleAuntInLaw :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+
+### In-law — horizontal
+
+:hasSiblingInLaw :assertionSet :OATS .
+
+### Step — vertical
+
+:hasStepChild  :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Descending .
+:hasStepParent :assertionSet :OATS ; :generationalDepth 1 ; :generationalDirection :Ascending .
+
+### Step — horizontal
+
+:hasStepSibling :assertionSet :OATS .
+
+#============================================================
+# SECTION 3a — FATS Class assertion (Forbiden Assertion Type Set)
+#============================================================
+
+:FemalePerson :assertionSet :FATS .
+:MalePerson   :assertionSet :FATS .
+
+#============================================================
+# SECTION 3b — FATS properties (Forbiden Assertion Type Set)
+#============================================================
+
+### Abstract superproperties
+
+:hasRelative           :assertionSet :FATS .
+:hasLineageRelative    :assertionSet :FATS .
+:hasCollateralRelative :assertionSet :FATS .
+:hasInLawRelative      :assertionSet :FATS .
+:hasStepRelative       :assertionSet :FATS .
+:hasCeremonialBond     :assertionSet :FATS .
+
+### Transitive closures
+
+:hasDescendant :assertionSet :FATS .
+:hasAncestor   :assertionSet :FATS .
+
+### Ambiguous generalizations
+
+:hasNibling   :assertionSet :FATS .
+:hasUncleAunt :assertionSet :FATS .
+
+### Gendered — parents and children
+
+:hasMother   :assertionSet :FATS .
+:hasFather   :assertionSet :FATS .
+:hasSon      :assertionSet :FATS .
+:hasDaughter :assertionSet :FATS .
+
+### Gendered — siblings
+
+:hasBrother :assertionSet :FATS .
+:hasSister  :assertionSet :FATS .
+
+### Gendered — partners
+
+:hasWife    :assertionSet :FATS .
+:hasHusband :assertionSet :FATS .
+
+### Gendered — extended lineage
+
+:hasGrandmother       :assertionSet :FATS .
+:hasGrandfather       :assertionSet :FATS .
+:hasGreatGrandmother  :assertionSet :FATS .
+:hasGreatGrandfather  :assertionSet :FATS .
+:hasNephew            :assertionSet :FATS .
+:hasNiece             :assertionSet :FATS .
+:hasUncle             :assertionSet :FATS .
+:hasAunt              :assertionSet :FATS .
+
+### Gendered — in-law
+
+:hasBrotherInLaw  :assertionSet :FATS .
+:hasSisterInLaw   :assertionSet :FATS .
+:hasSonInLaw      :assertionSet :FATS .
+:hasDaughterInLaw :assertionSet :FATS .
+:hasFatherInLaw   :assertionSet :FATS .
+:hasMotherInLaw   :assertionSet :FATS .
+
+### Gendered — step
+
+:hasStepMother    :assertionSet :FATS .
+:hasStepFather    :assertionSet :FATS .
+:hasStepSon       :assertionSet :FATS .
+:hasStepDaughter  :assertionSet :FATS .
+:hasStepBrother   :assertionSet :FATS .
+:hasStepSister    :assertionSet :FATS .
+
+### Gendered — ceremonial
+
+:hasGodfather :assertionSet :FATS .
+:hasGodmother :assertionSet :FATS .
+
+#============================================================
+# SECTION 4 — Property disjointness axioms (consolidated)
+#============================================================
+
+#— Generic role-conflict and cross-depth detection (the queries documented
+#— in consistency-query-generation.md) is driven by :generationalDepth and
+#— :generationalDirection above and does not require these axioms to be
+#— declared individually. They are declared here regardless, because:
+#—   (a) full OWL 2 DL reasoners (HermiT, FaCT++) can use them to detect
+#—       ABox inconsistency, though this marks the whole ontology
+#—       inconsistent rather than the specific individual — GraphDB's
+#—       OWL RL profile does not produce any queryable consequence from
+#—       these axioms at all; targeted post-inference detection on GraphDB
+#—       requires the dedicated SHACL shapes layer instead;
+#—   (b) :disjointnessNature, attached via RDF-star, documents severity
+#—       for pairs that are NOT true owl:inverseOf pairs.
+#— True owl:inverseOf pairs need no :disjointnessNature annotation — their
+#— nature is :UniversalImpossibility by construction (see
+#— consistency-foundation.ttl).
+
+### Universal impossibility — true inverse pairs (no annotation needed)
+
+:hasChild             owl:propertyDisjointWith :hasParent .
+:hasDescendant        owl:propertyDisjointWith :hasAncestor .
+:hasGrandparent       owl:propertyDisjointWith :hasGrandchild .
+:hasGreatGrandparent  owl:propertyDisjointWith :hasGreatGrandchild .
+:hasSiblingNibling    owl:propertyDisjointWith :hasSiblingUncleAunt .
+:hasChildInLaw        owl:propertyDisjointWith :hasParentInLaw .
+:hasNiblingInLaw      owl:propertyDisjointWith :hasUncleAuntInLaw .
+:hasStepChild         owl:propertyDisjointWith :hasStepParent .
+
+### Universal impossibility — cross-depth, same family
+
+:hasGrandparent      owl:propertyDisjointWith :hasGreatGrandchild .
+:hasGreatGrandparent owl:propertyDisjointWith :hasGrandchild .
+
+### Legal/social convention
+
+<< :hasSibling owl:propertyDisjointWith :hasChild >>
+    :disjointnessNature :LegalConvention .
+<< :hasSibling owl:propertyDisjointWith :hasParent >>
+    :disjointnessNature :LegalConvention .
+<< :hasSibling owl:propertyDisjointWith :hasSiblingInLaw >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasPartner owl:propertyDisjointWith :hasChild >>
+    :disjointnessNature :LegalConvention .
+<< :hasPartner owl:propertyDisjointWith :hasParent >>
+    :disjointnessNature :LegalConvention .
+<< :hasPartner owl:propertyDisjointWith :hasDescendant >>
+    :disjointnessNature :LegalConvention .
+<< :hasPartner owl:propertyDisjointWith :hasAncestor >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasSiblingInLaw owl:propertyDisjointWith :hasStepSibling >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasChildInLaw owl:propertyDisjointWith :hasChild >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasParentInLaw owl:propertyDisjointWith :hasParent >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasSiblingNibling owl:propertyDisjointWith :hasNiblingInLaw >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasSiblingUncleAunt owl:propertyDisjointWith :hasUncleAuntInLaw >>
+    :disjointnessNature :LegalConvention .
+
+:hasSibling           owl:propertyDisjointWith :hasChild, :hasParent, :hasSiblingInLaw .
+:hasPartner           owl:propertyDisjointWith :hasChild, :hasParent, :hasDescendant, :hasAncestor .
+:hasSiblingInLaw      owl:propertyDisjointWith :hasStepSibling .
+:hasChildInLaw        owl:propertyDisjointWith :hasChild .
+:hasParentInLaw       owl:propertyDisjointWith :hasParent .
+:hasSiblingNibling    owl:propertyDisjointWith :hasNiblingInLaw .
+:hasSiblingUncleAunt  owl:propertyDisjointWith :hasUncleAuntInLaw .
+
+### Definitional
+
+<< :hasSibling owl:propertyDisjointWith :hasStepSibling >>
+    :disjointnessNature :Definitional .
+
+:hasSibling owl:propertyDisjointWith :hasStepSibling .
+
+### Modelling convention
+
+<< :hasChild owl:propertyDisjointWith :hasStepChild >>
+    :disjointnessNature :Definitional .
+
+<< :hasParent owl:propertyDisjointWith :hasStepParent >>
+    :disjointnessNature :Definitional .
+
+<< :hasBloodChild owl:propertyDisjointWith :hasAdoptiveChild >>
+    :disjointnessNature :ModellingConvention .
+
+<< :hasBloodParent owl:propertyDisjointWith :hasAdoptiveParent >>
+    :disjointnessNature :ModellingConvention .
+
+:hasChild       owl:propertyDisjointWith :hasStepChild .
+:hasParent      owl:propertyDisjointWith :hasStepParent .
+:hasBloodChild  owl:propertyDisjointWith :hasAdoptiveChild .
+:hasBloodParent owl:propertyDisjointWith :hasAdoptiveParent .
+
+## hasChild/hasParent (MATS, non sous hasLineageRelative) vs OATS collatéraux
+
+<< :hasChild   owl:propertyDisjointWith :hasGrandparent >>
+    :disjointnessNature :UniversalImpossibility .
+
+<< :hasChild   owl:propertyDisjointWith :hasGreatGrandparent >>
+    :disjointnessNature :UniversalImpossibility .
+
+<< :hasParent  owl:propertyDisjointWith :hasGrandchild >>
+    :disjointnessNature :UniversalImpossibility .
+
+<< :hasParent  owl:propertyDisjointWith :hasGreatGrandchild >>
+    :disjointnessNature :UniversalImpossibility .
+
+<< :hasChild   owl:propertyDisjointWith :hasSiblingUncleAunt >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasChild   owl:propertyDisjointWith :hasParentInLaw >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasChild   owl:propertyDisjointWith :hasNiblingInLaw >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasChild   owl:propertyDisjointWith :hasUncleAuntInLaw >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasParent  owl:propertyDisjointWith :hasSiblingNibling >>
+    :disjointnessNature :LegalConvention .
+
+<< :hasParent  owl:propertyDisjointWith :hasChildInLaw >>
+    :disjointnessNature :LegalConvention .
+
+:hasChild   owl:propertyDisjointWith :hasGrandparent .        # child ⊥ grandparent
+:hasChild   owl:propertyDisjointWith :hasGreatGrandparent .
+:hasParent  owl:propertyDisjointWith :hasGrandchild .
+:hasParent  owl:propertyDisjointWith :hasGreatGrandchild .
+
+:hasChild   owl:propertyDisjointWith :hasSiblingUncleAunt .   # child ⊥ uncle/aunt-via-sibling
+:hasChild   owl:propertyDisjointWith :hasParentInLaw .        # child ⊥ parent-in-law
+:hasChild   owl:propertyDisjointWith :hasNiblingInLaw .       # child ⊥ nibling-in-law
+:hasChild   owl:propertyDisjointWith :hasUncleAuntInLaw .
+:hasParent  owl:propertyDisjointWith :hasSiblingNibling .     # parent ⊥ nibling-via-sibling
+:hasParent  owl:propertyDisjointWith :hasChildInLaw .
+
+#============================================================
+# SECTION 5 — Cardinality restrictions (consolidated)
+#============================================================
+
+### Biological parent count — universal impossibility
+
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasBloodParent ;
+    owl:maxCardinality "2"^^xsd:nonNegativeInteger
+] .
+
+### Biological parent gender uniqueness — universal impossibility
+
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasBloodParent ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass :MalePerson
+] .
+
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasBloodParent ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass :FemalePerson
+] .
+
+## Person gender assignement - universal impossibility
+
+:Person rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty :hasGender ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass :GenderIdentity
+] .

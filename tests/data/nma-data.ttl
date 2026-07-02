@@ -1,0 +1,185 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# nma-data.ttl
+# Test data for non-minimal assertion (NMA) validation (Gates 7-8).
+# Loaded alongside core-data.ttl.
+#
+# Naming: :nma_<category><variant>_<role>
+#   category = c1, c2, c3, c4
+#   variant  = a, b, c (positive cases), d, e (negative cases)
+#   role     = x, y, z (actors in the scenario)
+#
+# Each scenario is fully isolated — no cross-contamination with core-data
+# individuals or between scenarios.
+# =============================================================================
+
+# =============================================================================
+# C1 — Generational cycle via NMA transitive assertion
+# =============================================================================
+
+# --- C1-a: hasAncestor closes cycle with hasBloodChild ---
+#   Minimal: x is parent of y (x hasBloodChild y)
+#   NMA:     x hasAncestor y   → y is ancestor of x
+#   After materialization: x hasDescendant y AND y hasDescendant x → cycle
+:nma_c1a_x :hasGender :Male .
+:nma_c1a_y :hasGender :Female .
+:nma_c1a_x :hasBloodChild :nma_c1a_y .
+:nma_c1a_x :hasAncestor   :nma_c1a_y .
+
+# --- C1-b: hasDescendant closes cycle with hasBloodParent ---
+#   Minimal: x has blood parent y (x hasBloodParent y)
+#   NMA:     y hasDescendant x  — BUT the NMA goes wrong direction:
+#            y hasDescendant x AND y is parent of x → x hasAncestor y → y hasDescendant y? NO.
+#   Let's invert: minimal y hasBloodChild x → y hasDescendant x (materialized)
+#   NMA: x hasDescendant y → now x hasDescendant y AND y hasDescendant x → both cycle
+:nma_c1b_x :hasGender :Male .
+:nma_c1b_y :hasGender :Female .
+:nma_c1b_y :hasBloodChild :nma_c1b_x .
+:nma_c1b_x :hasDescendant :nma_c1b_y .
+
+# --- C1-c: hasGrandparent closes cycle with 2-generation blood chain ---
+#   Minimal: x → y → z (blood chain: x hasBloodChild y, y hasBloodChild z)
+#   So x is grandparent of z. NMA: x hasGrandparent z → z is grandparent of x
+#   After materialization: x hasDescendant z AND z hasDescendant x → cycle
+:nma_c1c_x :hasGender :Male .
+:nma_c1c_y :hasGender :Female .
+:nma_c1c_z :hasGender :Male .
+:nma_c1c_x :hasBloodChild :nma_c1c_y .
+:nma_c1c_y :hasBloodChild :nma_c1c_z .
+:nma_c1c_x :hasGrandparent :nma_c1c_z .
+
+# --- C1-d: negative — redundant but no cycle ---
+#   Minimal: x hasBloodChild y → x hasDescendant y (materialized, same direction)
+#   NMA:     x hasDescendant y — same direction, just redundant (RED), no cycle
+:nma_c1d_x :hasGender :Male .
+:nma_c1d_y :hasGender :Female .
+:nma_c1d_x :hasBloodChild :nma_c1d_y .
+:nma_c1d_x :hasDescendant :nma_c1d_y .
+
+
+# =============================================================================
+# C2 — Role conflict: NMA sibling/lineage vs minimal filiation
+# =============================================================================
+
+# --- C2-a: hasSibling conflicts with hasChild ---
+#   Minimal: x hasChild y (x is parent of y)
+#   NMA:     x hasSibling y → hasSibling disjoint with hasChild
+:nma_c2a_x :hasGender :Male .
+:nma_c2a_y :hasGender :Female .
+:nma_c2a_x :hasBloodChild :nma_c2a_y .
+:nma_c2a_x :hasSibling     :nma_c2a_y .
+
+# --- C2-b: hasHalfSibling conflicts with hasBloodParent ---
+#   Minimal: x hasBloodParent y (y is parent of x)
+#   NMA:     x hasHalfSibling y → hasSibling (super) disjoint with hasParent
+:nma_c2b_x :hasGender :Male .
+:nma_c2b_y :hasGender :Female .
+:nma_c2b_x :hasBloodParent  :nma_c2b_y .
+:nma_c2b_x :hasHalfSibling  :nma_c2b_y .
+
+# --- C2-c: hasDescendant + hasAncestor on same pair (bidirectional conflict) ---
+#   Both NMA: x hasDescendant y AND x hasAncestor y
+#   hasDescendant disjoint with hasAncestor
+:nma_c2c_x :hasGender :Male .
+:nma_c2c_y :hasGender :Female .
+:nma_c2c_x :hasDescendant :nma_c2c_y .
+:nma_c2c_x :hasAncestor   :nma_c2c_y .
+
+# --- C2-d: negative — hasSibling NMA with no filiation ---
+#   NMA: x hasSibling y — no hasChild/hasParent between them
+#   No conflict — valid NMA
+:nma_c2d_x :hasGender :Male .
+:nma_c2d_y :hasGender :Female .
+:nma_c2d_x :hasSibling :nma_c2d_y .
+
+
+# =============================================================================
+# C3 — Partnership in lineage: NMA lineage vs minimal partnership
+# =============================================================================
+
+# --- C3-a: hasSibling conflicts with hasSpouse ---
+#   Minimal: x hasSpouse y
+#   NMA:     x hasSibling y → sibling + spouse conflict
+:nma_c3a_x :hasGender :Male .
+:nma_c3a_y :hasGender :Female .
+:nma_c3a_x :hasSpouse  :nma_c3a_y .
+:nma_c3a_x :hasSibling :nma_c3a_y .
+
+# --- C3-b: hasAncestor conflicts with hasLifePartner ---
+#   Minimal: x hasLifePartner y
+#   NMA:     x hasAncestor y → ancestor + partner conflict
+:nma_c3b_x :hasGender :Male .
+:nma_c3b_y :hasGender :Female .
+:nma_c3b_x :hasLifePartner :nma_c3b_y .
+:nma_c3b_x :hasAncestor    :nma_c3b_y .
+
+# --- C3-c: hasCousin conflicts with hasCivilPartner ---
+#   Minimal: x hasCivilPartner y
+#   NMA:     x hasCousin y → cousin + civil partner conflict
+:nma_c3c_x :hasGender :Male .
+:nma_c3c_y :hasGender :Female .
+:nma_c3c_x :hasCivilPartner :nma_c3c_y .
+:nma_c3c_x :hasCousin       :nma_c3c_y .
+
+# --- C3-d: hasGrandchild conflicts with hasLifePartner ---
+#   Minimal: x hasLifePartner y
+#   NMA:     x hasGrandchild y → grandchild + partner conflict
+:nma_c3d_x :hasGender :Male .
+:nma_c3d_y :hasGender :Female .
+:nma_c3d_x :hasLifePartner :nma_c3d_y .
+:nma_c3d_x :hasGrandchild  :nma_c3d_y .
+
+# --- C3-e: negative — hasCousin NMA with no partnership ---
+#   NMA: x hasCousin y — no partnership between them
+#   No conflict — valid NMA
+:nma_c3e_x :hasGender :Male .
+:nma_c3e_y :hasGender :Female .
+:nma_c3e_x :hasCousin :nma_c3e_y .
+
+
+# =============================================================================
+# C4 — Gendered NMA type conflict
+# =============================================================================
+
+# --- C4-a: hasMother targets Male person ---
+#   NMA: x hasMother y, but y is Male
+:nma_c4a_x :hasGender :Female .
+:nma_c4a_y :hasGender :Male .
+:nma_c4a_x :hasMother :nma_c4a_y .
+
+# --- C4-b: hasFather targets Female person ---
+#   NMA: x hasFather y, but y is Female
+:nma_c4b_x :hasGender :Male .
+:nma_c4b_y :hasGender :Female .
+:nma_c4b_x :hasFather :nma_c4b_y .
+
+# --- C4-c: hasWife targets Male person ---
+#   NMA: x hasWife y, but y is Male
+:nma_c4c_x :hasGender :Female .
+:nma_c4c_y :hasGender :Male .
+:nma_c4c_x :hasWife :nma_c4c_y .
+
+# --- C4-d: hasBrother targets Female person ---
+#   NMA: x hasBrother y, but y is Female
+:nma_c4d_x :hasGender :Male .
+:nma_c4d_y :hasGender :Female .
+:nma_c4d_x :hasBrother :nma_c4d_y .
+
+# --- C4-e: hasGrandfather targets Female person ---
+#   NMA: x hasGrandfather y, but y is Female
+:nma_c4e_x :hasGender :Male .
+:nma_c4e_y :hasGender :Female .
+:nma_c4e_x :hasGrandfather :nma_c4e_y .
+
+# --- C4-f: negative — hasMother targets Female person (correct) ---
+#   NMA: x hasMother y, y is Female → no conflict
+:nma_c4f_x :hasGender :Male .
+:nma_c4f_y :hasGender :Female .
+:nma_c4f_x :hasMother :nma_c4f_y .
+
+# --- C4-g: negative — hasFather targets person with no declared gender ---
+#   NMA: x hasFather y, y has no gender → no conflict (no FILTER match)
+:nma_c4g_x :hasGender :Male .
+:nma_c4g_y a :Person .
+:nma_c4g_x :hasFather :nma_c4g_y .

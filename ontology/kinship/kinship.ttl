@@ -24,7 +24,7 @@
 <http://example.org/kinship> a owl:Ontology ;
     owl:versionInfo "1.0.0" ;
     owl:versionIRI <http://example.org/kinship/1.0.0> ;
-    owl:imports <http://example.org/kinship/gender-specific> ;
+    owl:imports <http://example.org/kinship/gendered> ;
     rdfs:label "Modular Kinship Ontology"@en ;
     rdfs:comment """A comprehensive ontology for modeling complex family relationships
         including biological, adoptive, blended, and in-law relationships.

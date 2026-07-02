@@ -18,3 +18,6 @@ Desktop.ini
 
 # Docker volumes
 graphdb-data/
+
+# working docs
+doc/.bakup/

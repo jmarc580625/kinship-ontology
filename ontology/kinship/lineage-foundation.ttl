@@ -52,6 +52,26 @@
     rdfs:comment """Superproperty of all consanguine relations. 
     Design: subproperties carry no crossing flags — position in this hierarchy is sufficient documentation."""@en .
 
+:hasCollateralRelative a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:label "has collateral relative"@en ;
+    rdfs:comment """Superproperty of all indirect consanguine relations."""@en .
+
+## In-law-specific properties
+:hasInLawRelative a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "has in-law relative"@en ;
+    rdfs:comment "General in-law relationship"@en;
+    :crossesAlliance true .
+
+## Step-specific properties
+:hasStepRelative a owl:ObjectProperty ;
+    rdfs:subPropertyOf :hasRelative ;
+    rdfs:label "has step relative"@en ;
+    rdfs:comment "General step relationship"@en ;
+    :crossesAlliance true .
+
+## Ceremonial-specific properties
 :hasCeremonialBond a owl:ObjectProperty ;
     rdfs:subPropertyOf :hasRelative ;
     rdfs:label "has ceremonial bond"@en ;

@@ -31,7 +31,8 @@
     rdfs:comment "Person for whom one acts as godparent, as established at baptism or equivalent ceremony. Usage: assert directly, or derive from :hasEventGodparent (kinship-events module) when the birth event is recorded."@en ;
     rdfs:domain :Person ;
     rdfs:range :Person ;
-    owl:inverseOf :hasGodparent .
+    owl:inverseOf :hasGodparent ;
+    a owl:AsymmetricProperty .
 
 ### godparent
 :hasGodparent a owl:ObjectProperty ;
@@ -41,7 +42,8 @@
     Usage: assert directly, or derive from :hasEventGodparent (kinship-events module) when the birth event is recorded."""@en ;
     rdfs:domain :Person ;
     rdfs:range :Person ;
-    owl:inverseOf :hasGodchild .
+    owl:inverseOf :hasGodchild ;
+    a owl:AsymmetricProperty .
 
 ### witness
 :hasWitness a owl:ObjectProperty ;
@@ -50,7 +52,9 @@
     rdfs:comment """Person who witnessed a marriage on behalf of one specific spouse. 
     Usage: asserted directly — the event-level :hasWitnessed does not identify which spouse's witness."""@en ;
     rdfs:domain :Person ;
-    rdfs:range :Person .
+    rdfs:range :Person ;
+    owl:inverseOf :hasWitnessed ;
+    a owl:AsymmetricProperty .
 
 ### witnessed
 :hasWitnessed a owl:ObjectProperty ;
@@ -59,4 +63,5 @@
     rdfs:comment "Person whose marriage was formally witnessed at a ceremony."@en ;
     rdfs:domain :Person ;
     rdfs:range :Person ;
-    owl:inverseOf :hasWitness .
+    owl:inverseOf :hasWitness ;
+    a owl:AsymmetricProperty .

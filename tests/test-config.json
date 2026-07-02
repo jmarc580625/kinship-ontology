@@ -14,7 +14,11 @@
     "owl-consistency-control",
     "owl-consistency-control-on-core-data",
     "negative",
-    "boundary"
+    "boundary",
+    "consistency-meta-queries-fats",
+    "consistency-meta-queries-mats",
+    "consistency-meta-queries-oats",
+    "cycle-detection"
   ],
   "graphdb": {
     "url": "http://localhost:7200",

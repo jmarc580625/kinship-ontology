@@ -1,0 +1,39 @@
+{
+  "module": "cycle-detection",
+  "ontologies": [
+    "ontology/kinship/core-neutral.ttl"
+  ],
+  "data_files": [
+    "tests/data/consistency-control-data.ttl"
+  ],
+  "abox_only": true,
+  "description": "Filiation cycle detection via NetworkX digraph analysis.",
+  "tests": {
+    "CYC-ALL": {
+      "test_function": "lib.cycle_detector:report_all_cycles_for_test",
+      "expected_comparison_function": "_compare_cycles",
+      "expected": [
+        {"cycle": [":cir1a_x", ":cir1a_y"]},
+        {"cycle": [":cir1b_x", ":cir1b_y"]},
+        {"cycle": [":cir2f1_x", ":cir2f1_z", ":cir2f1_y"]},
+        {"cycle": [":cir2f2_x", ":cir2f2_y", ":cir2f2_z"]},
+        {"cycle": [":cir2f3_x", ":cir2f3_z", ":cir2f3_y"]},
+        {"cycle": [":cir2f4_x", ":cir2f4_z", ":cir2f4_y"]},
+        {"cycle": [":cir2f5_x", ":cir2f5_z", ":cir2f5_y"]},
+        {"cycle": [":cir2f6_x", ":cir2f6_z", ":cir2f6_y"]},
+        {"cycle": [":cir2f7_x", ":cir2f7_z", ":cir2f7_y"]},
+        {"cycle": [":cir2f8_x", ":cir2f8_y", ":cir2f8_z"]},
+        {"cycle": [":con2a_x", ":con2a_y"]},
+        {"cycle": [":con2b_x", ":con2b_y"]},
+        {"cycle": [":con2c_x", ":con2c_y"]},
+        {"cycle": [":con2d_x", ":con2d_y"]},
+        {"cycle": [":irr_c1"]},
+        {"cycle": [":irr_c2"]},
+        {"cycle": [":irr_c3"]},
+        {"cycle": [":irr_p1"]},
+        {"cycle": [":irr_p2"]},
+        {"cycle": [":irr_p3"]}
+      ]
+    }
+  }
+}

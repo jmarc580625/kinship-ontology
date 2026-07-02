@@ -1,0 +1,57 @@
+{
+  "module": "consistency-meta-queries-fats",
+  "query_library": "tests/definitions/queries/consistency-meta-queries.json",
+  "ontologies": [
+    "ontology/kinship/kinship-consistency.ttl"
+  ],
+  "data_files": [],
+  "description": "Meta-query validation — FATS assertion set membership. TBox only, no ABox data.",
+  "tests": {
+    "MQ-FATS-MEMBERS": {
+      "expected": [
+        { "p": ":MalePerson" },
+        { "p": ":FemalePerson" },
+        { "p": ":hasRelative" },
+        { "p": ":hasLineageRelative" },
+        { "p": ":hasCollateralRelative" },
+        { "p": ":hasInLawRelative" },
+        { "p": ":hasStepRelative" },
+        { "p": ":hasCeremonialBond" },
+        { "p": ":hasDescendant" },
+        { "p": ":hasAncestor" },
+        { "p": ":hasNibling" },
+        { "p": ":hasUncleAunt" },
+        { "p": ":hasMother" },
+        { "p": ":hasFather" },
+        { "p": ":hasSon" },
+        { "p": ":hasDaughter" },
+        { "p": ":hasBrother" },
+        { "p": ":hasSister" },
+        { "p": ":hasWife" },
+        { "p": ":hasHusband" },
+        { "p": ":hasGrandmother" },
+        { "p": ":hasGrandfather" },
+        { "p": ":hasGreatGrandmother" },
+        { "p": ":hasGreatGrandfather" },
+        { "p": ":hasNephew" },
+        { "p": ":hasNiece" },
+        { "p": ":hasUncle" },
+        { "p": ":hasAunt" },
+        { "p": ":hasBrotherInLaw" },
+        { "p": ":hasSisterInLaw" },
+        { "p": ":hasSonInLaw" },
+        { "p": ":hasDaughterInLaw" },
+        { "p": ":hasFatherInLaw" },
+        { "p": ":hasMotherInLaw" },
+        { "p": ":hasStepMother" },
+        { "p": ":hasStepFather" },
+        { "p": ":hasStepSon" },
+        { "p": ":hasStepDaughter" },
+        { "p": ":hasStepBrother" },
+        { "p": ":hasStepSister" },
+        { "p": ":hasGodfather" },
+        { "p": ":hasGodmother" }
+      ]
+    }
+  }
+}

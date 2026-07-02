@@ -26,10 +26,11 @@
 
 ### child-in-law
 :hasChildInLaw a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasRelative ;
+    rdfs:subPropertyOf :hasInLawRelative ;
     rdfs:label "Has Child-In-Law"@en ;
     rdfs:comment "Partner of one's child — crosses one alliance link."@en ;
     owl:inverseOf :hasParentInLaw ;
+    a owl:AsymmetricProperty ;
     owl:propertyChainAxiom (
         :hasChild
         :hasPartner
@@ -38,15 +39,16 @@
 
 ### parent-in-law
 :hasParentInLaw a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasRelative ;
+    rdfs:subPropertyOf :hasInLawRelative ;
     rdfs:label "Has Parent-In-Law"@en ;
     rdfs:comment "Parent of one's partner — crosses one alliance link."@en ;
     owl:inverseOf :hasChildInLaw ;
+    a owl:AsymmetricProperty ;
     :crossesAlliance true .
 
 ### sibling-in-law
 :hasSiblingInLaw a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasRelative ;
+    rdfs:subPropertyOf :hasInLawRelative ;
     rdfs:label "Has Sibling-In-Law"@en ;
     rdfs:comment "Partner's sibling, or sibling's partner — union of two distinct paths covering both directions."@en ;
     :MaterializationReason :UnionPatternLimitation ;
@@ -68,10 +70,3 @@
     """ ;
     rdf:type owl:SymmetricProperty, owl:IrreflexiveProperty ;
     :crossesAlliance true .
-
-#---------------------------
-# In-Law property disjointness axioms
-#---------------------------
-
-:hasChildInLaw owl:propertyDisjointWith :hasChild .
-:hasParentInLaw owl:propertyDisjointWith :hasParent .

@@ -337,20 +337,20 @@ class MaterializationManager:
                     added = self.backend.execute_update(sparql)
                     record["triples_added"] = int(added) if isinstance(added, (int, float)) else 0
                     record["status"] = "ok"
-                    log.info("✓ %-30s  +%d triples", local_name, record["triples_added"])
+                    log.info("[OK] %-30s  +%d triples", local_name, record["triples_added"])
 
                     if callable(_reasoner):
                         inferred = _reasoner()
                         record["reasoning_triggered"] = True
                         record["inferred_triples"] = int(inferred) if isinstance(inferred, (int, float)) else 0
                         log.info(
-                            "  ↳ reasoning pass after :%s  +%d inferred",
+                            "  -> reasoning pass after :%s  +%d inferred",
                             local_name,
                             record["inferred_triples"],
                         )
                 except Exception as exc:
                     record["status"] = f"error: {exc}"
-                    log.error("✗ %-30s  %s", local_name, exc)
+                    log.error("[FAIL] %-30s  %s", local_name, exc)
 
             results.append(record)
             if callable(on_script):

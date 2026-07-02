@@ -31,17 +31,20 @@
     rdfs:subPropertyOf :hasLineageRelative ;
     rdfs:label "Has Grandchild"@en ;
     rdfs:comment "Child's child — inclusive (biological or adoptive at each step)."@en ;
+    owl:inverseOf :hasGrandparent ;
+    a owl:AsymmetricProperty ;
     owl:propertyChainAxiom (
         :hasChild
         :hasChild
     ) .
 
-### grandparent (OWL inverse of hasGrandchild)
+### grandparent
 :hasGrandparent a owl:ObjectProperty ;
     rdfs:subPropertyOf :hasLineageRelative ;
     rdfs:label "Has Grandparent"@en ;
     rdfs:comment "Parent's parent — inclusive (biological or adoptive at each step)."@en ;
-    owl:inverseOf :hasGrandchild .
+    owl:inverseOf :hasGrandchild ;
+    a owl:AsymmetricProperty .
 
 ### great-grandchild 
 :hasGreatGrandchild a owl:ObjectProperty ;
@@ -52,14 +55,16 @@
         :hasGrandchild
         :hasChild
     ) ;
-    owl:inverseOf :hasGreatGrandparent .
+    owl:inverseOf :hasGreatGrandparent ;
+    a owl:AsymmetricProperty .
 
 ### great-grandparent
 :hasGreatGrandparent a owl:ObjectProperty ;
     rdfs:subPropertyOf :hasLineageRelative ;
     rdfs:label "Has Great-Grandparent"@en ;
     rdfs:comment "Parent's grandparent — inclusive (biological or adoptive at each step)."@en ;
-    owl:inverseOf :hasGreatGrandchild .
+    owl:inverseOf :hasGreatGrandchild ;
+    a owl:AsymmetricProperty .
 
 ## Indirect lineage relationships
 
@@ -68,10 +73,11 @@
     rdfs:subPropertyOf :hasRelative ;
     rdfs:label "Has Nibling"@en ;
     rdfs:comment """Niece or nephew — superproperty covering both :hasSiblingNibling (via own siblings) and :hasNiblingInLaw (via partner's siblings)."""@en ;
-    owl:inverseOf :hasUncleAunt .
+    owl:inverseOf :hasUncleAunt ;
+    a owl:AsymmetricProperty .
 
 :hasSiblingNibling a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasNibling, :hasLineageRelative ;
+    rdfs:subPropertyOf :hasNibling, :hasCollateralRelative ;
     rdfs:label "Has Sibling's Nibling"@en ;
     rdfs:comment """Nibling through siblings (biological or adoptive). 
     Design: distinguished from :hasNiblingInLaw by path, not by blood."""@en ;
@@ -79,10 +85,11 @@
         :hasSibling
         :hasChild
     ) ;
-    owl:inverseOf :hasSiblingUncleAunt .
+    owl:inverseOf :hasSiblingUncleAunt ;
+    a owl:AsymmetricProperty .
 
 :hasNiblingInLaw a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasNibling ;
+    rdfs:subPropertyOf :hasNibling, :hasInLawRelative ;
     rdfs:label "Has Nibling In Law"@en ;
     rdfs:comment """Child of a partner's sibling — no blood or adoptive link to ego."""@en ;
     owl:propertyChainAxiom (
@@ -91,6 +98,7 @@
         :hasChild
     ) ;
     owl:inverseOf :hasUncleAuntInLaw ;
+    a owl:AsymmetricProperty ;
     :crossesAlliance true .
 
 ### uncle/aunt
@@ -98,24 +106,27 @@
     rdfs:subPropertyOf :hasRelative ;
     rdfs:label "Has Uncle/Aunt"@en ;
     rdfs:comment """Parent's sibling or partner's parent's sibling — superproperty covering :hasSiblingUncleAunt and :hasUncleAuntInLaw."""@en ;
-    owl:inverseOf :hasNibling .
+    owl:inverseOf :hasNibling ;
+    a owl:AsymmetricProperty .
 
 :hasSiblingUncleAunt a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasUncleAunt, :hasLineageRelative ;
+    rdfs:subPropertyOf :hasUncleAunt, :hasCollateralRelative ;
     rdfs:label "Has Sibling Uncle/Aunt"@en ;
     rdfs:comment """Parent's sibling (biological or adoptive at each step)."""@en ;
-    owl:inverseOf :hasSiblingNibling .
+    owl:inverseOf :hasSiblingNibling ;
+    a owl:AsymmetricProperty .
 
 :hasUncleAuntInLaw a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasUncleAunt ;
+    rdfs:subPropertyOf :hasUncleAunt, :hasInLawRelative ;
     rdfs:label "Has Uncle/Aunt In Law"@en ;
     rdfs:comment """Partner's parent's sibling — no blood or adoptive link to ego."""@en ;
     owl:inverseOf :hasNiblingInLaw ;
+    a owl:AsymmetricProperty ;
     :crossesAlliance true .
 
 ### cousin
 :hasCousin a owl:ObjectProperty ;
-    rdfs:subPropertyOf :hasLineageRelative ;
+    rdfs:subPropertyOf :hasCollateralRelative ;
     rdfs:label "Has Cousin"@en ;
     rdfs:comment "Child of a parent's sibling — inclusive (biological or adoptive at each step)."@en ;
     owl:propertyChainAxiom (

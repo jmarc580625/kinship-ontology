@@ -97,7 +97,7 @@ class BaseTestRunner:
             
             # Compare results
             if actual_sorted == expected_sorted:
-                print("✅ PASS")
+                print("[PASS] PASS")
                 
                 # Show results in verbose mode
                 if self.verbose:
@@ -114,7 +114,7 @@ class BaseTestRunner:
                 }
                 return True
             else:
-                print("❌ FAIL")
+                print("[FAIL] FAIL")
                 print("\nExpected:")
                 print(json.dumps(expected, indent=2))
                 print("\nActual:")
@@ -134,7 +134,7 @@ class BaseTestRunner:
                 return False
                 
         except Exception as e:
-            error_msg = f"❌ ERROR: {str(e)}"
+            error_msg = f"[FAIL] ERROR: {str(e)}"
             print(error_msg)
             self.results['failed'] += 1
             self.results['details'][test_id] = {
@@ -146,35 +146,35 @@ class BaseTestRunner:
     
     def _analyze_failure(self, test_id: str, expected: List, actual: List):
         """Analyze test failure and provide suggestions."""
-        print("\n" + "─"*80)
+        print("\n" + "-"*80)
         print("FAILURE ANALYSIS:")
         
         if len(actual) == 0 and len(expected) > 0:
-            print("❌ No results returned (expected results)")
+            print("[FAIL] No results returned (expected results)")
             print("→ Possible causes:")
-            print("  • Property chain axiom not supported by reasoner")
-            print("  • Inference not triggered")
-            print("  • Missing data")
+            print("  * Property chain axiom not supported by reasoner")
+            print("  * Inference not triggered")
+            print("  * Missing data")
             print("\n→ Suggested action:")
-            print(f"  • Create materialization query for this relationship")
-            print(f"  • Check ontology axioms for test {test_id}")
+            print(f"  * Create materialization query for this relationship")
+            print(f"  * Check ontology axioms for test {test_id}")
         elif len(actual) < len(expected):
-            print(f"❌ Partial results ({len(actual)}/{len(expected)})")
+            print(f"[FAIL] Partial results ({len(actual)}/{len(expected)})")
             missing = [e for e in expected if e not in actual]
             print("→ Missing results:")
             for m in missing:
-                print(f"  • {m}")
+                print(f"  * {m}")
         elif len(actual) > len(expected):
-            print(f"❌ Too many results ({len(actual)}/{len(expected)})")
+            print(f"[FAIL] Too many results ({len(actual)}/{len(expected)})")
             extra = [a for a in actual if a not in expected]
             print("→ Extra results:")
             for e in extra:
-                print(f"  • {e}")
+                print(f"  * {e}")
         else:
-            print("❌ Results differ in content")
+            print("[FAIL] Results differ in content")
             print("→ Check value formatting and URI prefixes")
         
-        print("─"*80)
+        print("-"*80)
     
     def run_tests(self, test_ids: Optional[List[str]] = None) -> Dict:
         """
@@ -222,15 +222,15 @@ class BaseTestRunner:
         print("="*80)
         print(f"Backend: {self.backend.get_stats().get('backend', 'unknown')}")
         print(f"Total:   {self.results['total']}")
-        print(f"Passed:  {self.results['passed']} ✅")
-        print(f"Failed:  {self.results['failed']} ❌")
+        print(f"Passed:  {self.results['passed']} [PASS]")
+        print(f"Failed:  {self.results['failed']} [FAIL]")
         
         if self.results['failed'] > 0:
             print("\nFailed tests:")
             for test_id, details in self.results['details'].items():
                 if details['status'] in ['FAIL', 'ERROR']:
                     test_name = details.get('name', '')
-                    print(f"  • {test_id} ({test_name}): {details.get('message', 'Unknown error')}")
+                    print(f"  * {test_id} ({test_name}): {details.get('message', 'Unknown error')}")
         
         print("="*80)
     

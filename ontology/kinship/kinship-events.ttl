@@ -14,8 +14,8 @@
     owl:versionIRI <http://example.org/kinship/kinship-events/1.0.0> ;
     owl:versionInfo "1.0.0" ;
     owl:imports <http://example.org/kinship/temporal> ;
-    owl:imports <http://example.org/kinship/gender> ;
-    owl:imports <http://example.org/kinship/materialization> ;
+    owl:imports <http://example.org/kinship/gendered> ;
+    owl:imports <http://example.org/kinship/materialization-foundation> ;
     rdfs:label "Kinship Ontology – Kinship Events Module"@en ;
     rdfs:comment "Kinship events and temporal relationships for kinship facts."@en ;
     dc:creator "Kinship Ontology Project" ;
