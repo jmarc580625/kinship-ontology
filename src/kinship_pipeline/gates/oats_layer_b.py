@@ -1,13 +1,17 @@
 """OATS Layer B: validate internal OATS consistency.
 
 Same severity model as the MATS Gate:
-  violation → pipeline ends with "violation" status.
-  warning   → pipeline ends with "warning" status.
+  violation -- pipeline ends with "violation" status.
+  warning   -- pipeline ends with "warning" status.
+
+CIR2 (generational cycles) is detected by the graph-algorithm cycle
+detector rather than a SPARQL query.
 """
 
 from typing import Any, Dict, List
 
 from ..backends.base import KinshipBackend
+from ..cycle_detector import detect_generational_cycles
 from ..query_generator import QueryGenerator, QUERY_SEVERITY
 
 
@@ -26,14 +30,15 @@ class OatsLayerB:
         {
           "status":     "ok" | "warning" | "violation",
           "graph":      <graph URI>,
-          "violations": [ {query, count, triples}, ... ],
-          "warnings":   [ {query, count, triples}, ... ],
+          "violations": [ {query, count, ...}, ... ],
+          "warnings":   [ {query, count, ...}, ... ],
         }
         """
         queries = self.query_generator.generate_oats(data_graph=oats_graph)
         violations: List[Dict[str, Any]] = []
         warnings:   List[Dict[str, Any]] = []
 
+        # SPARQL-based detection families.
         for name, sparql in queries.items():
             results = self.backend.execute_query(sparql)
             if not results:
@@ -43,6 +48,13 @@ class OatsLayerB:
                 warnings.append(entry)
             else:
                 violations.append(entry)
+
+        # Graph-algorithm cycle detection (Q-CIR2).
+        cir2 = detect_generational_cycles(
+            self.backend, self.query_generator, oats_graph, "OATS",
+        )
+        if cir2["count"] > 0:
+            violations.append(cir2)
 
         if violations:
             status = "violation"

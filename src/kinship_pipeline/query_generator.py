@@ -74,7 +74,11 @@ class QueryGenerator:
     # ------------------------------------------------------------------
 
     def generate_mats(self, data_graph: str = "urn:kinship:asserted") -> Dict[str, str]:
-        """Generate all MATS gate queries."""
+        """Generate all MATS gate queries.
+
+        Note: Q-CIR2 (generational cycles) is handled by the graph-algorithm
+        cycle detector and is not included here.
+        """
         return {
             "Q-IRR": self._irr_query(self._cache["mats_irr"], data_graph),
             "Q-RED1": self._red1_query(self._cache["mats_red1"], data_graph),
@@ -89,14 +93,17 @@ class QueryGenerator:
             "Q-TWI1": self._twi1_query(data_graph),
             "Q-TWI2": self._twi2_query(data_graph),
             "Q-CIR1": self._cir1_query(self._cache["mats_cir1"], data_graph),
-            "Q-CIR2": self._cir2_query(data_graph),
             "Q-PAR1": self._par1_query(data_graph),
             "Q-PAR2": self._par2_query(data_graph),
             "Q-PAR3": self._par3_query(data_graph),
         }
 
     def generate_oats(self, data_graph: str = "urn:kinship:oats") -> Dict[str, str]:
-        """Generate all OATS Layer B queries."""
+        """Generate all OATS Layer B queries.
+
+        Note: Q-CIR2 (generational cycles) is handled by the graph-algorithm
+        cycle detector and is not included here.
+        """
         return {
             "Q-IRR": self._irr_query(self._cache["oats_irr"], data_graph),
             "Q-RED1": self._red1_query(self._cache["oats_red1"], data_graph),
@@ -104,7 +111,6 @@ class QueryGenerator:
             "Q-RED3": self._red3_query(self._cache["oats_red3"], data_graph),
             "Q-CON": self._con2_query(self._cache["oats_asc"], self._cache["oats_desc"], data_graph),
             "Q-CIR1": self._cir1_query(self._cache["oats_cir1"], data_graph),
-            "Q-CIR2": self._cir2_query(data_graph),
             "Q-PAR1": self._par1_query(data_graph),
             "Q-PAR2": self._par2_query(data_graph),
             "Q-PAR3": self._par3_query(data_graph),

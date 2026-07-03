@@ -287,8 +287,13 @@ def _print_violation_gate(label: str, r: Dict[str, Any]) -> None:
         return
     for v in violations:
         print(f"  {v['query']}  -- {v['count']} violation(s):")
-        for t in v.get("triples", []):
-            print(_fmt_row(t))
+        if "cycles" in v:
+            for cyc in v["cycles"]:
+                path = " -> ".join(_short(n) for n in cyc)
+                print(f"    cycle: {path}")
+        else:
+            for t in v.get("triples", []):
+                print(_fmt_row(t))
     for w in warnings:
         print(f"  {w['query']}  -- {w['count']} warning(s) [redundancy]:")
         for t in w.get("triples", []):

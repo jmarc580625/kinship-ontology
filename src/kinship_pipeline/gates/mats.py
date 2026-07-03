@@ -2,15 +2,20 @@
 
 Each query family carries a severity defined in ``QUERY_SEVERITY``:
 
-  violation — the gate sets status "violation" and the pipeline blocks.
-  warning   — the gate sets status "warning" (RED families); pipeline continues.
+  violation -- the gate sets status "violation" and the pipeline blocks.
+  warning   -- the gate sets status "warning" (RED families); pipeline continues.
 
 The report separates the two into ``violations`` and ``warnings`` lists.
+
+CIR2 (generational cycles) is detected by the graph-algorithm cycle
+detector rather than a SPARQL query.  Its report entry carries ``cycles``
+(list of node-path lists) instead of ``triples``.
 """
 
 from typing import Any, Dict, List
 
 from ..backends.base import KinshipBackend
+from ..cycle_detector import detect_generational_cycles
 from ..query_generator import QueryGenerator, QUERY_SEVERITY
 
 
@@ -29,14 +34,15 @@ class MatsGate:
         {
           "status":     "ok" | "warning" | "violation",
           "graph":      <graph URI>,
-          "violations": [ {query, count, triples}, ... ],   # blocking families
-          "warnings":   [ {query, count, triples}, ... ],   # RED families
+          "violations": [ {query, count, ...}, ... ],   # blocking families
+          "warnings":   [ {query, count, ...}, ... ],   # RED families
         }
         """
         queries = self.query_generator.generate_mats(data_graph=asserted_graph)
         violations: List[Dict[str, Any]] = []
         warnings:   List[Dict[str, Any]] = []
 
+        # SPARQL-based detection families.
         for name, sparql in queries.items():
             results = self.backend.execute_query(sparql)
             if not results:
@@ -46,6 +52,13 @@ class MatsGate:
                 warnings.append(entry)
             else:
                 violations.append(entry)
+
+        # Graph-algorithm cycle detection (Q-CIR2).
+        cir2 = detect_generational_cycles(
+            self.backend, self.query_generator, asserted_graph, "MATS",
+        )
+        if cir2["count"] > 0:
+            violations.append(cir2)
 
         if violations:
             status = "violation"

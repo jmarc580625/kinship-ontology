@@ -24,7 +24,31 @@
         "Q-TWI1": { "count": 13 },
         "Q-TWI2": { "count": 6  },
         "Q-CIR1": { "count": 2  },
-        "Q-CIR2": { "count": 24 },
+        "Q-CIR2": {
+          "count": 20,
+          "cycles": [
+            [":cir1a_x", ":cir1a_y"],
+            [":cir1b_x", ":cir1b_y"],
+            [":cir2f1_x", ":cir2f1_z", ":cir2f1_y"],
+            [":cir2f2_x", ":cir2f2_y", ":cir2f2_z"],
+            [":cir2f3_x", ":cir2f3_z", ":cir2f3_y"],
+            [":cir2f4_x", ":cir2f4_z", ":cir2f4_y"],
+            [":cir2f5_x", ":cir2f5_z", ":cir2f5_y"],
+            [":cir2f6_x", ":cir2f6_z", ":cir2f6_y"],
+            [":cir2f7_x", ":cir2f7_z", ":cir2f7_y"],
+            [":cir2f8_x", ":cir2f8_y", ":cir2f8_z"],
+            [":con2a_x", ":con2a_y"],
+            [":con2b_x", ":con2b_y"],
+            [":con2c_x", ":con2c_y"],
+            [":con2d_x", ":con2d_y"],
+            [":irr_c1"],
+            [":irr_c2"],
+            [":irr_c3"],
+            [":irr_p1"],
+            [":irr_p2"],
+            [":irr_p3"]
+          ]
+        },
         "Q-PAR1": { "count": 4  },
         "Q-PAR2": { "count": 8  },
         "Q-PAR3": { "count": 2  }

@@ -141,6 +141,39 @@ def _check_triples(label: str,
     return None
 
 
+def _canonicalise_cycle(cycle: List[str]) -> tuple:
+    """Rotate cycle so the smallest node is first, then return as tuple."""
+    if not cycle:
+        return tuple(cycle)
+    normed = [_norm(n) for n in cycle]
+    min_idx = normed.index(min(normed))
+    return tuple(normed[min_idx:] + normed[:min_idx])
+
+
+def _check_cycles(label: str,
+                  actual_cycles: List[List[str]],
+                  expected_cycles: List[List[str]]) -> Optional[str]:
+    """Rotation-invariant, order-insensitive comparison of cycle lists."""
+    if expected_cycles == []:
+        if actual_cycles:
+            return f"{label}: expected empty, got {len(actual_cycles)} cycle(s)"
+        return None
+    actual_canon  = sorted(_canonicalise_cycle(c) for c in actual_cycles)
+    expect_canon  = sorted(_canonicalise_cycle(c) for c in expected_cycles)
+    if actual_canon != expect_canon:
+        act_set = set(actual_canon)
+        exp_set = set(expect_canon)
+        missing  = sorted(exp_set - act_set)
+        spurious = sorted(act_set - exp_set)
+        parts = []
+        if missing:
+            parts.append(f"missing {len(missing)}: {list(missing[:3])}")
+        if spurious:
+            parts.append(f"spurious {len(spurious)}: {list(spurious[:3])}")
+        return f"{label}: " + "; ".join(parts)
+    return None
+
+
 def _check_violation_map(label: str,
                          actual_list: List[Dict],
                          expected_map: Dict[str, Any]) -> List[str]:
@@ -175,6 +208,14 @@ def _check_violation_map(label: str,
                 f"{label}[{q_name}].triples",
                 actual_entry.get("triples", []),
                 q_exp["triples"],
+            )
+            if err:
+                errors.append(err)
+        if "cycles" in q_exp:
+            err = _check_cycles(
+                f"{label}[{q_name}].cycles",
+                actual_entry.get("cycles", []),
+                q_exp["cycles"],
             )
             if err:
                 errors.append(err)
