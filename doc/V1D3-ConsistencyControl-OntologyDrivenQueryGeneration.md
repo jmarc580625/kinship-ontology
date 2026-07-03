@@ -141,18 +141,105 @@ kin:OATS    property    kin:hasCousin ... (all OATS properties)
 
 ### How the generator uses this inventory
 
-The `?kind` column drives which detection template is applied:
+The `?kind` column drives which detection template is applied, and the
+`?set` column drives both detection and routing — the inventory is the
+single source that governs the complete lifecycle of an incoming triple:
 
-| `?kind` | Used as | Detection template |
-| --- | --- | --- |
-| `property` | predicate — `?s ?r ?o` | all query families (IRR, RED, CON, CIR, CAR) |
-| `class` | type object — `?s a ?r` | FATS rejection only (class assertion checking) |
+| `?set` | `?kind` | Detection | Routing destination |
+| --- | --- | --- | --- |
+| `kin:FATS` | `property` | FATS rejection query | discard |
+| `kin:FATS` | `class` | FATS rejection query | discard |
+| `kin:MATS` | `property` | MATS Gate meta-queries | `<urn:kinship:asserted>` (A) |
+| `kin:MATS` | `class` | — (class assertions not further validated) | `<urn:kinship:asserted>` (A) |
+| `kin:OATS` | `property` | OATS Gate meta-queries | `<urn:kinship:oats>` (O) |
 
-Properties with `?kind = "class"` only appear in the FATS Gate generated
-query — they generate the `?s a ?c` branch of the UNION. No other query
-family applies to class assertions: a class cannot be irreflexive, have an
-inverse, or carry a cardinality restriction in the sense that is relevant
-to this pipeline.
+The routing queries generated from the inventory are executed by the
+ingestion pipeline against `<urn:kinship:intake>` after the FATS rejection
+pass. Each routing query moves triples from the intake graph to the
+appropriate target graph.
+
+**Routing to A — MATS triples:**
+
+```sparql
+INSERT {
+    GRAPH <urn:kinship:asserted> { ?s ?p ?o }
+}
+WHERE {
+    GRAPH <urn:kinship:intake> {
+        ?s ?p ?o .
+        {
+            VALUES ?p { <substituted MATS properties> }
+        }
+        UNION
+        {
+            VALUES ?o { <substituted MATS classes> }
+            FILTER(?p = rdf:type)
+        }
+    }
+}
+```
+
+**Routing to O — OATS triples:**
+
+```sparql
+INSERT {
+    GRAPH <urn:kinship:oats> { ?s ?p ?o }
+}
+WHERE {
+    GRAPH <urn:kinship:intake> {
+        ?s ?p ?o .
+        {
+            VALUES ?p { <substituted OATS properties> }
+        }
+        UNION
+        {
+            ## Class assertions routed to O.
+            ## VALUES ?c { } is valid SPARQL 1.1 — produces zero bindings
+            ## when the OATS class list is empty, making this branch a no-op.
+            ## The branch structure is retained so that adding a class to
+            ## kin:assertionSet kin:OATS in kinship-consistency.ttl
+            ## immediately takes effect without modifying the query template.
+            VALUES ?c { <substituted OATS classes, possibly empty> }
+            FILTER(?p = rdf:type)
+            ?s a ?c .
+        }
+    }
+}
+```
+
+> **Empty VALUES robustness.** All routing and detection queries generated
+> by this framework are designed to function correctly when any substituted
+> `VALUES` list is empty. An empty list produces zero bindings for that
+> branch, making it a no-op without invalidating the query. This ensures
+> that adding a new class or property to any assertion set in
+> `kinship-consistency.ttl` takes effect immediately at the next generator
+> run, with no structural change to the query templates.
+
+Both routing queries are generated from the same inventory result —
+`VALUES` lists for MATS properties, MATS classes, OATS properties,
+and OATS classes (empty for OATS classes when no OATS classes exist)
+are substituted directly from the `?set`-filtered inventory results
+(see per-set filtered queries above). No separate routing table is
+maintained.
+
+After the two routing inserts, `<urn:kinship:intake>` should contain only
+FATS triples (already flagged by the rejection query) and any triple
+whose predicate is not classified in the ontology. The latter case signals
+a property absent from `kinship-consistency.ttl` — a maintenance gap to
+be flagged rather than silently routed.
+
+```sparql
+## Unclassified triple detection — maintenance diagnostic
+SELECT ?s ?p ?o WHERE {
+    GRAPH <urn:kinship:intake> { ?s ?p ?o }
+    FILTER NOT EXISTS {
+        GRAPH <urn:kinship:ontology> {
+            ?p kin:assertionSet ?any .
+        }
+    }
+    FILTER(?p != rdf:type)   ## rdf:type handled via class assertionSet
+}
+```
 
 ### Per-set filtered queries
 

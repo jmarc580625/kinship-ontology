@@ -1,0 +1,209 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix kin:  <http://example.org/kinship#> .
+@prefix ksh:  <http://example.org/kinship/shapes#> .
+
+#---------------------------
+# Ontology header
+#---------------------------
+
+<http://example.org/kinship/kinship-shapes> a owl:Ontology ;
+    owl:versionIRI <http://example.org/kinship/kinship-shapes/1.0.0> ;
+    owl:versionInfo "1.0.0" ;
+    owl:imports <http://example.org/kinship/consistency-foundation> ;
+    rdfs:label "Kinship Ontology – SHACL Gate Shapes"@en ;
+    rdfs:comment """Post-inference SHACL validation shapes for the kinship
+    ontology consistency control pipeline. These shapes constitute the SHACL
+    Gate, the final safety-net stage of the pipeline, operating on the full
+    materialized closure MO (<urn:kinship:full>) after Materialization Step 2.
+
+    Role: safety net, not primary consistency mechanism. The FATS, MATS, and
+    OATS SPARQL gates are the authoritative detection path. A positive result
+    here signals either a gap in Step 1 materialization configuration, a bug
+    in a materialization script, or a depth-limited pattern that escaped the
+    SPARQL catalog. See Document 2bis for the full specification.
+
+    Target graph: <urn:kinship:full> (MO = closure(A ∪ validated O)).
+    Report graph: <urn:kinship:validation> (sh:ValidationResult triples).
+
+    Shapes NOT included here:
+    - RED shapes: post-inference, inferred triples matching RED patterns are
+      correct by construction — including them would produce false positives.
+    - FATS shapes: FATS properties are rejected at ingestion and must not
+      reach MO. Their presence would signal a FATS Gate failure, which is
+      outside the scope of post-inference validation.
+    - TWI1 shapes: no OWL axiom supports the common-parent constraint
+      post-inference; detection is exclusive to Q-MATS-TWI1/TWI2 in the
+      MATS Gate.
+    - NMA shapes (original design): superseded by the OATS Gate Layers A
+      and B, which cover the same conflicts pre-inference with greater
+      precision."""@en .
+
+#---------------------------
+# Shared prefix declarations for SPARQL-based shapes
+#---------------------------
+
+ksh:KinPrefixes
+    sh:declare [
+        sh:prefix    "kin" ;
+        sh:namespace "http://example.org/kinship#"^^xsd:anyURI
+    ] ;
+    sh:declare [
+        sh:prefix    "ksh" ;
+        sh:namespace "http://example.org/kinship/shapes#"^^xsd:anyURI
+    ] .
+
+#---------------------------
+# ksh:PostCycleShape
+# Residual category: R1 (interaction visible only in MO) and R2 (script error)
+#
+# Detects self-ancestry via hasDescendant or hasAncestor in MO.
+# Root cause diagnosis:
+#   - Cycle in blood parent chain in A  → Q-MATS-CIR1/CIR2 gap
+#   - Cycle involving OATS assertions   → Layer A or B gap, or incomplete Step 1
+#   - No cycle in source data          → materialization script bug
+#---------------------------
+
+ksh:PostCycleShape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "POST-CYCLE" ;
+    sh:description """Self-ancestry via materialized hasDescendant or hasAncestor.
+        Root cause: undetected generational cycle in source data (gap in MATS
+        or OATS gate), or incorrect derivation by a materialization script."""@en ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message """POST-CYCLE: {$this} is its own ancestor or descendant
+            in the materialized closure. Check source data for generational
+            cycles (Q-MATS-CIR1, Q-MATS-CIR2) and materialization scripts."""@en ;
+        sh:select """
+            SELECT $this WHERE {
+                GRAPH <urn:kinship:full> {
+                    { $this kin:hasDescendant $this . } UNION
+                    { $this kin:hasAncestor   $this . }
+                }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+# ksh:PostGenderShape
+# Residual category: R2 (script error)
+#
+# Detects simultaneous MalePerson and FemalePerson class membership in MO.
+# Root cause diagnosis:
+#   - Conflicting hasGender assertions in A  → Q-MATS-CON3 gap
+#   - Correct hasGender but wrong GCI inference → materialization script bug
+#
+# Note: sh:disjoint between MalePerson and FemalePerson could also express
+# this, but a SPARQL constraint is used for consistency with the rest of the
+# catalog and for richer diagnostic messages.
+#---------------------------
+
+ksh:PostGenderShape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "POST-GENDER" ;
+    sh:description """Person simultaneously classified as MalePerson and
+        FemalePerson in the materialized closure.
+        Root cause: conflicting hasGender assertions not blocked by Q-MATS-CON3,
+        or incorrect GCI inference in a materialization script."""@en ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message """POST-GENDER: {$this} is classified as both MalePerson
+            and FemalePerson. Check hasGender assertions in the asserted graph
+            (Q-MATS-CON3) and the GCI materialization script."""@en ;
+        sh:select """
+            SELECT $this WHERE {
+                GRAPH <urn:kinship:full> {
+                    $this a kin:MalePerson .
+                    $this a kin:FemalePerson .
+                }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+# ksh:PostPartnerLineageShape
+# Residual category: R3 (depth-limited SPARQL pattern)
+#
+# Detects partnership between individuals linked as ancestor/descendant in MO.
+# Q-MATS-PAR1 covers depth 1, Q-MATS-PAR2 covers depth 2.
+# This shape covers all depths using the materialized closure — no depth limit.
+# Root cause diagnosis:
+#   - Depth <= 2: gap in Q-MATS-PAR1 or Q-MATS-PAR2
+#   - Depth > 2:  expected residual correctly handled here
+#---------------------------
+
+ksh:PostPartnerLineageShape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "POST-PARTNER-LINEAGE" ;
+    sh:description """Person is both partner and lineage relative (ancestor or
+        descendant) of the same individual in the materialized closure.
+        Covers all depths. Depth <= 2 indicates a gap in Q-MATS-PAR1 or
+        Q-MATS-PAR2. Depth > 2 is the expected residual for this shape."""@en ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message """POST-PARTNER-LINEAGE: {$this} is both partner and
+            lineage relative of {?partner}. Verify partnership and filiation
+            assertions in the source data."""@en ;
+        sh:select """
+            SELECT $this ?partner WHERE {
+                GRAPH <urn:kinship:full> {
+                    VALUES ?prop {
+                        kin:hasPartner kin:hasSpouse
+                        kin:hasCivilPartner kin:hasLifePartner
+                    }
+                    $this ?prop ?partner .
+                    { $this kin:hasDescendant ?partner . } UNION
+                    { $this kin:hasAncestor   ?partner . }
+                }
+            }
+        """ ;
+    ] .
+
+#---------------------------
+# ksh:PostSiblingParentShape
+# Residual category: R1 (cycle interaction visible only in MO) and R2 (script error)
+#
+# Detects sibling cascade: an undetected generational cycle causes hasSibling
+# materialization to produce an individual as both sibling and parent/child of
+# the same person, violating hasSibling ⊥ hasChild / hasSibling ⊥ hasParent
+# declared in kinship-consistency.ttl.
+# Root cause diagnosis:
+#   - Cycle in A       → Q-MATS-CIR1 or Q-MATS-CIR2 gap
+#   - OATS involved    → Layer A or B gap
+#   - No cycle in data → hasSibling materialization script bug
+#---------------------------
+
+ksh:PostSiblingParentShape a sh:NodeShape ;
+    sh:targetClass kin:Person ;
+    sh:severity sh:Violation ;
+    sh:name "POST-SIBLING-PARENT" ;
+    sh:description """Person is simultaneously sibling and parent/child of
+        the same individual in the materialized closure. Signals a sibling
+        cascade from an undetected generational cycle, or a hasSibling
+        materialization script bug."""@en ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes ksh:KinPrefixes ;
+        sh:message """POST-SIBLING-PARENT: {$this} is both sibling and
+            parent or child of {?other}. Check source data for generational
+            cycles and the hasSibling materialization script."""@en ;
+        sh:select """
+            SELECT $this ?other WHERE {
+                GRAPH <urn:kinship:full> {
+                    $this kin:hasSibling ?other .
+                    { $this kin:hasParent ?other . } UNION
+                    { $this kin:hasChild  ?other . }
+                }
+            }
+        """ ;
+    ] .

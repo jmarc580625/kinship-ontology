@@ -28,6 +28,6 @@ class MatsGate:
                 report["violations"].append({
                     "query": name,
                     "count": len(results),
-                    "sample": results[:5],
+                    "triples": results,
                 })
         return report

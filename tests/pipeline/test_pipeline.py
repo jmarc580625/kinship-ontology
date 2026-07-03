@@ -61,7 +61,10 @@ class PipelineIntegrationTest(unittest.TestCase):
         fats = self.report["stages"]["FATS"]
         self.assertEqual(fats["status"], "ok")
         self.assertEqual(fats["fats_rejected"], 0)
+        self.assertEqual(len(fats["fats_property_triples"]), 0)
+        self.assertEqual(len(fats["fats_class_triples"]), 0)
         self.assertEqual(fats["unclassified_rejected"], 0)
+        self.assertEqual(len(fats["unclassified_triples"]), 0)
         self.assertEqual(fats["oats_count"], 0)
         self.assertGreater(fats["mats_count"], 0)
 
@@ -70,7 +73,13 @@ class PipelineIntegrationTest(unittest.TestCase):
         self.assertEqual(self.report["status"], "violation")
         mats = self.report["stages"]["MATS"]
         self.assertEqual(mats["status"], "violation")
-        self.assertGreater(len(mats["violations"]), 0)
+        violations = mats["violations"]
+        self.assertGreater(len(violations), 0)
+        # Each violation entry must have full triples list, not just a sample
+        for v in violations:
+            self.assertIn("triples", v)
+            self.assertIsInstance(v["triples"], list)
+            self.assertEqual(v["count"], len(v["triples"]))
 
     def test_materialization_creates_mats_closure(self):
         """MATS materialization produces a non-empty closure graph."""
@@ -129,7 +138,10 @@ class GraphDBPipelineIntegrationTest(unittest.TestCase):
         fats = self.report["stages"]["FATS"]
         self.assertEqual(fats["status"], "ok")
         self.assertEqual(fats["fats_rejected"], 0)
+        self.assertEqual(len(fats["fats_property_triples"]), 0)
+        self.assertEqual(len(fats["fats_class_triples"]), 0)
         self.assertEqual(fats["unclassified_rejected"], 0)
+        self.assertEqual(len(fats["unclassified_triples"]), 0)
         self.assertEqual(fats["oats_count"], 0)
         self.assertGreater(fats["mats_count"], 0)
 
@@ -137,7 +149,11 @@ class GraphDBPipelineIntegrationTest(unittest.TestCase):
         self.assertEqual(self.report["status"], "violation")
         mats = self.report["stages"]["MATS"]
         self.assertEqual(mats["status"], "violation")
-        self.assertGreater(len(mats["violations"]), 0)
+        violations = mats["violations"]
+        self.assertGreater(len(violations), 0)
+        for v in violations:
+            self.assertIn("triples", v)
+            self.assertEqual(v["count"], len(v["triples"]))
 
     def test_materialization_creates_mats_closure(self):
         self.assertGreater(
