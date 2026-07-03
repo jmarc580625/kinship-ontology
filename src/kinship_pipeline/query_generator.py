@@ -29,6 +29,31 @@ _OWL = "http://www.w3.org/2002/07/owl#"
 _RDFS = "http://www.w3.org/2000/01/rdf-schema#"
 
 
+# Severity of each query family.
+# "violation" → pipeline blocks on this gate.
+# "warning"   → reported but pipeline continues.
+QUERY_SEVERITY: Dict[str, str] = {
+    "Q-IRR":  "violation",
+    "Q-RED1": "warning",
+    "Q-RED2": "warning",
+    "Q-RED3": "warning",
+    "Q-CON":  "violation",   # OATS generic CON
+    "Q-CON1": "violation",
+    "Q-CON2": "violation",
+    "Q-CON3": "violation",
+    "Q-CON4": "violation",
+    "Q-CAR1": "violation",
+    "Q-CAR2": "violation",
+    "Q-TWI1": "violation",
+    "Q-TWI2": "violation",
+    "Q-CIR1": "violation",
+    "Q-CIR2": "violation",
+    "Q-PAR1": "violation",
+    "Q-PAR2": "violation",
+    "Q-PAR3": "violation",
+}
+
+
 class QueryGenerator:
     """Generate validation queries from the kinship TBox."""
 

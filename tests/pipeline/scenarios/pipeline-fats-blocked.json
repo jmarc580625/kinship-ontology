@@ -1,0 +1,29 @@
+{
+  "scenario": "pipeline-fats-blocked",
+  "description": "All intake triples are FATS-classified; nothing routed to MATS or OATS. Pipeline blocked.",
+  "intake_file": "tests/data/fats-only-data.ttl",
+
+  "expected": {
+    "FATS": {
+      "status": "blocked",
+      "mats_count": 0,
+      "oats_count": 0,
+      "fats_rejected": 4,
+      "unclassified_rejected": 0,
+      "fats_property_triples": [
+        { "s": ":p1", "p": ":hasAncestor", "o": ":p2" },
+        { "s": ":p1", "p": ":hasMother",   "o": ":p3" }
+      ],
+      "fats_class_triples": [
+        { "s": ":p4", "p": "rdf:type", "o": ":MalePerson"   },
+        { "s": ":p5", "p": "rdf:type", "o": ":FemalePerson" }
+      ],
+      "unclassified_triples": []
+    },
+    "MATS":                 { "status": "skipped" },
+    "MATS_MATERIALIZATION": { "status": "skipped" },
+    "OATS_LAYER_A":         { "status": "skipped" },
+    "OATS_LAYER_B":         { "status": "skipped" },
+    "FULL_MATERIALIZATION":  { "status": "skipped" }
+  }
+}

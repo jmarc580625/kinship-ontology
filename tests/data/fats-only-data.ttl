@@ -1,0 +1,16 @@
+@prefix :    <http://example.org/kinship#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# =============================================================================
+# fats-only-data.ttl
+#
+# Every triple uses a FATS-classified predicate or class.
+# No MATS or OATS triples are present.
+# Purpose: test the FATS "blocked" path — after the FATS gate rejects all
+# triples, mats_count = 0 and oats_count = 0, so the pipeline cannot continue.
+# =============================================================================
+
+:p1  :hasAncestor  :p2 .       # FATS: transitive closure
+:p1  :hasMother    :p3 .       # FATS: gendered derived property
+:p4  rdf:type      :MalePerson .    # FATS: gendered class
+:p5  rdf:type      :FemalePerson .  # FATS: gendered class

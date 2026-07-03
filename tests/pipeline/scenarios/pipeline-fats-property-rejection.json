@@ -1,0 +1,35 @@
+{
+  "scenario": "pipeline-fats-property-rejection",
+  "description": "FATS property predicates (hasAncestor, hasMother) are rejected; remaining MATS triples pass.",
+  "intake_file": "tests/data/fats-rejection-data.ttl",
+
+  "expected": {
+    "FATS": {
+      "status": "warning",
+      "mats_count_min": 1,
+      "oats_count": 0,
+      "fats_rejected": 4,
+      "unclassified_rejected": 1,
+      "fats_property_triples": [
+        { "p": ":hasAncestor", "s": ":fats_p1", "o": ":fats_p2" },
+        { "p": ":hasMother",   "s": ":fats_p1", "o": ":fats_p3" }
+      ],
+      "fats_class_triples": [
+        { "s": ":fats_c1", "p": "rdf:type", "o": ":MalePerson"   },
+        { "s": ":fats_c2", "p": "rdf:type", "o": ":FemalePerson" }
+      ],
+      "unclassified_triples": [
+        { "s": ":fats_u1", "p": ":hasUnknownRelation", "o": ":fats_u2" }
+      ]
+    },
+    "MATS": {
+      "status": "ok",
+      "violations": {},
+      "warnings": {}
+    },
+    "MATS_MATERIALIZATION": { "status": "ok" },
+    "OATS_LAYER_A":         { "status": "ok" },
+    "OATS_LAYER_B":         { "status": "ok" },
+    "FULL_MATERIALIZATION":  { "status": "ok" }
+  }
+}

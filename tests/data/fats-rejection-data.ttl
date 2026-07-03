@@ -1,0 +1,53 @@
+@prefix :    <http://example.org/kinship#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# =============================================================================
+# fats-rejection-data.ttl
+#
+# Minimal dataset for testing FATS gate rejection scenarios.
+# Contains exactly one representative from each FATS rejection category:
+#
+#   - FATS property:    a triple whose predicate is FATS-classified
+#   - FATS class:       an rdf:type triple whose object is a FATS-classified class
+#   - Unclassified:     a triple whose predicate is in the kinship namespace
+#                       but absent from kinship-consistency.ttl
+#   - Valid MATS:       a handful of legitimate MATS triples to ensure the
+#                       pipeline is not "blocked" (zero survivors) in mixed
+#                       scenarios where only some triples are rejected.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# FATS property rejections
+# hasAncestor is classified :FATS (transitive closure — must not be asserted)
+# hasMother   is classified :FATS (gendered derived property)
+# ---------------------------------------------------------------------------
+
+:fats_p1  :hasAncestor  :fats_p2 .    # FATS property
+:fats_p1  :hasMother    :fats_p3 .    # FATS property
+
+# ---------------------------------------------------------------------------
+# FATS class rejections
+# rdf:type kin:MalePerson and kin:FemalePerson are FATS-classified classes
+# (gendered subclasses — should not be directly asserted; use hasGender)
+# ---------------------------------------------------------------------------
+
+:fats_c1  rdf:type  :MalePerson .     # FATS class
+:fats_c2  rdf:type  :FemalePerson .   # FATS class
+
+# ---------------------------------------------------------------------------
+# Unclassified kinship-namespace predicate
+# :hasUnknownRelation is in the kin: namespace but not declared in
+# kinship-consistency.ttl, so it has no assertionSet annotation.
+# ---------------------------------------------------------------------------
+
+:fats_u1  :hasUnknownRelation  :fats_u2 .   # unclassified
+
+# ---------------------------------------------------------------------------
+# Valid MATS triples (used in "mixed" scenarios so the gate is not blocked)
+# ---------------------------------------------------------------------------
+
+:mats_x   rdf:type       :Person .
+:mats_y   rdf:type       :Person .
+:mats_x   :hasChild      :mats_y .
+:mats_x   :hasGender     :Male .
+:mats_y   :hasGender     :Female .

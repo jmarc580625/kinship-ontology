@@ -1,0 +1,43 @@
+{
+  "scenario": "pipeline-mats-violations",
+  "description": "All MATS violation families detected; pipeline blocks after MATS gate.",
+  "intake_file": "tests/data/consistency-control-data.ttl",
+
+  "expected": {
+    "FATS": {
+      "status": "ok",
+      "mats_count_min": 1,
+      "oats_count": 0,
+      "fats_rejected": 0,
+      "unclassified_rejected": 0
+    },
+    "MATS": {
+      "status": "violation",
+      "violations": {
+        "Q-IRR":  { "count": 11 },
+        "Q-CON1": { "count": 4  },
+        "Q-CON2": { "count": 4  },
+        "Q-CON3": { "count": 1  },
+        "Q-CON4": { "count": 4  },
+        "Q-CAR1": { "count": 4  },
+        "Q-CAR2": { "count": 6  },
+        "Q-TWI1": { "count": 13 },
+        "Q-TWI2": { "count": 6  },
+        "Q-CIR1": { "count": 2  },
+        "Q-CIR2": { "count": 24 },
+        "Q-PAR1": { "count": 4  },
+        "Q-PAR2": { "count": 8  },
+        "Q-PAR3": { "count": 2  }
+      },
+      "warnings": {
+        "Q-RED1": { "count": 7 },
+        "Q-RED2": { "count": 6 },
+        "Q-RED3": { "count": 5 }
+      }
+    },
+    "MATS_MATERIALIZATION": { "status": "skipped" },
+    "OATS_LAYER_A":         { "status": "skipped" },
+    "OATS_LAYER_B":         { "status": "skipped" },
+    "FULL_MATERIALIZATION":  { "status": "skipped" }
+  }
+}
