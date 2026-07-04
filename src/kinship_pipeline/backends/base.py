@@ -74,6 +74,26 @@ class KinshipBackend(ABC):
         """Return the number of triples in the given graph."""
         ...
 
+    def export_graph(self, graph: str) -> str:
+        """Serialize a named graph as NTriples and return the string.
+
+        Used by the pipeline to stash/restore graphs when isolation is needed.
+        Default implementation uses CONSTRUCT query; backends may override.
+        """
+        rows = self.execute_query(
+            f"CONSTRUCT {{ ?s ?p ?o }} WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}"
+        )
+        # Fallback: shouldn't be reached if backends override properly.
+        raise NotImplementedError("Backend must implement export_graph")
+
+    def import_graph(self, graph: str, ntriples: str) -> None:
+        """Load NTriples data into a named graph.
+
+        Used by the pipeline to restore previously stashed graphs.
+        Default implementation is not provided; backends must override.
+        """
+        raise NotImplementedError("Backend must implement import_graph")
+
     # ------------------------------------------------------------------
     # Query / update
     # ------------------------------------------------------------------
@@ -97,3 +117,40 @@ class KinshipBackend(ABC):
         the entire dataset.
         """
         ...
+
+    # ------------------------------------------------------------------
+    # Inference control
+    # ------------------------------------------------------------------
+
+    def disable_inference(self) -> None:
+        """Turn off automatic/explicit reasoning.
+
+        After this call, no new inferences should be produced when data
+        is loaded or SPARQL UPDATEs are executed.  ``trigger_reasoning``
+        becomes a no-op until ``enable_inference`` is called.
+
+        The pipeline calls this before loading data and after
+        materialization phases to prevent cross-graph contamination.
+        """
+
+    def enable_inference(self) -> None:
+        """Re-enable reasoning and infer over all data currently in the store.
+
+        This effectively runs a full reasoning pass over whatever data
+        is present at the moment of the call.
+        """
+
+    # ------------------------------------------------------------------
+    # Backend capabilities
+    # ------------------------------------------------------------------
+
+    @property
+    def scope_where_to_graph(self) -> bool:
+        """Whether materialization WHERE clauses must be GRAPH-scoped.
+
+        True for backends where inferred triples are stored inside the
+        target named graph (RDFLib).  False for backends where inferred
+        triples reside only in the default graph and are visible only
+        via unscoped queries (GraphDB).
+        """
+        return True

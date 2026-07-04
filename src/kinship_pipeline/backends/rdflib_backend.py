@@ -35,14 +35,21 @@ class RDFLibKinshipBackend(KinshipBackend):
         self.data_files: List[Union[str, Path]] = data_files or []
         self.dataset: Optional[Dataset] = None
         self.ontology_graph: str = "urn:kinship:ontology"
+        self._inference_enabled: bool = True
 
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
 
     def initialize(self) -> None:
-        """Create the Dataset and load TBox/ABox."""
+        """Create the Dataset and load TBox/ABox.
+
+        Inference is disabled during loading.  The pipeline controls
+        when reasoning runs via ``enable_inference()``.
+        """
         self.dataset = Dataset(default_union=True)
+        self._inference_enabled = False
+
         for ttl in self.ontology_files:
             self.load_ontology(ttl, graph=self.ontology_graph)
         for ttl in self.data_files:
@@ -115,6 +122,33 @@ class RDFLibKinshipBackend(KinshipBackend):
             return sum(len(g) for g in self.dataset.graphs())
         return len(self.dataset.graph(URIRef(graph)))
 
+    def export_graph(self, graph: str) -> str:
+        """Serialize a named graph as NTriples."""
+        if self.dataset is None:
+            raise RuntimeError("Backend not initialized")
+        g = self.dataset.graph(URIRef(graph))
+        return g.serialize(format="nt")
+
+    def import_graph(self, graph: str, ntriples: str) -> None:
+        """Load NTriples data into a named graph."""
+        if self.dataset is None:
+            raise RuntimeError("Backend not initialized")
+        g = self.dataset.graph(URIRef(graph))
+        g.parse(data=ntriples, format="nt")
+
+    # ------------------------------------------------------------------
+    # Inference control
+    # ------------------------------------------------------------------
+
+    def disable_inference(self) -> None:
+        """Prevent trigger_reasoning from running until re-enabled."""
+        self._inference_enabled = False
+
+    def enable_inference(self) -> None:
+        """Re-enable reasoning and run a full reasoning pass now."""
+        self._inference_enabled = True
+        self.trigger_reasoning()
+
     # ------------------------------------------------------------------
     # Query / update
     # ------------------------------------------------------------------
@@ -150,8 +184,12 @@ class RDFLibKinshipBackend(KinshipBackend):
         When ``graph`` is provided, reasoning is limited to the union of the
         ontology graph and that named graph.  Otherwise the entire dataset is
         reasoned over.
+
+        Returns 0 immediately if inference has been disabled.
         """
         if self.dataset is None or not OWLRL_AVAILABLE:
+            return 0
+        if not self._inference_enabled:
             return 0
 
         temp = Graph()

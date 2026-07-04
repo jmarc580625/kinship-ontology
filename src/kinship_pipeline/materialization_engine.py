@@ -164,16 +164,27 @@ SELECT ?property ?script ?reason WHERE {{
         return sorted(scripts, key=lambda s: s["property"])
 
     def _wrap_with_target(self, script: str, target_graph: str) -> str:
-        """Wrap INSERT block with GRAPH <target> and add a kinship prefix.
+        """Wrap INSERT block with GRAPH <target> and optionally scope WHERE.
 
-        The WHERE clause is left unscoped so it evaluates over the effective
-        dataset (the union of all named graphs). This works for RDFLib
-        (default_union=True) and for GraphDB (which materialises OWL-RL
-        inferences globally and exposes them through the default graph).
+        The INSERT clause is always scoped to the target graph so new triples
+        land in the correct named graph.
+
+        The WHERE clause scoping depends on the backend:
+
+        - **RDFLib** (``scope_where_to_graph=True``): the WHERE body is also
+          wrapped with ``GRAPH <target>`` to prevent cross-graph leakage from
+          ``default_union=True``.
+
+        - **GraphDB** (``scope_where_to_graph=False``): the WHERE is left
+          unscoped so it can see OWL-RL inferences that reside only in the
+          default graph.  Graph isolation is guaranteed at a higher level by
+          the pipeline removing OATS data before MATS materialization.
         """
         import re
 
         graph_block = f"GRAPH <{target_graph}>"
+
+        # Always wrap INSERT body.
         script = re.sub(
             r"INSERT\s*\{(.*?)\}",
             lambda m: f"INSERT {{ {graph_block} {{ {m.group(1)} }} }}",
@@ -181,6 +192,17 @@ SELECT ?property ?script ?reason WHERE {{
             count=1,
             flags=re.DOTALL | re.IGNORECASE,
         )
+
+        # Wrap WHERE body only if the backend requires graph scoping.
+        if self.backend.scope_where_to_graph:
+            script = re.sub(
+                r"WHERE\s*\{(.*)\}",
+                lambda m: f"WHERE {{ {graph_block} {{ {m.group(1)} }} }}",
+                script,
+                count=1,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+
         prefix = f"PREFIX : <{self.namespace}>\n"
         if not re.search(r"^\s*PREFIX\s+", script, re.MULTILINE | re.IGNORECASE):
             script = prefix + script

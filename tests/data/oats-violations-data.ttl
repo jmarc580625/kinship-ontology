@@ -1,0 +1,47 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# oats-violations-data.ttl
+# Valid MATS core plus internally conflicting OATS assertions.
+# MATS is clean => materialisation + Layer A pass.
+# Layer B detects IRR and RED3 violations within the OATS graph.
+#
+# Design: the OATS assertions reference individuals that have NO presence
+# in the MATS data, so the MATS closure cannot derive any of them and
+# Layer A passes.
+#
+# Used by pipeline-oats-layer-b-violation.json.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# MATS individuals and filiation
+# ---------------------------------------------------------------------------
+:ov_m1 a :Person .  :ov_m1 :hasGender :Male .
+:ov_m2 a :Person .  :ov_m2 :hasGender :Female .
+:ov_m3 a :Person .  :ov_m3 :hasGender :Male .
+
+:ov_m1 :hasBloodChild :ov_m3 .
+:ov_m2 :hasBloodChild :ov_m3 .
+
+# ---------------------------------------------------------------------------
+# OATS-only individuals — never mentioned in any MATS triple
+# ---------------------------------------------------------------------------
+:ov_o1 a :Person .  :ov_o1 :hasGender :Male .
+:ov_o2 a :Person .  :ov_o2 :hasGender :Female .
+:ov_o3 a :Person .  :ov_o3 :hasGender :Male .
+
+# ---------------------------------------------------------------------------
+# OATS violations between OATS-only individuals
+# ---------------------------------------------------------------------------
+# IRR: ov_o1 is their own cousin (irreflexive violation)
+:ov_o1 :hasCousin :ov_o1 .
+
+# RED3: hasCousin is symmetric, asserting both directions is redundant
+:ov_o1 :hasCousin :ov_o2 .
+:ov_o2 :hasCousin :ov_o1 .
+
+# CIR2: generational cycle via grandparent across disconnected individuals
+# ov_o1 -> ov_o2 -> ov_o3 -> ov_o1 (ascending cycle)
+:ov_o1 :hasGrandparent :ov_o2 .
+:ov_o2 :hasGrandparent :ov_o3 .
+:ov_o3 :hasGrandparent :ov_o1 .

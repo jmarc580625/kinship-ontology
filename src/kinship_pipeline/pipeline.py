@@ -42,6 +42,23 @@ def _skipped(reason: str) -> Dict[str, Any]:
     return {"status": _SKIPPED, "reason": reason}
 
 
+def _stash_oats(backend: "KinshipBackend", oats_graph: str) -> str:
+    """Extract OATS graph as serialized NTriples, then clear it.
+
+    Returns the NTriples string (empty string if OATS was empty).
+    """
+    if backend.graph_size(oats_graph) == 0:
+        return ""
+    ntriples = backend.export_graph(oats_graph)
+    backend.clear_graph(oats_graph)
+    return ntriples
+
+
+def _restore_oats(backend: "KinshipBackend", oats_graph: str, data: str) -> None:
+    """Re-insert previously stashed OATS triples."""
+    backend.import_graph(oats_graph, data)
+
+
 class ConsistencyPipeline:
     """Run the full kinship consistency pipeline."""
 
@@ -110,7 +127,15 @@ class ConsistencyPipeline:
             report["status"] = "warning"
 
         # ------------------------------------------------------------------
-        # 2. MATS Gate
+        # 2. Isolate OATS graph
+        # ------------------------------------------------------------------
+        # OATS triples must be physically absent from the store during
+        # MATS gate checks and materialization Step 1.  This guarantees
+        # that M is derived purely from A, regardless of backend.
+        oats_stash_data = _stash_oats(self.backend, oats_graph)
+
+        # ------------------------------------------------------------------
+        # 3. MATS Gate
         # ------------------------------------------------------------------
         mats_report = self.mats_gate.run(asserted_graph)
         report["stages"]["MATS"] = mats_report
@@ -120,6 +145,9 @@ class ConsistencyPipeline:
         mats_status = mats_report.get("status", "ok")
         if mats_status == "violation":
             report["status"] = "violation"
+            # Restore OATS before returning so the repo is left intact.
+            if oats_stash_data:
+                _restore_oats(self.backend, oats_graph, oats_stash_data)
             for stage in ("MATS_MATERIALIZATION",
                           "OATS_LAYER_A", "OATS_LAYER_B", "FULL_MATERIALIZATION"):
                 report["stages"][stage] = _skipped("MATS gate violation: graph not materialised")
@@ -130,7 +158,12 @@ class ConsistencyPipeline:
             report["status"] = "warning"
 
         # ------------------------------------------------------------------
-        # 3. Materialization Step 1: A -> M
+        # 4. Enable inference (MATS-only: ontology + asserted)
+        # ------------------------------------------------------------------
+        self.backend.enable_inference()
+
+        # ------------------------------------------------------------------
+        # 5. Materialization Step 1: A -> M
         # ------------------------------------------------------------------
         mats_scripts = self.materialization_engine.step1(
             source_graph=asserted_graph,
@@ -147,7 +180,18 @@ class ConsistencyPipeline:
             _print_materialization("Materialization Step 1 (A -> M)", mat1_report)
 
         # ------------------------------------------------------------------
-        # 4. OATS Layer A
+        # 6. Disable inference (freeze M before OATS re-enters)
+        # ------------------------------------------------------------------
+        self.backend.disable_inference()
+
+        # ------------------------------------------------------------------
+        # 7. Restore OATS graph
+        # ------------------------------------------------------------------
+        if oats_stash_data:
+            _restore_oats(self.backend, oats_graph, oats_stash_data)
+
+        # ------------------------------------------------------------------
+        # 8. OATS Layer A
         # ------------------------------------------------------------------
         layer_a = self.oats_layer_a.run(oats_graph, mats_closure_graph)
         report["stages"]["OATS_LAYER_A"] = layer_a
@@ -163,7 +207,7 @@ class ConsistencyPipeline:
             return report
 
         # ------------------------------------------------------------------
-        # 5. OATS Layer B
+        # 9. OATS Layer B
         # ------------------------------------------------------------------
         layer_b = self.oats_layer_b.run(oats_graph)
         report["stages"]["OATS_LAYER_B"] = layer_b
@@ -177,7 +221,12 @@ class ConsistencyPipeline:
             report["status"] = "warning"
 
         # ------------------------------------------------------------------
-        # 6. Materialization Step 2: A+O -> MO
+        # 10. Enable inference (full: ontology + asserted + oats)
+        # ------------------------------------------------------------------
+        self.backend.enable_inference()
+
+        # ------------------------------------------------------------------
+        # 11. Materialization Step 2: A+O -> MO
         # ------------------------------------------------------------------
         full_scripts = self.materialization_engine.step2(
             asserted_graph=asserted_graph,

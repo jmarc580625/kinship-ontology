@@ -1,0 +1,39 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# oats-clean-data.ttl
+# Minimal dataset with both MATS and OATS assertions.
+# All triples are consistent: no MATS violations, no Layer A overlap,
+# no Layer B violations.
+#
+# Design: the OATS assertions reference individuals that have NO presence
+# whatsoever in the MATS data, and the OATS properties are horizontal
+# (no generational direction) so no cycle detection applies.  This ensures
+# the MATS closure cannot derive any of these relationships.
+#
+# Used by pipeline-oats-clean.json to verify end-to-end pipeline flow
+# through all six stages including full materialization (A+O -> MO).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# MATS individuals and filiation
+# ---------------------------------------------------------------------------
+:oc_m1 a :Person .  :oc_m1 :hasGender :Male .
+:oc_m2 a :Person .  :oc_m2 :hasGender :Female .
+:oc_m3 a :Person .  :oc_m3 :hasGender :Male .
+
+:oc_m1 :hasBloodChild :oc_m3 .
+:oc_m2 :hasBloodChild :oc_m3 .
+
+# ---------------------------------------------------------------------------
+# OATS-only individuals — never mentioned in any MATS triple
+# ---------------------------------------------------------------------------
+:oc_o1 a :Person .  :oc_o1 :hasGender :Male .
+:oc_o2 a :Person .  :oc_o2 :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# OATS assertions between OATS-only individuals
+# ---------------------------------------------------------------------------
+# hasCousin is horizontal (no generational direction), symmetric-like.
+# Since oc_o1 and oc_o2 have no MATS presence, the closure cannot derive this.
+:oc_o1 :hasCousin :oc_o2 .

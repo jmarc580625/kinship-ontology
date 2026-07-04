@@ -41,17 +41,26 @@ class GraphDBKinshipBackend(KinshipBackend):
     # ------------------------------------------------------------------
 
     def initialize(self) -> None:
-        """Create the GraphDB repository and load TBox/ABox."""
+        """Create the GraphDB repository and load TBox/ABox.
+
+        The repository is created with the configured ruleset so that it
+        is available, but inference is immediately switched off (empty
+        ruleset) before any data is loaded.  The pipeline controls when
+        inference is re-enabled via ``enable_inference()``.
+        """
         self._wait_for_graphdb()
         self._delete_repository()
         self._create_repository()
+
+        # Switch to empty ruleset BEFORE loading anything.
+        self.disable_inference()
 
         for ttl in self.ontology_files:
             self.load_ontology(ttl, graph=self.ontology_graph)
         for ttl in self.data_files:
             self.load_data(ttl, graph="urn:kinship:asserted")
 
-        time.sleep(2)
+        time.sleep(1)
 
     def clear_graph(self, graph_uri: str) -> None:
         """Clear the named graph."""
@@ -104,6 +113,69 @@ class GraphDBKinshipBackend(KinshipBackend):
         if results:
             return int(results[0].get("cnt", "0"))
         return 0
+
+    def export_graph(self, graph: str) -> str:
+        """Export a named graph as NTriples via GraphDB REST API."""
+        headers = {"Accept": "text/plain"}  # NTriples
+        params = {"context": f"<{graph}>", "infer": "false"}
+        response = requests.get(
+            f"{self.repo_url}/statements",
+            headers=headers,
+            params=params,
+        )
+        if response.status_code != 200:
+            raise RuntimeError(f"Export failed: {response.status_code} {response.text}")
+        return response.text
+
+    def import_graph(self, graph: str, ntriples: str) -> None:
+        """Import NTriples data into a named graph via GraphDB REST API."""
+        if not ntriples.strip():
+            return
+        headers = {"Content-Type": "text/plain"}  # NTriples
+        params = {"context": f"<{graph}>"}
+        response = requests.post(
+            f"{self.repo_url}/statements",
+            data=ntriples.encode("utf-8"),
+            headers=headers,
+            params=params,
+        )
+        if response.status_code not in (200, 204):
+            raise RuntimeError(f"Import failed: {response.status_code} {response.text}")
+
+    # ------------------------------------------------------------------
+    # Inference control
+    # ------------------------------------------------------------------
+
+    def disable_inference(self) -> None:
+        """Switch to the 'empty' ruleset so no inference is produced."""
+        self.execute_update(
+            'PREFIX sys: <http://www.ontotext.com/owlim/system#>\n'
+            'INSERT DATA { _:b sys:addRuleset "empty" . '
+            '_:b sys:defaultRuleset "empty" . }'
+        )
+
+    def enable_inference(self) -> None:
+        """Switch back to the configured ruleset and reinfer from scratch."""
+        self.execute_update(
+            'PREFIX sys: <http://www.ontotext.com/owlim/system#>\n'
+            f'INSERT DATA {{ _:b sys:defaultRuleset "{self.ruleset}" . '
+            '_:b sys:reinfer [] . }'
+        )
+        time.sleep(2)
+
+    # ------------------------------------------------------------------
+    # Backend capabilities
+    # ------------------------------------------------------------------
+
+    @property
+    def scope_where_to_graph(self) -> bool:
+        """GraphDB inferences live in the default graph only.
+
+        Unscoped WHERE is required so materialization scripts can see
+        inferred super-properties (e.g. hasChild from hasBloodChild).
+        Graph isolation is achieved by removing OATS data before Step 1.
+        """
+        return False
 
     # ------------------------------------------------------------------
     # Query / update

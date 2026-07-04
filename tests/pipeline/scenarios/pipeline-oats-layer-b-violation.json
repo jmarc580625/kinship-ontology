@@ -1,0 +1,41 @@
+{
+  "scenario": "pipeline-oats-layer-b-violation",
+  "description": "OATS assertions are independent of MATS closure (Layer A OK) but internally inconsistent. Layer B detects IRR, CIR2 cycle, and RED3 warning.",
+  "intake_file": "tests/data/oats-violations-data.ttl",
+
+  "expected": {
+    "FATS": {
+      "status": "ok",
+      "mats_count": 14,
+      "oats_count": 6,
+      "fats_rejected": 0,
+      "unclassified_rejected": 0
+    },
+    "MATS": {
+      "status": "ok",
+      "violations": {},
+      "warnings": {}
+    },
+    "MATS_MATERIALIZATION": { "status": "ok" },
+    "OATS_LAYER_A": {
+      "status": "ok",
+      "count": 0
+    },
+    "OATS_LAYER_B": {
+      "status": "violation",
+      "violations": {
+        "Q-IRR": { "count": 1 },
+        "Q-CIR2": {
+          "count": 1,
+          "cycles": [
+            [":ov_o1", ":ov_o2", ":ov_o3"]
+          ]
+        }
+      },
+      "warnings": {
+        "Q-RED3": { "count": 1 }
+      }
+    },
+    "FULL_MATERIALIZATION": { "status": "ok" }
+  }
+}

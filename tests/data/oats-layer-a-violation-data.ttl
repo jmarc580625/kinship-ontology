@@ -1,0 +1,33 @@
+@prefix : <http://example.org/kinship#> .
+
+# =============================================================================
+# oats-layer-a-violation-data.ttl
+# OATS assertions that overlap with the MATS closure.
+# Layer A detects the overlap and blocks; Layer B is skipped.
+#
+# a1 and a2 are parents of a3 and a4.  The materialization step derives
+# :a3 :hasSibling :a4 (shared parents).  The OATS assertion below
+# redundantly re-states this derived fact, which Layer A rejects.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Individuals
+# ---------------------------------------------------------------------------
+:a1 a :Person .  :a1 :hasGender :Male .
+:a2 a :Person .  :a2 :hasGender :Female .
+:a3 a :Person .  :a3 :hasGender :Male .
+:a4 a :Person .  :a4 :hasGender :Female .
+
+# ---------------------------------------------------------------------------
+# MATS — clean filiation (no MATS violations)
+# ---------------------------------------------------------------------------
+:a1 :hasBloodChild :a3 .
+:a1 :hasBloodChild :a4 .
+:a2 :hasBloodChild :a3 .
+:a2 :hasBloodChild :a4 .
+
+# ---------------------------------------------------------------------------
+# OATS — redundant with MATS closure (Layer A violation)
+# ---------------------------------------------------------------------------
+# hasSibling is materialised from shared parents; asserting it is redundant.
+:a3 :hasSibling :a4 .
