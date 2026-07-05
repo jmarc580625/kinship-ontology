@@ -164,21 +164,14 @@ SELECT ?property ?script ?reason WHERE {{
         return sorted(scripts, key=lambda s: s["property"])
 
     def _wrap_with_target(self, script: str, target_graph: str) -> str:
-        """Wrap INSERT block with GRAPH <target> and optionally scope WHERE.
+        """Wrap INSERT block with GRAPH <target>.
 
-        The INSERT clause is always scoped to the target graph so new triples
-        land in the correct named graph.
-
-        The WHERE clause scoping depends on the backend:
-
-        - **RDFLib** (``scope_where_to_graph=True``): the WHERE body is also
-          wrapped with ``GRAPH <target>`` to prevent cross-graph leakage from
-          ``default_union=True``.
-
-        - **GraphDB** (``scope_where_to_graph=False``): the WHERE is left
-          unscoped so it can see OWL-RL inferences that reside only in the
-          default graph.  Graph isolation is guaranteed at a higher level by
-          the pipeline removing OATS data before MATS materialization.
+        The INSERT clause is always scoped to the target graph so new
+        materialized triples land in the correct named graph.  The WHERE
+        clause is left unscoped on both backends: OWL-RL inferences live in
+        the default (global/implicit) graph and must be visible to the
+        materialization scripts.  Graph isolation is guaranteed at a higher
+        level by the pipeline removing OATS data before MATS materialization.
         """
         import re
 
@@ -192,16 +185,6 @@ SELECT ?property ?script ?reason WHERE {{
             count=1,
             flags=re.DOTALL | re.IGNORECASE,
         )
-
-        # Wrap WHERE body only if the backend requires graph scoping.
-        if self.backend.scope_where_to_graph:
-            script = re.sub(
-                r"WHERE\s*\{(.*)\}",
-                lambda m: f"WHERE {{ {graph_block} {{ {m.group(1)} }} }}",
-                script,
-                count=1,
-                flags=re.DOTALL | re.IGNORECASE,
-            )
 
         prefix = f"PREFIX : <{self.namespace}>\n"
         if not re.search(r"^\s*PREFIX\s+", script, re.MULTILINE | re.IGNORECASE):

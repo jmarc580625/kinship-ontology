@@ -92,10 +92,12 @@ after Step 1 cannot alter `M`.
 - `urn:kinship:mats-closure` — A → M
 - `urn:kinship:full` — A ∪ O → MO
 
-Because GraphDB puts inferences in the default graph, materialization WHERE
-clauses must be unscoped for GraphDB (`scope_where_to_graph = False`) and
-GRAPH-scoped for RDFLib (`scope_where_to_graph = True`).  The OATS stash/restore
-sequence is the higher-level isolation mechanism that works for both backends.
+On both backends, OWL-RL inferences are stored in the default (global/implicit)
+graph, while materialization scripts write their output into the target named
+graph (`mats-closure` or `full`).  Materialization WHERE clauses are therefore
+unscoped on both backends so they can see the inferred triples.  The OATS
+stash/restore sequence is the higher-level isolation mechanism that keeps the
+MATS closure free of OATS influence.
 
 ### SHACL Gate
 

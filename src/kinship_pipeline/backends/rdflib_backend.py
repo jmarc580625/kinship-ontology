@@ -194,6 +194,11 @@ class RDFLibKinshipBackend(KinshipBackend):
     def trigger_reasoning(self, graph: Optional[str] = None) -> int:
         """Apply OWL-RL reasoning and return inferred triple count.
 
+        Inferred triples are stored in the default (global/implicit) graph,
+        matching GraphDB behavior.  Named graphs such as ``mats-closure`` and
+        ``full`` therefore contain only materialized triples produced by the
+        materialization scripts.
+
         When ``graph`` is provided, reasoning is limited to the union of the
         ontology graph and that named graph.  Otherwise the entire dataset is
         reasoned over.
@@ -205,6 +210,10 @@ class RDFLibKinshipBackend(KinshipBackend):
         if not self._inference_enabled:
             return 0
 
+        # Clear the default graph before re-reasoning so stale inferences are
+        # removed.  Explicit triples are never loaded into the default graph.
+        self.dataset.default_context.remove((None, None, None))
+
         temp = Graph()
         # Always include the ontology
         for triple in self.dataset.graph(URIRef(self.ontology_graph)):
@@ -213,7 +222,12 @@ class RDFLibKinshipBackend(KinshipBackend):
             for triple in self.dataset.graph(URIRef(graph)):
                 temp.add(triple)
         else:
+            # Reason over all named graphs except the default graph, which was
+            # just cleared.
+            default_id = self.dataset.default_context.identifier
             for g in self.dataset.graphs():
+                if g.identifier == default_id:
+                    continue
                 for triple in g:
                     temp.add(triple)
 
@@ -223,13 +237,13 @@ class RDFLibKinshipBackend(KinshipBackend):
         if inferred <= 0:
             return 0
 
-        target = self.dataset.graph(URIRef(graph)) if graph else self.dataset.default_graph
+        # Store inferences in the default graph, not in the target named graph.
+        target = self.dataset.default_graph
         ontology_triples = set(self.dataset.graph(URIRef(self.ontology_graph)))
-        source_triples = set(self.dataset.graph(URIRef(graph))) if graph else set()
 
         added = 0
         for triple in temp:
-            if triple in ontology_triples or triple in source_triples:
+            if triple in ontology_triples:
                 continue
             target_before = len(target)
             target.add(triple)

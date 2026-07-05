@@ -170,20 +170,6 @@ class GraphDBKinshipBackend(KinshipBackend):
         time.sleep(2)
 
     # ------------------------------------------------------------------
-    # Backend capabilities
-    # ------------------------------------------------------------------
-
-    @property
-    def scope_where_to_graph(self) -> bool:
-        """GraphDB inferences live in the default graph only.
-
-        Unscoped WHERE is required so materialization scripts can see
-        inferred super-properties (e.g. hasChild from hasBloodChild).
-        Graph isolation is achieved by removing OATS data before Step 1.
-        """
-        return False
-
-    # ------------------------------------------------------------------
     # Query / update
     # ------------------------------------------------------------------
 

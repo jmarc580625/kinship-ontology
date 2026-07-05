@@ -153,17 +153,3 @@ class KinshipBackend(ABC):
         is present at the moment of the call.
         """
 
-    # ------------------------------------------------------------------
-    # Backend capabilities
-    # ------------------------------------------------------------------
-
-    @property
-    def scope_where_to_graph(self) -> bool:
-        """Whether materialization WHERE clauses must be GRAPH-scoped.
-
-        True for backends where inferred triples are stored inside the
-        target named graph (RDFLib).  False for backends where inferred
-        triples reside only in the default graph and are visible only
-        via unscoped queries (GraphDB).
-        """
-        return True

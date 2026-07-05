@@ -35,33 +35,38 @@ shapes could therefore use `GRAPH <urn:kinship:full>` uniformly.
 
 ### Encountered
 
-- **RDFLib**: `owl-rl` writes inferred triples back into the target named graph
-  passed to `trigger_reasoning()` (e.g. `<urn:kinship:full>`).
 - **GraphDB**: inferred triples are stored in the **default graph**, not in the
   target named graph. A `GRAPH <urn:kinship:full>` clause only sees explicit
   triples in that graph.
-
-This means a SPARQL script that works on RDFLib by wrapping its `WHERE` clause
-with `GRAPH <urn:kinship:full>` fails on GraphDB (it cannot see inferences), and
-a script that leaves the `WHERE` clause unscoped works on GraphDB but leaks
-across graphs on RDFLib.
+- **RDFLib**: by default, `owl-rl` writes inferred triples back into the target
+  named graph passed to `trigger_reasoning()`. This made RDFLib and GraphDB
+  incompatible: a script that wrapped its `WHERE` with `GRAPH <target>` worked on
+  RDFLib but missed inferences on GraphDB, while an unscoped script worked on
+  GraphDB but leaked across graphs on RDFLib.
 
 ### Workaround
 
-- Introduced `KinshipBackend.scope_where_to_graph`.
-  - `True` for RDFLib: materialization `WHERE` clauses are wrapped in
-    `GRAPH <target>` so they see only the intended graph and avoid leakage from
-    `Dataset(default_union=True)`.
-  - `False` for GraphDB: `WHERE` clauses are left unscoped so they can see the
-    default-graph inferences.
-- For SHACL, removed all `GRAPH` clauses from the shape file and validate the
-  whole dataset on both backends. This avoids the backend difference entirely.
+RDFLib was aligned to the GraphDB model:
+
+- `RDFLibKinshipBackend.trigger_reasoning()` now clears the default graph and
+  writes all OWL-RL inferences into the default graph instead of the target named
+  graph.
+- The materialization engine no longer wraps `WHERE` clauses with
+  `GRAPH <target>`; both backends use unscoped `WHERE` so scripts can see the
+  default-graph inferences.
+- `KinshipBackend.scope_where_to_graph` was removed because the backends now
+  share the same scoping behavior.
+- Named graphs `mats-closure` and `full` now contain only materialized triples
+  produced by the materialization scripts. The default (implicit) graph holds all
+  OWL-RL inferences.
+- For SHACL, the shape file already used no `GRAPH` clauses and validates the
+  whole dataset, so it remained unchanged.
 
 ### Principle preserved
 
 Graph isolation and MATS Primacy are maintained at the pipeline level by the
-OATS stash/restore mechanism (see §4); the WHERE-scoping difference only hides a
-backend implementation detail from the materialization scripts.
+OATS stash/restore mechanism (see §4). The backend divergence on inference
+placement has been eliminated, simplifying the materialization engine.
 
 ---
 
@@ -271,8 +276,10 @@ of it that contains the equivalent non-star axioms the pipeline actually uses.
 | V1 doc | Recommended update |
 |---|---|
 | V1D1 §2.3 / §3.3 | Explicitly state that M may be derived from A only if OATS is physically absent during the derivation, because some triplestores union named graphs in the default graph. |
+| V1D1 §2.3 / §3.3 | Clarify that materialized graphs (`mats-closure`, `full`) contain only script-produced triples, while OWL-RL inferences reside in the default/implicit graph. |
 | V1D4 §3 / §7 | Add a note that `GRAPH` clauses in `sh:sparql` constraints are not portable and that shapes should be backend-agnostic. |
 | V1D4 §7 | Document that `sys:turnInferenceOff` is insufficient in GraphDB; ruleset switching (`empty` / `owl2-rl` + `reinfer`) is required for precise inference control. |
+| V1D4 §7 | Document that RDFLib was aligned to GraphDB: inferences go to the default graph, named graphs hold only script materializations. |
 | V1D4 §9.3 | Confirm that RDFLib requires RDF-star stripping at load time. |
 | V1D4 | Add a deployment note about GraphDB heap requirements for explicit-only count queries on inferred repositories. |
 
@@ -288,8 +295,9 @@ pipeline deliberately separates **user-editable graphs** from **derived graphs**
 | `<urn:kinship:intake>` | yes | landing zone for new triples before classification |
 | `<urn:kinship:asserted>` | yes | MATS assertions (raw, no inference) |
 | `<urn:kinship:oats>` | yes | OATS assertions (raw, quarantined) |
-| `<urn:kinship:mats-closure>` | **no** | `closure(A)` — rebuilt by Step 1 |
-| `<urn:kinship:full>` | **no** | `closure(A ∪ O)` — rebuilt by Step 2 |
+| `<urn:kinship:mats-closure>` | **no** | materialized triples from Step 1 scripts only |
+| `<urn:kinship:full>` | **no** | materialized triples from Step 2 scripts only |
+| default graph | **no** | all OWL-RL inferences; cleared and re-derived on every run |
 | `<urn:kinship:validation>` | **no** | SHACL report — cleared and repopulated by the SHACL Gate |
 | `<urn:kinship:ontology>` | **no** | TBox definitions |
 
@@ -297,8 +305,8 @@ pipeline deliberately separates **user-editable graphs** from **derived graphs**
 
 When a user edits a family relationship, the pipeline should re-classify the
 modified triples, re-run the gates, and re-derive the closure. Rebuilding the
-materialized graphs from the assertion-set graphs avoids the retraction edge
-cases discussed in §3 and §9:
+materialized graphs and the default-graph inferences from the assertion-set
+graphs avoids the retraction edge cases discussed in §3 and §9:
 
 - Removing a single `hasSpouse` assertion would require the reasoner to retract
 the inferred symmetric `hasSpouse` inverse, the inferred `hasPartner`
@@ -306,10 +314,11 @@ superproperty triple, and any transitive/chain triples derived from it. With a
 forward-chaining reasoner, it is easy to leave "ghost" inferences behind or to
 over-delete triples that have alternative justifications.
 
-- By clearing and re-populating `<urn:kinship:mats-closure>` and
-`<urn:kinship:full>` on every run, the pipeline never needs to reason about
-which inferred triples depend on which assertions. The derived graphs are simply
-correct by construction from the current assertion-set graphs.
+- By clearing and re-populating `<urn:kinship:mats-closure>`,
+`<urn:kinship:full>` and the default (inference) graph on every run, the
+pipeline never needs to reason about which inferred triples depend on which
+assertions. The derived graphs and their inferences are simply correct by
+construction from the current assertion-set graphs.
 
 This rule also supports a future edit workflow: a user-facing editor modifies
 triples only in `asserted` or `oats`, then re-invokes the pipeline. Any
