@@ -65,7 +65,8 @@ To enforce this, both backends implement `disable_inference()` and
 
 - **RDFLib**: `disable_inference()` sets a flag that makes `trigger_reasoning()`
   a no-op; `enable_inference()` clears the flag and runs OWL-RL over the whole
-  dataset.  RDFLib stores inferred triples inside the target named graph.
+  dataset.  RDFLib stores inferred triples in the default graph (aligned with
+  GraphDB behaviour).
 - **GraphDB**: `disable_inference()` switches the active ruleset to `empty`;
   `enable_inference()` switches back to the configured ruleset (`owl2-rl`) and
   calls `sys:reinfer`.  GraphDB stores inferred triples in the default graph.
@@ -94,7 +95,7 @@ after Step 1 cannot alter `M`.
 
 On both backends, OWL-RL inferences are stored in the default (global/implicit)
 graph, while materialization scripts write their output into the target named
-graph (`mats-materialization` or `oats-materialization`).  Materialization WHERE clauses are therefore
+graph (`mats-materialization` or `oats-materialization`).  Materialization WHERE clauses are
 unscoped on both backends so they can see the inferred triples.  The OATS
 stash/restore sequence is the higher-level isolation mechanism that keeps the
 MATS closure free of OATS influence.
@@ -138,3 +139,5 @@ usable but the pipeline report indicates that an upstream review is needed.
 - The FATS gate ignores non-kinship predicates (e.g. `rdf:type`) rather than classifying them as FATS.
 - The MATS gate can run slowly on the PAR-2 query for large datasets; the control-data test runs in ~70 seconds.
 - `mats-materialization` and `oats-materialization` contain only script-produced derived triples; asserted/OATS data is never copied into them.
+- RDFLib 7.6 rejects `VALUES` inside a `GRAPH { }` clause; `OatsLayerA` uses `FILTER(?p IN (...))` instead.
+- The pipeline has two entry points: `python -m unittest tests.pipeline.test_pipeline` (unittest-discoverable, GraphDB auto-skipped if unreachable) and `python tests/pipeline/pipeline_scenario_runner.py --all` (richer CLI output, `--scenario`, `--list`, `--backend`).
