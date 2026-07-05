@@ -276,7 +276,7 @@ of it that contains the equivalent non-star axioms the pipeline actually uses.
 | V1 doc | Recommended update |
 |---|---|
 | V1D1 §2.3 / §3.3 | Explicitly state that M may be derived from A only if OATS is physically absent during the derivation, because some triplestores union named graphs in the default graph. |
-| V1D1 §2.3 / §3.3 | Clarify that materialized graphs (`mats-closure`, `full`) contain only script-produced triples, while OWL-RL inferences reside in the default/implicit graph. |
+| V1D1 §2.3 / §3.3 | Clarify that materialized graphs (`mats-materialization`, `oats-materialization`) contain only script-produced triples, while OWL-RL inferences reside in the default/implicit graph. |
 | V1D4 §3 / §7 | Add a note that `GRAPH` clauses in `sh:sparql` constraints are not portable and that shapes should be backend-agnostic. |
 | V1D4 §7 | Document that `sys:turnInferenceOff` is insufficient in GraphDB; ruleset switching (`empty` / `owl2-rl` + `reinfer`) is required for precise inference control. |
 | V1D4 §7 | Document that RDFLib was aligned to GraphDB: inferences go to the default graph, named graphs hold only script materializations. |
@@ -295,8 +295,8 @@ pipeline deliberately separates **user-editable graphs** from **derived graphs**
 | `<urn:kinship:intake>` | yes | landing zone for new triples before classification |
 | `<urn:kinship:asserted>` | yes | MATS assertions (raw, no inference) |
 | `<urn:kinship:oats>` | yes | OATS assertions (raw, quarantined) |
-| `<urn:kinship:mats-closure>` | **no** | materialized triples from Step 1 scripts only |
-| `<urn:kinship:full>` | **no** | materialized triples from Step 2 scripts only |
+| `<urn:kinship:mats-materialization>` | **no** | materialized triples from Step 1 scripts only |
+| `<urn:kinship:oats-materialization>` | **no** | materialized triples from Step 2 scripts only |
 | default graph | **no** | all OWL-RL inferences; cleared and re-derived on every run |
 | `<urn:kinship:validation>` | **no** | SHACL report — cleared and repopulated by the SHACL Gate |
 | `<urn:kinship:ontology>` | **no** | TBox definitions |
@@ -314,8 +314,8 @@ superproperty triple, and any transitive/chain triples derived from it. With a
 forward-chaining reasoner, it is easy to leave "ghost" inferences behind or to
 over-delete triples that have alternative justifications.
 
-- By clearing and re-populating `<urn:kinship:mats-closure>`,
-`<urn:kinship:full>` and the default (inference) graph on every run, the
+- By clearing and re-populating `<urn:kinship:mats-materialization>`,
+`<urn:kinship:oats-materialization>` and the default (inference) graph on every run, the
 pipeline never needs to reason about which inferred triples depend on which
 assertions. The derived graphs and their inferences are simply correct by
 construction from the current assertion-set graphs.
@@ -326,6 +326,11 @@ validation failures are reported against the assertion sets, not against the
 derived graphs, keeping the data model simple for the user.
 
 ## 12. Current status
+
+All RDFLib pipeline scenarios pass (56/56 expectations). The new SHACL-specific
+scenario `pipeline-shacl-post-partner-lineage-r3` passes individually on
+GraphDB. The full GraphDB suite is blocked by the heap-memory issue described in
+§8, not by a logic error.
 
 All RDFLib pipeline scenarios pass (56/56 expectations). The new SHACL-specific
 scenario `pipeline-shacl-post-partner-lineage-r3` passes individually on

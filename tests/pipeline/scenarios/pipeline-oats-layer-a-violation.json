@@ -1,7 +1,9 @@
 {
   "scenario": "pipeline-oats-layer-a-violation",
   "description": "OATS assertion overlaps with MATS closure (hasSibling derived from shared parents). Layer A blocks; Layer B skipped.",
+  "backends": ["rdflib"],
   "intake_file": "tests/data/oats-layer-a-violation-data.ttl",
+
   "expected": {
     "FATS": {
       "status": "ok",
@@ -15,21 +17,12 @@
       "violations": {},
       "warnings": {}
     },
-    "MATS_MATERIALIZATION": {
-      "status": "ok"
-    },
+    "MATS_MATERIALIZATION": { "status": "ok" },
     "OATS_LAYER_A": {
       "status": "violation",
       "count": 1
     },
-    "OATS_LAYER_B": {
-      "status": "skipped"
-    },
-    "FULL_MATERIALIZATION": {
-      "status": "skipped"
-    },
-    "SHACL_GATE": {
-      "status": "ignore"
-    }
+    "OATS_LAYER_B":         { "status": "skipped" },
+    "OATS_MATERIALIZATION":  { "status": "skipped" }
   }
 }

@@ -17,7 +17,7 @@
     rdfs:comment """Post-inference SHACL validation shapes for the kinship
     ontology consistency control pipeline. These shapes constitute the SHACL
     Gate, the final safety-net stage of the pipeline, operating on the full
-    materialized closure MO (<urn:kinship:full>) after Materialization Step 2.
+    materialized closure MO (<urn:kinship:oats-materialization>) after Materialization Step 2.
     Role: safety net, not primary consistency mechanism. The FATS, MATS, and
     OATS SPARQL gates are the authoritative detection path. A positive result
     here signals either a gap in Step 1 materialization configuration, a bug

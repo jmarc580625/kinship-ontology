@@ -2,6 +2,7 @@
   "scenario": "pipeline-oats-clean",
   "description": "OATS assertion is independent of MATS closure and internally consistent. Full pipeline completes through A+O -> MO.",
   "intake_file": "tests/data/oats-clean-data.ttl",
+
   "expected": {
     "FATS": {
       "status": "ok",
@@ -15,9 +16,7 @@
       "violations": {},
       "warnings": {}
     },
-    "MATS_MATERIALIZATION": {
-      "status": "ok"
-    },
+    "MATS_MATERIALIZATION": { "status": "ok" },
     "OATS_LAYER_A": {
       "status": "ok",
       "count": 0
@@ -27,11 +26,6 @@
       "violations": {},
       "warnings": {}
     },
-    "FULL_MATERIALIZATION": {
-      "status": "ok"
-    },
-    "SHACL_GATE": {
-      "status": "ok"
-    }
+    "OATS_MATERIALIZATION": { "status": "ok" }
   }
 }

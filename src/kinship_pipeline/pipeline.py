@@ -86,8 +86,8 @@ class ConsistencyPipeline:
         intake_graph: str = "urn:kinship:intake",
         asserted_graph: str = "urn:kinship:asserted",
         oats_graph: str = "urn:kinship:oats",
-        mats_closure_graph: str = "urn:kinship:mats-closure",
-        full_graph: str = "urn:kinship:full",
+        mats_materialization_graph: str = "urn:kinship:mats-materialization",
+        oats_materialization_graph: str = "urn:kinship:oats-materialization",
         reason_after_each: bool = False,
         verbose: bool = False,
     ) -> Dict[str, Any]:
@@ -122,7 +122,7 @@ class ConsistencyPipeline:
         if fats_status == "blocked":
             report["status"] = "blocked"
             for stage in ("MATS", "MATS_MATERIALIZATION",
-                          "OATS_LAYER_A", "OATS_LAYER_B", "FULL_MATERIALIZATION"):
+                          "OATS_LAYER_A", "OATS_LAYER_B", "OATS_MATERIALIZATION"):
                 report["stages"][stage] = _skipped("FATS gate blocked: no triples routed")
             if verbose:
                 _print_banner("blocked")
@@ -153,7 +153,7 @@ class ConsistencyPipeline:
             if oats_stash_data:
                 _restore_oats(self.backend, oats_graph, oats_stash_data)
             for stage in ("MATS_MATERIALIZATION",
-                          "OATS_LAYER_A", "OATS_LAYER_B", "FULL_MATERIALIZATION"):
+                          "OATS_LAYER_A", "OATS_LAYER_B", "OATS_MATERIALIZATION"):
                 report["stages"][stage] = _skipped("MATS gate violation: graph not materialised")
             if verbose:
                 _print_banner("violation")
@@ -171,7 +171,7 @@ class ConsistencyPipeline:
         # ------------------------------------------------------------------
         mats_scripts = self.materialization_engine.step1(
             source_graph=asserted_graph,
-            target_graph=mats_closure_graph,
+            target_graph=mats_materialization_graph,
             reason_after_each=reason_after_each,
         )
         mat1_report = {
@@ -197,14 +197,14 @@ class ConsistencyPipeline:
         # ------------------------------------------------------------------
         # 8. OATS Layer A
         # ------------------------------------------------------------------
-        layer_a = self.oats_layer_a.run(oats_graph, mats_closure_graph)
+        layer_a = self.oats_layer_a.run(oats_graph)
         report["stages"]["OATS_LAYER_A"] = layer_a
         if verbose:
             _print_oats_layer_a(layer_a)
 
         if layer_a.get("status") == "violation":
             report["status"] = "violation"
-            for stage in ("OATS_LAYER_B", "FULL_MATERIALIZATION"):
+            for stage in ("OATS_LAYER_B", "OATS_MATERIALIZATION"):
                 report["stages"][stage] = _skipped("OATS Layer A violation: quarantine graph compromised")
             if verbose:
                 _print_banner("violation")
@@ -232,18 +232,18 @@ class ConsistencyPipeline:
         # ------------------------------------------------------------------
         # 11. Materialization Step 2: A+O -> MO
         # ------------------------------------------------------------------
-        full_scripts = self.materialization_engine.step2(
+        oats_mat_scripts = self.materialization_engine.step2(
             asserted_graph=asserted_graph,
             oats_graph=oats_graph,
-            target_graph=full_graph,
+            target_graph=oats_materialization_graph,
             reason_after_each=reason_after_each,
         )
         mat2_report = {
             "status": "ok",
-            "scripts": len(full_scripts),
-            "details": full_scripts,
+            "scripts": len(oats_mat_scripts),
+            "details": oats_mat_scripts,
         }
-        report["stages"]["FULL_MATERIALIZATION"] = mat2_report
+        report["stages"]["OATS_MATERIALIZATION"] = mat2_report
         if verbose:
             _print_materialization("Materialization Step 2 (A+O -> MO)", mat2_report)
 

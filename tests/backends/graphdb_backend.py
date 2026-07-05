@@ -79,7 +79,7 @@ class GraphDBBackend:
             if elapsed >= timeout:
                 break
             remaining = timeout - elapsed
-            print(f"  ... no response ({remaining}s remaining)", flush=True)
+            print(f"  … no response ({remaining}s remaining)", flush=True)
             time.sleep(2)
 
         self._print_graphdb_help()

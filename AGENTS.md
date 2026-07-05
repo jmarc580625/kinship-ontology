@@ -89,12 +89,12 @@ after Step 1 cannot alter `M`.
 - `urn:kinship:ontology` — TBox
 - `urn:kinship:shapes` — SHACL shapes
 - `urn:kinship:validation` — SHACL validation report
-- `urn:kinship:mats-closure` — A → M
-- `urn:kinship:full` — A ∪ O → MO
+- `urn:kinship:mats-materialization` — A → M
+- `urn:kinship:oats-materialization` — A ∪ O → MO
 
 On both backends, OWL-RL inferences are stored in the default (global/implicit)
 graph, while materialization scripts write their output into the target named
-graph (`mats-closure` or `full`).  Materialization WHERE clauses are therefore
+graph (`mats-materialization` or `oats-materialization`).  Materialization WHERE clauses are therefore
 unscoped on both backends so they can see the inferred triples.  The OATS
 stash/restore sequence is the higher-level isolation mechanism that keeps the
 MATS closure free of OATS influence.
@@ -137,3 +137,4 @@ usable but the pipeline report indicates that an upstream review is needed.
 - RDF-star annotations in `kinship-consistency.ttl` are stripped by the RDFLib backend; the plain equivalent triples are used.
 - The FATS gate ignores non-kinship predicates (e.g. `rdf:type`) rather than classifying them as FATS.
 - The MATS gate can run slowly on the PAR-2 query for large datasets; the control-data test runs in ~70 seconds.
+- `mats-materialization` and `oats-materialization` contain only script-produced derived triples; asserted/OATS data is never copied into them.

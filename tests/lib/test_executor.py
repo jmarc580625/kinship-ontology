@@ -84,11 +84,11 @@ class TestExecutor:
                 try:
                     self.apply_materialization(script_path)
                 except FileNotFoundError as e:
-                    print(f"\n[ERROR] Error: {e}")
+                    print(f"\nScript not found: {Path(script_path).name}: {e}")
                     print(f"   Stopping test execution.")
                     return {'total': 0, 'passed': 0, 'failed': 0, 'details': {}, 'materialization_error': str(e)}
                 except Exception as e:
-                    print(f"\n[ERROR] Error applying {Path(script_path).name}: {e}")
+                    print(f"\nError applying {Path(script_path).name}: {e}")
                     print(f"   Stopping test execution.")
                     return {'total': 0, 'passed': 0, 'failed': 0, 'details': {}, 'materialization_error': str(e)}
         
@@ -107,7 +107,7 @@ class TestExecutor:
         if not Path(script_path).exists():
             raise FileNotFoundError(f"Materialization script not found: {script_path}")
         
-        print(f"  * Applying: {Path(script_path).name}")
+        print(f"  • Applying: {Path(script_path).name}")
         
         with open(script_path, 'r') as f:
             sparql_update = f.read()
@@ -115,9 +115,9 @@ class TestExecutor:
         triples_added = self.backend.execute_update(sparql_update)
         
         if triples_added == 0:
-            print(f"    [WARN]  Applied but added 0 triples (may indicate an error or no matches)")
+            print(f"    ⚠️t added 0 triples (may indicate an error or no matches)")
         else:
-            print(f"    [OK] Applied successfully (added {triples_added} triples)")
+            print(f"    ✓successfully (added {triples_added} triples)")
     
     def verify_materialization(self, script_path: str) -> bool:
         """
@@ -142,7 +142,7 @@ class TestExecutor:
         try:
             self.apply_materialization(script_path)
         except Exception as e:
-            print(f"[ERROR] Materialization failed: {e}")
+            print(f"❌ailed: {e}")
             return False
         
         # Get statement count after
@@ -151,7 +151,7 @@ class TestExecutor:
         print(f"Statements after:  {count_after}")
         
         added = count_after - count_before
-        print(f"\n[PASS] Materialization successful")
+        print(f"\n✅n successful")
         print(f"   Added {added} new statement(s)")
         
         return True
@@ -174,7 +174,7 @@ class TestExecutor:
             
             # Stop if tests failed
             if results['failed'] > 0:
-                print(f"\n[WARN]  Level {level} has failures. Fix issues before proceeding to next level.")
+                print(f"\nLevel {level} has failures. Fix issues before proceeding to next level.")
                 break
         
         return all_results

@@ -19,7 +19,7 @@
     "MATS_MATERIALIZATION": { "status": "ok" },
     "OATS_LAYER_A":         { "status": "ok" },
     "OATS_LAYER_B":         { "status": "ok" },
-    "FULL_MATERIALIZATION":  { "status": "ok" },
+    "OATS_MATERIALIZATION":  { "status": "ok" },
     "SHACL_GATE": {
       "status": "warning",
       "conforms": false,

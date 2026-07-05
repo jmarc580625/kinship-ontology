@@ -195,9 +195,9 @@ class RDFLibKinshipBackend(KinshipBackend):
         """Apply OWL-RL reasoning and return inferred triple count.
 
         Inferred triples are stored in the default (global/implicit) graph,
-        matching GraphDB behavior.  Named graphs such as ``mats-closure`` and
-        ``full`` therefore contain only materialized triples produced by the
-        materialization scripts.
+        matching GraphDB behavior.  Named graphs such as ``mats-materialization``
+        and ``oats-materialization`` therefore contain only materialized triples
+        produced by the materialization scripts.
 
         When ``graph`` is provided, reasoning is limited to the union of the
         ontology graph and that named graph.  Otherwise the entire dataset is
@@ -363,3 +363,40 @@ class RDFLibKinshipBackend(KinshipBackend):
                     continue
                 out_lines.append(line)
         return "".join(out_lines)
+        if len(shapes_g) == 0 and not self.shacl_shapes:
+            raise RuntimeError("No SHACL shapes loaded")
+
+        self.clear_graph(report_graph)
+
+        result = pyshacl.validate(
+            data_graph=self.dataset,
+            shacl_graph=shapes_g,
+            advanced=True,
+            inference="none",
+            abort_on_first=False,
+        )
+        if not isinstance(result, tuple) or len(result) != 3:
+            raise RuntimeError(f"pySHACL returned unexpected result: {result!r}")
+
+        conforms, report_g, report_text = result
+        if not isinstance(report_g, Graph):
+            msg = getattr(report_g, "message", str(report_g))
+            raise RuntimeError(f"pySHACL validation failure: {msg}")
+
+        validation_g = self.dataset.graph(URIRef(report_graph))
+        for triple in report_g:
+            validation_g.add(triple)
+
+        violation_count = sum(
+            1
+            for _ in report_g.subjects(
+                URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                URIRef("http://www.w3.org/ns/shacl#ValidationResult"),
+            )
+        )
+        return bool(conforms), int(violation_count)
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+

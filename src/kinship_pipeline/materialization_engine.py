@@ -4,8 +4,8 @@ Materialization engine for the kinship consistency pipeline.
 This engine is modelled on the existing ``MaterializationManager`` used by the
 test runner, but it is designed for the pipeline graph architecture:
 
-    Step 1:  <urn:kinship:asserted>  ->  <urn:kinship:mats-closure>
-    Step 2:  asserted + oats        ->  <urn:kinship:full>
+    Step 1:  <urn:kinship:asserted>  ->  <urn:kinship:mats-materialization>
+    Step 2:  asserted + oats        ->  <urn:kinship:oats-materialization>
 
 The engine reads ``:MaterializationScript`` annotations from the TBox, resolves
 their execution order by dependency analysis, and executes them via the
@@ -32,12 +32,12 @@ class MaterializationEngine:
         self,
         *,
         source_graph: str = "urn:kinship:asserted",
-        target_graph: str = "urn:kinship:mats-closure",
+        target_graph: str = "urn:kinship:mats-materialization",
         reason_after_each: bool = False,
         on_script: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> List[Dict[str, Any]]:
-        """Materialize the MATS closure from ``<urn:kinship:asserted>``."""
-        self._prepare_target(source_graph, target_graph)
+        """Materialize the MATS closure from ``<urn:kinship:asserted>`` (scripts only)."""
+        self.backend.clear_graph(target_graph)
         return self._run_scripts(target_graph, reason_after_each=reason_after_each, on_script=on_script)
 
     def step2(
@@ -45,20 +45,13 @@ class MaterializationEngine:
         *,
         asserted_graph: str = "urn:kinship:asserted",
         oats_graph: str = "urn:kinship:oats",
-        target_graph: str = "urn:kinship:full",
+        target_graph: str = "urn:kinship:oats-materialization",
         reason_after_each: bool = False,
         on_script: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> List[Dict[str, Any]]:
-        """Materialize the full graph from asserted + oats."""
+        """Materialize the OATS closure from asserted + oats (scripts only)."""
         self.backend.clear_graph(target_graph)
-        self.backend.add_to_graph(asserted_graph, target_graph)
-        self.backend.add_to_graph(oats_graph, target_graph)
         return self._run_scripts(target_graph, reason_after_each=reason_after_each, on_script=on_script)
-
-    def _prepare_target(self, source: str, target: str) -> None:
-        """Copy source into a clean target graph."""
-        self.backend.clear_graph(target)
-        self.backend.add_to_graph(source, target)
 
     def _run_scripts(
         self,
@@ -72,8 +65,9 @@ class MaterializationEngine:
         results: List[Dict[str, Any]] = []
 
         # Pre-reasoning: ensure superproperties, inverses, etc. are materialised
-        # before scripts that depend on them run.
-        self.backend.trigger_reasoning(target_graph)
+        # before scripts that depend on them run.  Reason over the whole dataset
+        # so the default graph contains inferences from the asserted named graph.
+        self.backend.trigger_reasoning()
 
         for entry in scripts:
             sparql = self._wrap_with_target(entry["script"], target_graph)
@@ -98,7 +92,7 @@ class MaterializationEngine:
 
             if reason_after_each:
                 record["reasoning_triggered"] = True
-                record["inferred_triples"] = self.backend.trigger_reasoning(target_graph)
+                record["inferred_triples"] = self.backend.trigger_reasoning()
 
             results.append(record)
             if callable(on_script):
@@ -106,7 +100,7 @@ class MaterializationEngine:
 
         if not reason_after_each:
             # Single post-materialization reasoning pass.
-            self.backend.trigger_reasoning(target_graph)
+            self.backend.trigger_reasoning()
 
         return results
 
