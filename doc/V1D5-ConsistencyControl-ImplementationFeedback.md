@@ -278,7 +278,45 @@ of it that contains the equivalent non-star axioms the pipeline actually uses.
 
 ---
 
-## 11. Current status
+## 11. Editing rule: only assertion-set graphs are user-modifiable
+
+As a consequence of the truth-maintenance issues described in §3–§5, the
+pipeline deliberately separates **user-editable graphs** from **derived graphs**.
+
+| Graph | Editable? | Content |
+|---|---|---|
+| `<urn:kinship:intake>` | yes | landing zone for new triples before classification |
+| `<urn:kinship:asserted>` | yes | MATS assertions (raw, no inference) |
+| `<urn:kinship:oats>` | yes | OATS assertions (raw, quarantined) |
+| `<urn:kinship:mats-closure>` | **no** | `closure(A)` — rebuilt by Step 1 |
+| `<urn:kinship:full>` | **no** | `closure(A ∪ O)` — rebuilt by Step 2 |
+| `<urn:kinship:validation>` | **no** | SHACL report — cleared and repopulated by the SHACL Gate |
+| `<urn:kinship:ontology>` | **no** | TBox definitions |
+
+### Rationale
+
+When a user edits a family relationship, the pipeline should re-classify the
+modified triples, re-run the gates, and re-derive the closure. Rebuilding the
+materialized graphs from the assertion-set graphs avoids the retraction edge
+cases discussed in §3 and §9:
+
+- Removing a single `hasSpouse` assertion would require the reasoner to retract
+the inferred symmetric `hasSpouse` inverse, the inferred `hasPartner`
+superproperty triple, and any transitive/chain triples derived from it. With a
+forward-chaining reasoner, it is easy to leave "ghost" inferences behind or to
+over-delete triples that have alternative justifications.
+
+- By clearing and re-populating `<urn:kinship:mats-closure>` and
+`<urn:kinship:full>` on every run, the pipeline never needs to reason about
+which inferred triples depend on which assertions. The derived graphs are simply
+correct by construction from the current assertion-set graphs.
+
+This rule also supports a future edit workflow: a user-facing editor modifies
+triples only in `asserted` or `oats`, then re-invokes the pipeline. Any
+validation failures are reported against the assertion sets, not against the
+derived graphs, keeping the data model simple for the user.
+
+## 12. Current status
 
 All RDFLib pipeline scenarios pass (56/56 expectations). The new SHACL-specific
 scenario `pipeline-shacl-post-partner-lineage-r3` passes individually on
