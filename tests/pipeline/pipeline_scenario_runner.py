@@ -55,6 +55,7 @@ _PROJECT_ROOT = _TESTS_DIR.parent
 _SRC_DIR      = _PROJECT_ROOT / "src"
 _SCENARIOS_DIR = _PIPELINE_DIR / "scenarios"
 _ONTOLOGY_DIR  = _PROJECT_ROOT / "ontology" / "kinship"
+_SHAPES_FILE   = _ONTOLOGY_DIR / "kinship-shapes.ttl"
 
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
@@ -222,17 +223,58 @@ def _check_violation_map(label: str,
     return errors
 
 
+def _check_shacl_violations_by_shape(
+    label: str,
+    actual_violations: List[Dict[str, Any]],
+    expected_map: Dict[str, Any],
+) -> List[str]:
+    """
+    Compare SHACL violation list against expected shape counts.
+
+    expected_map == {}              -> list must be empty.
+    expected_map == {SHAPE: {count: N}} -> check count for each shape.
+    """
+    errors = []
+    if expected_map == {}:
+        if actual_violations:
+            names = [v.get("shape", "?") for v in actual_violations]
+            errors.append(f"{label}: expected empty, got {names}")
+        return errors
+
+    from collections import Counter
+    actual_counts = Counter(v.get("shape", "?") for v in actual_violations)
+
+    for shape_name, shape_exp in expected_map.items():
+        got = actual_counts.get(shape_name, 0)
+        if "count" in shape_exp:
+            exp = shape_exp["count"]
+            if got != exp:
+                errors.append(
+                    f"{label}[{shape_name}].count: expected {exp}, got {got}"
+                )
+        elif got == 0:
+            errors.append(f"{label}[{shape_name}]: expected violations, got none")
+
+    return errors
+
+
 def _compare_stage(stage_name: str,
                    actual: Dict[str, Any],
                    expected: Dict[str, Any]) -> List[str]:
     """Compare one stage's actual report against its expectations. Return errors."""
+    # If the scenario declares status "ignore", the stage did not run (or its
+    # outcome is intentionally irrelevant) and should not be checked.
+    if expected.get("status") == "ignore":
+        return []
+
     errors = []
 
     for key, exp_val in expected.items():
 
         # --- scalar fields ---
         if key in ("status", "fats_rejected", "unclassified_rejected",
-                   "mats_count", "oats_count", "scripts"):
+                   "mats_count", "oats_count", "scripts",
+                   "conforms", "total_count", "coverage_gap"):
             err = _check_scalar(f"{stage_name}.{key}", actual.get(key), exp_val)
             if err:
                 errors.append(err)
@@ -254,11 +296,20 @@ def _compare_stage(stage_name: str,
             if err:
                 errors.append(err)
 
-        # --- violations / warnings maps ---
+        # --- violations / warnings maps (gate-specific queries) ---
         elif key in ("violations", "warnings"):
             errs = _check_violation_map(
                 f"{stage_name}.{key}",
                 actual.get(key, []),
+                exp_val,
+            )
+            errors.extend(errs)
+
+        # --- SHACL shape violation counts ---
+        elif key == "violations_by_shape":
+            errs = _check_shacl_violations_by_shape(
+                f"{stage_name}.{key}",
+                actual.get("violations", []),
                 exp_val,
             )
             errors.extend(errs)
@@ -276,13 +327,17 @@ def _make_backend(backend_name: str,
                   graphdb_repo: str = "kinship-pipeline-scenario-test"):
     if backend_name == "rdflib":
         from kinship_pipeline.backends import RDFLibKinshipBackend
-        b = RDFLibKinshipBackend(ontology_files=ontology_files)
+        b = RDFLibKinshipBackend(
+            ontology_files=ontology_files,
+            shacl_shapes=_SHAPES_FILE,
+        )
         b.initialize()
         return b
     if backend_name == "graphdb":
         from kinship_pipeline.backends import GraphDBKinshipBackend
         b = GraphDBKinshipBackend(
             ontology_files=ontology_files,
+            shacl_shapes=_SHAPES_FILE,
             repository_id=graphdb_repo,
             graphdb_url=graphdb_url,
         )

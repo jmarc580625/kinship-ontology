@@ -1,0 +1,33 @@
+{
+  "scenario": "pipeline-shacl-post-partner-lineage-r3",
+  "description": "Residual R3 case: partnership between ancestor and descendant at depth > 2 escapes MATS PAR2 but is caught by SHACL PostPartnerLineageShape.",
+  "intake_file": "tests/data/shacl-post-partner-lineage-r3-data.ttl",
+
+  "expected": {
+    "FATS": {
+      "status": "ok",
+      "mats_count_min": 1,
+      "oats_count": 0,
+      "fats_rejected": 0,
+      "unclassified_rejected": 0
+    },
+    "MATS": {
+      "status": "ok",
+      "violations": {},
+      "warnings": {}
+    },
+    "MATS_MATERIALIZATION": { "status": "ok" },
+    "OATS_LAYER_A":         { "status": "ok" },
+    "OATS_LAYER_B":         { "status": "ok" },
+    "FULL_MATERIALIZATION":  { "status": "ok" },
+    "SHACL_GATE": {
+      "status": "warning",
+      "conforms": false,
+      "total_count": 2,
+      "coverage_gap": 0,
+      "violations_by_shape": {
+        "POST-PARTNER-LINEAGE": { "count": 2 }
+      }
+    }
+  }
+}

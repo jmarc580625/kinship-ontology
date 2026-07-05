@@ -100,6 +100,7 @@ backend = RDFLibKinshipBackend(
         "ontology/kinship/kinship-consistency.ttl",
         # ... other modules as needed
     ],
+    shacl_shapes="ontology/kinship/kinship-shapes.ttl",
     data_files=["tests/data/core-data.ttl"],
 )
 backend.initialize()

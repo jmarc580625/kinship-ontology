@@ -9,7 +9,7 @@ import platform
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import requests
 
@@ -24,17 +24,21 @@ class GraphDBKinshipBackend(KinshipBackend):
         ontology_files: Optional[List[Union[str, Path]]] = None,
         data_files: Optional[List[Union[str, Path]]] = None,
         *,
+        shacl_shapes: Optional[Union[str, Path]] = None,
         graphdb_url: str = "http://localhost:7200",
         repository_id: str = "kinship-pipeline-test",
         ruleset: str = "owl2-rl",
     ) -> None:
         self.ontology_files: List[Union[str, Path]] = ontology_files or []
         self.data_files: List[Union[str, Path]] = data_files or []
+        self.shacl_shapes: Optional[Union[str, Path]] = shacl_shapes
         self.graphdb_url = graphdb_url.rstrip("/")
         self.repository_id = repository_id
         self.ruleset = ruleset
         self.repo_url = f"{self.graphdb_url}/repositories/{self.repository_id}"
         self.ontology_graph = "urn:kinship:ontology"
+        self.shapes_graph = "urn:kinship:shapes"
+        self.validation_graph = "urn:kinship:validation"
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -57,6 +61,8 @@ class GraphDBKinshipBackend(KinshipBackend):
 
         for ttl in self.ontology_files:
             self.load_ontology(ttl, graph=self.ontology_graph)
+        if self.shacl_shapes:
+            self.load_ontology(self.shacl_shapes, graph=self.shapes_graph)
         for ttl in self.data_files:
             self.load_data(ttl, graph="urn:kinship:asserted")
 
@@ -232,6 +238,70 @@ class GraphDBKinshipBackend(KinshipBackend):
             total = self._get_size()
             explicit = self._graph_size_explicit()
         return max(0, total - explicit)
+
+    # ------------------------------------------------------------------
+    # SHACL validation
+    # ------------------------------------------------------------------
+
+    def run_shacl_validation(
+        self,
+        shapes_graph: str = "urn:kinship:shapes",
+        report_graph: str = "urn:kinship:validation",
+    ) -> Tuple[bool, int]:
+        """Run GraphDB SHACL validation and store the report.
+
+        The shapes are expected to be loaded in ``shapes_graph`` already.
+        The bulk validation endpoint is used and the returned Turtle report
+        is stored in ``report_graph``.  Returns ``(conforms, violation_count)``.
+        """
+        if not self.shacl_shapes or not Path(self.shacl_shapes).exists():
+            raise RuntimeError(f"SHACL shapes file not found: {self.shacl_shapes}")
+
+        self.clear_graph(report_graph)
+
+        with open(self.shacl_shapes, "rb") as f:
+            response = requests.post(
+                f"{self.graphdb_url}/rest/repositories/"
+                f"{self.repository_id}/validate/file",
+                files={"file": (Path(self.shacl_shapes).name, f, "text/turtle")},
+                headers={"Accept": "text/turtle"},
+            )
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"SHACL validation failed: {response.status_code} {response.text[:500]}"
+            )
+
+        # GraphDB uses rdf4j:nil in the report; replace with standard rdf:nil
+        # so the report can be stored as regular data.
+        report_turtle = response.text
+        report_turtle = report_turtle.replace(
+            "<http://rdf4j.org/schema/rdf4j#nil>",
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>",
+        )
+        report_turtle = re.sub(r"\brdf4j:nil\b", "rdf:nil", report_turtle)
+
+        store_resp = requests.post(
+            f"{self.repo_url}/statements",
+            data=report_turtle.encode("utf-8"),
+            headers={"Content-Type": "text/turtle"},
+            params={"context": f"<{report_graph}>"},
+        )
+        if store_resp.status_code not in (200, 204):
+            raise RuntimeError(
+                f"Failed to store validation report: {store_resp.status_code} "
+                f"{store_resp.text[:500]}"
+            )
+
+        count_query = (
+            "PREFIX sh: <http://www.w3.org/ns/shacl#> "
+            f"SELECT (COUNT(?r) AS ?cnt) WHERE {{ "
+            f"GRAPH <{report_graph}> {{ ?r a sh:ValidationResult . }} }}"
+        )
+        count_result = self.execute_query(count_query)
+        result_count = int(count_result[0].get("cnt", "0")) if count_result else 0
+        conforms = result_count == 0
+        return conforms, result_count
 
     # ------------------------------------------------------------------
     # Helpers

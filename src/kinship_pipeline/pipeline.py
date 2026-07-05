@@ -10,12 +10,14 @@ Implements the V1D1/V1D2 pipeline:
       -> OATS Layer A             (blocks on "violation")
       -> OATS Layer B
       -> Materialization Step 2   (A+O -> MO)
+      -> SHACL Gate               (warning only; MO remains usable)
 
 Blocking rules
 --------------
-FATS  "blocked"   -> pipeline stops (nothing survived routing)
-MATS  "violation" -> pipeline stops (graph invalid; do not materialise)
+FATS   "blocked"   -> pipeline stops (nothing survived routing)
+MATS   "violation" -> pipeline stops (graph invalid; do not materialise)
 OATS_A "violation" -> pipeline stops (quarantine graph compromised)
+SHACL  "warning"  -> pipeline continues; MO is usable but flagged
 
 Stages that did not run appear in the report as {"status": "skipped", "reason": "..."}.
 
@@ -29,6 +31,7 @@ from .gates.fats import FatsGate
 from .gates.mats import MatsGate
 from .gates.oats_layer_a import OatsLayerA
 from .gates.oats_layer_b import OatsLayerB
+from .gates.shacl import ShaclGate
 from .materialization_engine import MaterializationEngine
 from .query_generator import QueryGenerator
 
@@ -75,6 +78,7 @@ class ConsistencyPipeline:
         self.mats_gate = MatsGate(backend, query_generator)
         self.oats_layer_a = OatsLayerA(backend)
         self.oats_layer_b = OatsLayerB(backend, query_generator)
+        self.shacl_gate = ShaclGate(backend)
 
     def run(
         self,
@@ -243,6 +247,21 @@ class ConsistencyPipeline:
         if verbose:
             _print_materialization("Materialization Step 2 (A+O -> MO)", mat2_report)
 
+        # ------------------------------------------------------------------
+        # 12. SHACL Gate (post-inference safety net, warning only)
+        # ------------------------------------------------------------------
+        shacl_report = self.shacl_gate.run(
+            shapes_graph="urn:kinship:shapes",
+            report_graph="urn:kinship:validation",
+        )
+        report["stages"]["SHACL_GATE"] = shacl_report
+        if verbose:
+            _print_shacl_gate(shacl_report)
+
+        shacl_status = shacl_report.get("status", "ok")
+        if shacl_status == "warning" and report["status"] == "ok":
+            report["status"] = "warning"
+
         if verbose:
             _print_banner(report["status"])
 
@@ -378,6 +397,25 @@ def _print_materialization(label: str, r: Dict[str, Any]) -> None:
         inferred = d.get("inferred_triples", 0)
         inf_str  = f"  (+{inferred} inferred)" if inferred else ""
         print(f"  {prop:<45}  +{added} triples{inf_str}")
+
+
+def _print_shacl_gate(r: Dict[str, Any]) -> None:
+    tag = _status_tag(r["status"])
+    print()
+    print(_sep("="))
+    print(f" SHACL Gate  {tag}")
+    print(_sep("-"))
+    if r.get("status") == "ok":
+        print("  No SHACL violations detected.")
+        return
+    print(f"  Total violations : {r.get('total_count', 0)}")
+    print(f"  Coverage gap     : {r.get('coverage_gap', 0)}")
+    for v in r.get("violations", []):
+        shape = v.get("shape", "?")
+        node = _short(v.get("node", ""))
+        detail = _short(v.get("detail", ""))
+        detail_str = f" (related: {detail})" if detail else ""
+        print(f"  {shape}: {node}{detail_str}")
 
 
 def _print_banner(overall_status: str) -> None:

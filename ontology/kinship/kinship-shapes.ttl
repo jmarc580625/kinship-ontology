@@ -13,20 +13,18 @@
 <http://example.org/kinship/kinship-shapes> a owl:Ontology ;
     owl:versionIRI <http://example.org/kinship/kinship-shapes/1.0.0> ;
     owl:versionInfo "1.0.0" ;
-    owl:imports <http://example.org/kinship/consistency-foundation> ;
     rdfs:label "Kinship Ontology – SHACL Gate Shapes"@en ;
     rdfs:comment """Post-inference SHACL validation shapes for the kinship
     ontology consistency control pipeline. These shapes constitute the SHACL
     Gate, the final safety-net stage of the pipeline, operating on the full
     materialized closure MO (<urn:kinship:full>) after Materialization Step 2.
-
     Role: safety net, not primary consistency mechanism. The FATS, MATS, and
     OATS SPARQL gates are the authoritative detection path. A positive result
     here signals either a gap in Step 1 materialization configuration, a bug
     in a materialization script, or a depth-limited pattern that escaped the
     SPARQL catalog. See Document 2bis for the full specification.
 
-    Target graph: <urn:kinship:full> (MO = closure(A ∪ validated O)).
+    Target dataset: the whole repository (MO = closure(A ∪ validated O)).
     Report graph: <urn:kinship:validation> (sh:ValidationResult triples).
 
     Shapes NOT included here:
@@ -82,10 +80,8 @@ ksh:PostCycleShape a sh:NodeShape ;
             cycles (Q-MATS-CIR1, Q-MATS-CIR2) and materialization scripts."""@en ;
         sh:select """
             SELECT $this WHERE {
-                GRAPH <urn:kinship:full> {
-                    { $this kin:hasDescendant $this . } UNION
-                    { $this kin:hasAncestor   $this . }
-                }
+                { $this kin:hasDescendant $this . } UNION
+                { $this kin:hasAncestor   $this . }
             }
         """ ;
     ] .
@@ -120,10 +116,8 @@ ksh:PostGenderShape a sh:NodeShape ;
             (Q-MATS-CON3) and the GCI materialization script."""@en ;
         sh:select """
             SELECT $this WHERE {
-                GRAPH <urn:kinship:full> {
-                    $this a kin:MalePerson .
-                    $this a kin:FemalePerson .
-                }
+                $this a kin:MalePerson .
+                $this a kin:FemalePerson .
             }
         """ ;
     ] .
@@ -156,15 +150,17 @@ ksh:PostPartnerLineageShape a sh:NodeShape ;
             assertions in the source data."""@en ;
         sh:select """
             SELECT $this ?partner WHERE {
-                GRAPH <urn:kinship:full> {
-                    VALUES ?prop {
-                        kin:hasPartner kin:hasSpouse
-                        kin:hasCivilPartner kin:hasLifePartner
-                    }
-                    $this ?prop ?partner .
-                    { $this kin:hasDescendant ?partner . } UNION
-                    { $this kin:hasAncestor   ?partner . }
+                {
+                    $this kin:hasPartner ?partner .
+                } UNION {
+                    $this kin:hasSpouse ?partner .
+                } UNION {
+                    $this kin:hasCivilPartner ?partner .
+                } UNION {
+                    $this kin:hasLifePartner ?partner .
                 }
+                { $this kin:hasDescendant ?partner . } UNION
+                { $this kin:hasAncestor   ?partner . }
             }
         """ ;
     ] .
@@ -199,11 +195,9 @@ ksh:PostSiblingParentShape a sh:NodeShape ;
             cycles and the hasSibling materialization script."""@en ;
         sh:select """
             SELECT $this ?other WHERE {
-                GRAPH <urn:kinship:full> {
-                    $this kin:hasSibling ?other .
-                    { $this kin:hasParent ?other . } UNION
-                    { $this kin:hasChild  ?other . }
-                }
+                $this kin:hasSibling ?other .
+                { $this kin:hasParent ?other . } UNION
+                { $this kin:hasChild  ?other . }
             }
         """ ;
     ] .

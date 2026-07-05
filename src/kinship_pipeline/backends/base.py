@@ -9,7 +9,7 @@ backend.
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class KinshipBackend(ABC):
@@ -115,6 +115,19 @@ class KinshipBackend(ABC):
         When ``graph`` is provided, the backend should reason on the union of
         the ontology graph and that named graph.  Otherwise it reasons over
         the entire dataset.
+        """
+        ...
+
+    @abstractmethod
+    def run_shacl_validation(
+        self,
+        shapes_graph: str = "urn:kinship:shapes",
+        report_graph: str = "urn:kinship:validation",
+    ) -> Tuple[bool, int]:
+        """Run SHACL validation over the whole dataset and store the report.
+
+        Returns ``(conforms, violation_count)``.  The report triples
+        (``sh:ValidationResult``) are written into ``report_graph``.
         """
         ...
 

@@ -10,7 +10,7 @@ import os
 import sys
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from rdflib import Dataset, Graph, URIRef
 
@@ -22,6 +22,12 @@ try:
 except ImportError:
     OWLRL_AVAILABLE = False
 
+try:
+    import pyshacl
+    PYSHACL_AVAILABLE = True
+except ImportError:
+    PYSHACL_AVAILABLE = False
+
 
 class RDFLibKinshipBackend(KinshipBackend):
     """In-memory RDFLib backend for the consistency pipeline."""
@@ -30,11 +36,16 @@ class RDFLibKinshipBackend(KinshipBackend):
         self,
         ontology_files: Optional[List[Union[str, Path]]] = None,
         data_files: Optional[List[Union[str, Path]]] = None,
+        *,
+        shacl_shapes: Optional[Union[str, Path]] = None,
     ) -> None:
         self.ontology_files: List[Union[str, Path]] = ontology_files or []
         self.data_files: List[Union[str, Path]] = data_files or []
+        self.shacl_shapes: Optional[Union[str, Path]] = shacl_shapes
         self.dataset: Optional[Dataset] = None
         self.ontology_graph: str = "urn:kinship:ontology"
+        self.shapes_graph: str = "urn:kinship:shapes"
+        self.validation_graph: str = "urn:kinship:validation"
         self._inference_enabled: bool = True
 
     # ------------------------------------------------------------------
@@ -42,7 +53,7 @@ class RDFLibKinshipBackend(KinshipBackend):
     # ------------------------------------------------------------------
 
     def initialize(self) -> None:
-        """Create the Dataset and load TBox/ABox.
+        """Create the Dataset and load TBox/ABox/SHACL shapes.
 
         Inference is disabled during loading.  The pipeline controls
         when reasoning runs via ``enable_inference()``.
@@ -52,6 +63,8 @@ class RDFLibKinshipBackend(KinshipBackend):
 
         for ttl in self.ontology_files:
             self.load_ontology(ttl, graph=self.ontology_graph)
+        if self.shacl_shapes:
+            self.load_ontology(self.shacl_shapes, graph=self.shapes_graph)
         for ttl in self.data_files:
             self.load_data(ttl, graph="urn:kinship:asserted")
 
@@ -223,6 +236,60 @@ class RDFLibKinshipBackend(KinshipBackend):
             if len(target) > target_before:
                 added += 1
         return added
+
+    # ------------------------------------------------------------------
+    # SHACL validation
+    # ------------------------------------------------------------------
+
+    def run_shacl_validation(
+        self,
+        shapes_graph: str = "urn:kinship:shapes",
+        report_graph: str = "urn:kinship:validation",
+    ) -> Tuple[bool, int]:
+        """Run pySHACL over the whole dataset and store the report.
+
+        Shapes are read from the named ``shapes_graph``; the validation
+        report is written into ``report_graph``.  Returns
+        ``(conforms, violation_count)``.
+        """
+        if not PYSHACL_AVAILABLE:
+            raise RuntimeError("pySHACL is not installed")
+        if self.dataset is None:
+            raise RuntimeError("Backend not initialized")
+
+        shapes_g = self.dataset.graph(URIRef(shapes_graph))
+        if len(shapes_g) == 0 and not self.shacl_shapes:
+            raise RuntimeError("No SHACL shapes loaded")
+
+        self.clear_graph(report_graph)
+
+        result = pyshacl.validate(
+            data_graph=self.dataset,
+            shacl_graph=shapes_g,
+            advanced=True,
+            inference="none",
+            abort_on_first=False,
+        )
+        if not isinstance(result, tuple) or len(result) != 3:
+            raise RuntimeError(f"pySHACL returned unexpected result: {result!r}")
+
+        conforms, report_g, report_text = result
+        if not isinstance(report_g, Graph):
+            msg = getattr(report_g, "message", str(report_g))
+            raise RuntimeError(f"pySHACL validation failure: {msg}")
+
+        validation_g = self.dataset.graph(URIRef(report_graph))
+        for triple in report_g:
+            validation_g.add(triple)
+
+        violation_count = sum(
+            1
+            for _ in report_g.subjects(
+                URIRef("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+                URIRef("http://www.w3.org/ns/shacl#ValidationResult"),
+            )
+        )
+        return bool(conforms), int(violation_count)
 
     # ------------------------------------------------------------------
     # Helpers

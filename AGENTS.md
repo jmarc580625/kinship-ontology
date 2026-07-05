@@ -44,8 +44,13 @@ venv/Scripts/python.exe tests/test_runner.py --all --backend graphdb
 Intake → FATS Gate → Stash OATS → MATS Gate → Enable inference
        → Materialization Step 1 → Disable inference → Restore OATS
        → OATS Layer A → OATS Layer B → Enable inference
-       → Materialization Step 2
+       → Materialization Step 2 → SHACL Gate
 ```
+
+FATS, MATS and OATS Layer A are blocking gates ("blocked"/"violation").  OATS
+Layer B is a warning gate.  The SHACL Gate is a post-inference **warning-only**
+safety net: it never blocks the pipeline, but it flags residual issues in the
+materialized closure.
 
 ### Inference control
 
@@ -82,6 +87,8 @@ after Step 1 cannot alter `M`.
 - `urn:kinship:asserted` — MATS assertions
 - `urn:kinship:oats` — OATS assertions
 - `urn:kinship:ontology` — TBox
+- `urn:kinship:shapes` — SHACL shapes
+- `urn:kinship:validation` — SHACL validation report
 - `urn:kinship:mats-closure` — A → M
 - `urn:kinship:full` — A ∪ O → MO
 
@@ -90,12 +97,31 @@ clauses must be unscoped for GraphDB (`scope_where_to_graph = False`) and
 GRAPH-scoped for RDFLib (`scope_where_to_graph = True`).  The OATS stash/restore
 sequence is the higher-level isolation mechanism that works for both backends.
 
+### SHACL Gate
+
+- `urn:kinship:shapes` — SHACL shapes loaded once at initialization.
+- `urn:kinship:validation` — validation report, cleared and repopulated on each run.
+
+The shape file `ontology/kinship/kinship-shapes.ttl` is backend-agnostic: it
+contains no `GRAPH` clauses, so both RDFLib (via pySHACL) and GraphDB (via the
+bulk validation endpoint) validate the whole dataset.  Four shapes are defined:
+
+- `PostCycleShape` — self-ancestry in `hasDescendant`/`hasAncestor`.
+- `PostGenderShape` — dual `MalePerson`/`FemalePerson` classification.
+- `PostPartnerLineageShape` — partnership between ancestor/descendant at any depth.
+- `PostSiblingParentShape` — sibling cascade from an undetected cycle.
+
+The gate is implemented in `src/kinship_pipeline/gates/shacl.py`.  It returns a
+warning status when violations are found, so the materialized graph remains
+usable but the pipeline report indicates that an upstream review is needed.
+
 ## Key files
 
 - `tests/test_runner.py` — data-driven test runner.
 - `tests/lib/materialization_manager.py` — reference materialization engine.
 - `tests/pipeline/test_pipeline.py` — pipeline integration tests.
 - `ontology/kinship/kinship-consistency.ttl` — assertion-set classification (FATS/MATS/OATS).
+- `ontology/kinship/kinship-shapes.ttl` — SHACL Gate shapes (backend-agnostic, no `GRAPH` clauses).
 - `doc/V1D1-ConsistencyControl–-GatesPipelineArchitecture.md` — named-graph pipeline architecture.
 - `doc/V1D2-GatePipelinesAndPatternCatalogs.md` — validation pattern catalog.
 - `doc/V1D3-OntologyDrivenQueryGeneration.md` — query generator specification.
@@ -104,7 +130,7 @@ sequence is the higher-level isolation mechanism that works for both backends.
 ## Known design decisions
 
 - `hasTwin` belongs to **MATS**.
-- SHACL Gate is ignored in the current plan.
+- SHACL Gate is implemented as a post-inference warning-only safety net.
 - Q-POST-CAR expected results were corrected to only include the explicitly dual-gender individual `:con3_x1`.
 - RDF-star annotations in `kinship-consistency.ttl` are stripped by the RDFLib backend; the plain equivalent triples are used.
 - The FATS gate ignores non-kinship predicates (e.g. `rdf:type`) rather than classifying them as FATS.

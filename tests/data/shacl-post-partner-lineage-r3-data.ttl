@@ -1,0 +1,25 @@
+@prefix : <http://example.org/kinship#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# =============================================================================
+# shacl-post-partner-lineage-r3-data.ttl
+#
+# Residual R3 case for the SHACL PostPartnerLineageShape.
+#
+# :r3_elder is the great-grandparent of :r3_young and is also their spouse.
+# This partnership+lineage interaction is at depth 3, so it escapes the
+# MATS gate Q-MATS-PAR2 (which covers depth 2).  It is correctly caught by
+# the SHACL PostPartnerLineageShape as an expected residual.
+# =============================================================================
+
+:r3_elder  :hasGender :Male .
+:r3_child  :hasGender :Female .
+:r3_grand :hasGender :Male .
+:r3_young  :hasGender :Female .
+
+:r3_elder :hasBloodChild :r3_child .
+:r3_child :hasBloodChild :r3_grand .
+:r3_grand :hasBloodChild :r3_young .
+
+:r3_elder :hasPartner :r3_young .
