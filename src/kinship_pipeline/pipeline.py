@@ -122,7 +122,7 @@ class ConsistencyPipeline:
         if fats_status == "blocked":
             report["status"] = "blocked"
             for stage in ("MATS", "MATS_MATERIALIZATION",
-                          "OATS_LAYER_A", "OATS_LAYER_B", "OATS_MATERIALIZATION"):
+                          "OATS_LAYER_A", "OATS_LAYER_B", "OATS_MATERIALIZATION", "SHACL_GATE"):
                 report["stages"][stage] = _skipped("FATS gate blocked: no triples routed")
             if verbose:
                 _print_banner("blocked")
@@ -153,7 +153,7 @@ class ConsistencyPipeline:
             if oats_stash_data:
                 _restore_oats(self.backend, oats_graph, oats_stash_data)
             for stage in ("MATS_MATERIALIZATION",
-                          "OATS_LAYER_A", "OATS_LAYER_B", "OATS_MATERIALIZATION"):
+                          "OATS_LAYER_A", "OATS_LAYER_B", "OATS_MATERIALIZATION", "SHACL_GATE"):
                 report["stages"][stage] = _skipped("MATS gate violation: graph not materialised")
             if verbose:
                 _print_banner("violation")
@@ -204,7 +204,7 @@ class ConsistencyPipeline:
 
         if layer_a.get("status") == "violation":
             report["status"] = "violation"
-            for stage in ("OATS_LAYER_B", "OATS_MATERIALIZATION"):
+            for stage in ("OATS_LAYER_B", "OATS_MATERIALIZATION", "SHACL_GATE"):
                 report["stages"][stage] = _skipped("OATS Layer A violation: quarantine graph compromised")
             if verbose:
                 _print_banner("violation")
@@ -221,7 +221,12 @@ class ConsistencyPipeline:
         layer_b_status = layer_b.get("status", "ok")
         if layer_b_status == "violation":
             report["status"] = "violation"
-        elif layer_b_status == "warning" and report["status"] == "ok":
+            for stage in ("OATS_MATERIALIZATION", "SHACL_GATE"):
+                report["stages"][stage] = _skipped("OATS Layer B violation: internal OATS inconsistency")
+            if verbose:
+                _print_banner("violation")
+            return report
+        if layer_b_status == "warning" and report["status"] == "ok":
             report["status"] = "warning"
 
         # ------------------------------------------------------------------

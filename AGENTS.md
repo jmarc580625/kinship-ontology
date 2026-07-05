@@ -47,10 +47,9 @@ Intake → FATS Gate → Stash OATS → MATS Gate → Enable inference
        → Materialization Step 2 → SHACL Gate
 ```
 
-FATS, MATS and OATS Layer A are blocking gates ("blocked"/"violation").  OATS
-Layer B is a warning gate.  The SHACL Gate is a post-inference **warning-only**
-safety net: it never blocks the pipeline, but it flags residual issues in the
-materialized closure.
+FATS, MATS, OATS Layer A, and OATS Layer B are blocking gates ("blocked"/"violation").
+The SHACL Gate is a post-inference **warning-only** safety net: it never blocks
+the pipeline, but it flags residual issues in the materialized closure.
 
 ### Inference control
 

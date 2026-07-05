@@ -36,6 +36,7 @@
         "Q-RED3": { "count": 1 }
       }
     },
-    "OATS_MATERIALIZATION": { "status": "ok" }
+    "OATS_MATERIALIZATION": { "status": "skipped" },
+    "SHACL_GATE": { "status": "skipped" }
   }
 }
