@@ -135,8 +135,8 @@ usable but the pipeline report indicates that an upstream review is needed.
 - SHACL Gate is implemented as a post-inference warning-only safety net.
 - Q-POST-CAR expected results were corrected to only include the explicitly dual-gender individual `:con3_x1`.
 - RDF-star annotations in `kinship-consistency.ttl` are stripped by the RDFLib backend; the plain equivalent triples are used.
-- The FATS gate ignores non-kinship predicates (e.g. `rdf:type`) rather than classifying them as FATS.
+- The FATS gate only acts on kinship-namespace predicates and `rdf:type` triples whose object class carries an `assertionSet` annotation. Everything else left in intake after routing (e.g. `rdf:type owl:NamedIndividual`, non-kinship predicates) is silently dropped by the step-8 `clear_graph` safeguard.
 - The MATS gate can run slowly on the PAR-2 query for large datasets; the control-data test runs in ~70 seconds.
 - `mats-materialization` and `oats-materialization` contain only script-produced derived triples; asserted/OATS data is never copied into them.
-- RDFLib 7.6 rejects `VALUES` inside a `GRAPH { }` clause; `OatsLayerA` uses `FILTER(?p IN (...))` instead.
+- RDFLib 7.6 rejects the **parenthesised single-variable** `VALUES` syntax (`VALUES ?p { (kin:x) }`) inside a `GRAPH { }` block; the bare form (`VALUES ?p { kin:x }`) works fine. All gates including `OatsLayerA` use the bare form consistently.
 - The pipeline has two entry points: `python -m unittest tests.pipeline.test_pipeline` (unittest-discoverable, GraphDB auto-skipped if unreachable) and `python tests/pipeline/pipeline_scenario_runner.py --all` (richer CLI output, `--scenario`, `--list`, `--backend`).

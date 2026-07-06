@@ -51,7 +51,7 @@ class OatsLayerA:
                 "violations": [],
             }
 
-        filter_in = ", ".join(self._qname(p) for p in oats_properties)
+        values_block = " ".join(self._qname(p) for p in oats_properties)
 
         sparql = f"""\
 PREFIX kin: <{_KIN}>
@@ -59,8 +59,8 @@ PREFIX rdfs: <{_RDFS}>
 PREFIX owl: <{_OWL}>
 SELECT DISTINCT ?s ?p ?o ?existingRel WHERE {{
     GRAPH <{oats_graph}> {{
+        VALUES ?p {{ {values_block} }}
         ?s ?p ?o .
-        FILTER(?p IN ({filter_in}))
     }}
     {{
         ?s kin:hasLineageRelative ?o .
