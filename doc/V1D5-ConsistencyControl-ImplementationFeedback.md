@@ -50,15 +50,19 @@ RDFLib was aligned to the GraphDB model:
 
 - `RDFLibKinshipBackend.trigger_reasoning()` now clears the default graph and
   writes all OWL-RL inferences into the default graph instead of the target named
-  graph.
+  graph. It always reasons over the full dataset (ontology + all named graphs),
+  so the default graph contains inferences derived from the asserted named graph.
+- The materialization engine calls `trigger_reasoning()` with no graph argument
+  (full-dataset scope) so the default graph is populated from all named graphs
+  before scripts run their unscoped `WHERE` clauses.
 - The materialization engine no longer wraps `WHERE` clauses with
   `GRAPH <target>`; both backends use unscoped `WHERE` so scripts can see the
   default-graph inferences.
 - `KinshipBackend.scope_where_to_graph` was removed because the backends now
   share the same scoping behavior.
-- Named graphs `mats-closure` and `full` now contain only materialized triples
-  produced by the materialization scripts. The default (implicit) graph holds all
-  OWL-RL inferences.
+- Named graphs `mats-materialization` and `oats-materialization` contain only
+  materialized triples produced by the materialization scripts. The default
+  (implicit) graph holds all OWL-RL inferences.
 - For SHACL, the shape file already used no `GRAPH` clauses and validates the
   whole dataset, so it remained unchanged.
 
@@ -87,13 +91,14 @@ MATS Primacy principle.
 
 ### Workaround
 
-The pipeline physically removes OATS from the store before MATS gate checks and
-before Materialization Step 1:
+The pipeline physically removes OATS from the store before the MATS gate and
+keeps it absent through Materialization Step 1:
 
 1. Serialize the OATS graph to NTriples in memory.
 2. Clear `<urn:kinship:oats>`.
-3. Run MATS gate and Materialization Step 1 on A only.
-4. Disable inference, restore OATS, then continue with Layer A/B.
+3. Run MATS gate on A only.
+4. Enable inference, run Materialization Step 1 (A → M), disable inference.
+5. Restore OATS, then continue with OATS Layer A/B and Materialization Step 2.
 
 Both backends implement the same `export_graph()` / `import_graph()` API, so the
 sequence is backend-agnostic. RDFLib also benefits from this removal because its
@@ -134,8 +139,12 @@ caller of `enable_inference()`, at exactly two points:
 1. After MATS gate, before Materialization Step 1.
 2. After OATS Layer B, before Materialization Step 2.
 
-RDFLib uses the same API (a flag that makes `trigger_reasoning()` a no-op), so
-the 12-step pipeline sequence is identical on both backends.
+On RDFLib, `enable_inference()` sets the flag **and immediately calls
+`trigger_reasoning()`**, so a full OWL-RL pass runs at the moment inference is
+enabled — before the materialization engine adds its own pre-script reasoning
+pass. On GraphDB, `enable_inference()` switches the ruleset back to `owl2-rl`
+and calls `sys:reinfer`, which has the same effect. The 12-step pipeline
+sequence is identical on both backends.
 
 ### Principle preserved
 
@@ -158,7 +167,9 @@ A single `kinship-shapes.ttl` file with `GRAPH <urn:kinship:full>` wrappers in
   graph and remove the `GRAPH` wrapper.
 - **pyshacl** also rejects `VALUES` clauses inside `sh:sparql` constraints
   ("A SPARQL Constraint must not contain a VALUES clause"), which the original
-  `PostPartnerLineageShape` used.
+  `PostPartnerLineageShape` used. Note: this is a pyshacl constraint validation
+  rule, distinct from the RDFLib SPARQL parser issue with the parenthesised
+  single-variable syntax `VALUES ?p { (kin:x) }` inside `GRAPH` blocks (see §10).
 
 ### Workaround
 
@@ -277,9 +288,11 @@ of it that contains the equivalent non-star axioms the pipeline actually uses.
 |---|---|
 | V1D1 §2.3 / §3.3 | Explicitly state that M may be derived from A only if OATS is physically absent during the derivation, because some triplestores union named graphs in the default graph. |
 | V1D1 §2.3 / §3.3 | Clarify that materialized graphs (`mats-materialization`, `oats-materialization`) contain only script-produced triples, while OWL-RL inferences reside in the default/implicit graph. |
+| V1D1 §3.5 | Confirm that OATS Layer B is a blocking gate: Materialization Step 2 and the SHACL Gate are skipped when Layer B reports a violation. |
 | V1D4 §3 / §7 | Add a note that `GRAPH` clauses in `sh:sparql` constraints are not portable and that shapes should be backend-agnostic. |
 | V1D4 §7 | Document that `sys:turnInferenceOff` is insufficient in GraphDB; ruleset switching (`empty` / `owl2-rl` + `reinfer`) is required for precise inference control. |
 | V1D4 §7 | Document that RDFLib was aligned to GraphDB: inferences go to the default graph, named graphs hold only script materializations. |
+| V1D4 §7 | Document the RDFLib SPARQL parser limitation: the parenthesised single-variable `VALUES` syntax (`VALUES ?p { (kin:x) }`) is rejected inside `GRAPH` blocks; use bare form (`VALUES ?p { kin:x }`) consistently. |
 | V1D4 §9.3 | Confirm that RDFLib requires RDF-star stripping at load time. |
 | V1D4 | Add a deployment note about GraphDB heap requirements for explicit-only count queries on inferred repositories. |
 
@@ -327,12 +340,17 @@ derived graphs, keeping the data model simple for the user.
 
 ## 12. Current status
 
-All RDFLib pipeline scenarios pass (56/56 expectations). The new SHACL-specific
-scenario `pipeline-shacl-post-partner-lineage-r3` passes individually on
-GraphDB. The full GraphDB suite is blocked by the heap-memory issue described in
-§8, not by a logic error.
+All 8 pipeline scenarios pass on both backends (50/50 expectations on RDFLib,
+50/50 on GraphDB). Scenarios cover:
 
-All RDFLib pipeline scenarios pass (56/56 expectations). The new SHACL-specific
-scenario `pipeline-shacl-post-partner-lineage-r3` passes individually on
-GraphDB. The full GraphDB suite is blocked by the heap-memory issue described in
-§8, not by a logic error.
+- FATS blocked and FATS property rejection
+- MATS violations (all violation families)
+- Clean end-to-end run (`pipeline-mats-on-core`)
+- OATS clean pass
+- OATS Layer A violation (blocks Layer B, Step 2, and SHACL Gate)
+- OATS Layer B violation (blocks Step 2 and SHACL Gate)
+- SHACL residual R3 case (`PostPartnerLineageShape` at depth > 2)
+
+The GraphDB `--all` suite occasionally raises a heap-memory error in teardown
+(the `graph_size` call in `_stash_oats` cleanup) as described in §8, but this
+does not affect scenario results — all expectations pass before teardown.
