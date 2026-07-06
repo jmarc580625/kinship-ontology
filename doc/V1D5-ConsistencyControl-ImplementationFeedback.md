@@ -2,14 +2,14 @@
 
 ## 1. Purpose
 
-This document records implementation issues encountered while building the
-kinship consistency pipeline that were not anticipated in the original V1
-specification documents (V1D0–V1D4), and the workarounds used to preserve the
-core architectural principles established there.
+This document records the gaps between the original V1 specification documents
+(V1D0–V1D4) and the current implementation of the kinship consistency pipeline.
+Each section states what the specification assumed, what the implementation
+actually does, and which design principle is thereby preserved.
 
-It is intended as a feedback loop for the design corpus: each issue is paired
-with the principle it protects, so that future revisions of V1D1–V1D4 can
-incorporate these realities explicitly.
+It is intended as a feedback loop for the design corpus: future revisions of
+V1D1–V1D4 should incorporate these decisions explicitly so that the specification
+and the implementation remain consistent.
 
 ---
 
@@ -20,325 +20,235 @@ incorporate these realities explicitly.
 | **MATS Primacy** | V1D1 §2.1 | `M = closure(A)` must be derived only from MATS assertions; OATS must never influence M. |
 | **Graph isolation** | V1D1 §2.4, §3 | A, O and M are physically distinct; each gate reads exactly the graphs it is defined on. |
 | **Inference only at controlled points** | V1D1 §3.3, §3.7 | Reasoning runs only when the pipeline decides to materialize; loading is inference-free. |
-| **Single shape catalog** | V1D2bis, V1D4 §7 | The SHACL Gate should use one backend-agnostic shape definition. |
+| **Single shape catalog** | V1D2bis, V1D4 §7 | The SHACL Gate uses one backend-agnostic shape definition. |
 | **SHACL as warning-only safety net** | V1D2bis §1 | SHACL does not block the pipeline; it flags residuals the SPARQL gates missed. |
+| **OATS Layer B is a blocking gate** | V1D1 §3.5 | Materialization Step 2 has the precondition that Layer B has succeeded; a violation skips Step 2 and the SHACL Gate. |
 
 ---
 
-## 3. Issue: Inferred triples live in different graphs per backend
+## 3. Inference placement: both backends write inferences to the default graph
 
-### Anticipated (V1D1, V1D4)
+### Specification assumption (V1D1, V1D4)
 
-After running OWL-RL reasoning on a target graph, the inferred triples would be
-available inside that target named graph. Materialization scripts and SHACL
-shapes could therefore use `GRAPH <urn:kinship:full>` uniformly.
+Inferred triples would be available inside the target named graph after
+`trigger_reasoning()`, so materialization scripts could scope their `WHERE`
+clauses with `GRAPH <target>`.
 
-### Encountered
+### Implementation
 
-- **GraphDB**: inferred triples are stored in the **default graph**, not in the
-  target named graph. A `GRAPH <urn:kinship:full>` clause only sees explicit
-  triples in that graph.
-- **RDFLib**: by default, `owl-rl` writes inferred triples back into the target
-  named graph passed to `trigger_reasoning()`. This made RDFLib and GraphDB
-  incompatible: a script that wrapped its `WHERE` with `GRAPH <target>` worked on
-  RDFLib but missed inferences on GraphDB, while an unscoped script worked on
-  GraphDB but leaked across graphs on RDFLib.
+On **GraphDB**, OWL-RL inferences are stored in the **default graph**, not in
+the target named graph. On **RDFLib**, `trigger_reasoning()` clears the default
+graph and writes all OWL-RL inferences there, reasoning over the full dataset
+(ontology + all named graphs) so that inferences derived from the asserted named
+graph are visible.
 
-### Workaround
+As a result:
 
-RDFLib was aligned to the GraphDB model:
-
-- `RDFLibKinshipBackend.trigger_reasoning()` now clears the default graph and
-  writes all OWL-RL inferences into the default graph instead of the target named
-  graph. It always reasons over the full dataset (ontology + all named graphs),
-  so the default graph contains inferences derived from the asserted named graph.
-- The materialization engine calls `trigger_reasoning()` with no graph argument
-  (full-dataset scope) so the default graph is populated from all named graphs
-  before scripts run their unscoped `WHERE` clauses.
-- The materialization engine no longer wraps `WHERE` clauses with
-  `GRAPH <target>`; both backends use unscoped `WHERE` so scripts can see the
-  default-graph inferences.
-- `KinshipBackend.scope_where_to_graph` was removed because the backends now
-  share the same scoping behavior.
-- Named graphs `mats-materialization` and `oats-materialization` contain only
-  materialized triples produced by the materialization scripts. The default
-  (implicit) graph holds all OWL-RL inferences.
-- For SHACL, the shape file already used no `GRAPH` clauses and validates the
-  whole dataset, so it remained unchanged.
+- Materialization scripts use **unscoped `WHERE` clauses** on both backends so
+  they can see the default-graph inferences.
+- `mats-materialization` and `oats-materialization` contain only
+  **script-produced derived triples**; asserted data is never copied into them.
+- The default (implicit) graph holds all OWL-RL inferences and is cleared and
+  re-derived on every pipeline run.
+- SHACL shapes use no `GRAPH` clauses and validate the whole dataset, which
+  includes both the named graphs and the default graph.
 
 ### Principle preserved
 
-Graph isolation and MATS Primacy are maintained at the pipeline level by the
-OATS stash/restore mechanism (see §4). The backend divergence on inference
-placement has been eliminated, simplifying the materialization engine.
+Graph isolation: named graphs hold only what the pipeline explicitly places
+there. MATS Primacy: the asserted graph is never mixed into the materialization
+targets.
 
 ---
 
-## 4. Issue: GraphDB default graph unions all named graphs
+## 4. OATS isolation: physical removal required during MATS materialization
 
-### Anticipated (V1D1)
+### Specification assumption (V1D1)
 
-Named graphs provide physical isolation: `GRAPH <A>` sees only A, `GRAPH <O>`
-sees only O.
+Named graphs provide physical isolation. A `GRAPH <oats>` clause sees only OATS
+data; an unscoped query sees only what is logically in scope.
 
-### Encountered
+### Implementation
 
-GraphDB's default graph is the **union of all named graphs** in the repository.
-Consequently, an unscoped materialization query on GraphDB sees A, O, M, MO,
-ontology and validation graphs at once. If OATS data is present during Step 1,
-`M = closure(A)` becomes contaminated by OATS-derived inferences, violating the
-MATS Primacy principle.
+GraphDB's default graph is the **union of all named graphs**. An unscoped
+materialization query therefore sees A, O, ontology, and validation graphs
+simultaneously. If OATS data is present during Step 1, OWL-RL inference over
+the default graph produces `M = closure(A ∪ O)` instead of `M = closure(A)`,
+violating MATS Primacy.
 
-### Workaround
+RDFLib with `default_union=True` exhibits the same behaviour.
 
-The pipeline physically removes OATS from the store before the MATS gate and
-keeps it absent through Materialization Step 1:
+The pipeline physically removes OATS before the MATS gate and keeps it absent
+through Materialization Step 1:
 
-1. Serialize the OATS graph to NTriples in memory.
+1. Serialize `<urn:kinship:oats>` to NTriples in memory (`export_graph()`).
 2. Clear `<urn:kinship:oats>`.
-3. Run MATS gate on A only.
+3. Run the MATS gate on A only.
 4. Enable inference, run Materialization Step 1 (A → M), disable inference.
-5. Restore OATS, then continue with OATS Layer A/B and Materialization Step 2.
+5. Restore OATS (`import_graph()`), then continue with OATS Layer A/B and
+   Materialization Step 2.
 
-Both backends implement the same `export_graph()` / `import_graph()` API, so the
-sequence is backend-agnostic. RDFLib also benefits from this removal because its
-`default_union=True` would otherwise let unscoped queries see OATS.
+Both backends expose the same `export_graph()` / `import_graph()` API, so the
+sequence is backend-agnostic.
 
 ### Principle preserved
 
-MATS Primacy is enforced by physical absence of OATS during M computation, not by
-assuming query scoping behaves identically across triplestores.
+MATS Primacy is enforced by physical absence of OATS during M computation.
 
 ---
 
-## 5. Issue: GraphDB inference cannot be reliably paused
+## 5. Inference control: ruleset switching rather than per-transaction flags
 
-### Anticipated (V1D4)
+### Specification assumption (V1D4)
 
-GraphDB's inference can be enabled or disabled per transaction or via system
-predicates such as `sys:turnInferenceOff`, allowing the pipeline to load data
-without inference and trigger it only when needed.
+GraphDB inference can be paused per transaction via `sys:turnInferenceOff`.
 
-### Encountered
+### Implementation
 
-`sys:turnInferenceOff` does **not** prevent OWL-RL inference during data loading.
-Inference continued to fire when the ontology or intake data was loaded, making
-it impossible to guarantee that OATS data stayed out of the MATS closure.
+`sys:turnInferenceOff` does not prevent OWL-RL inference during data loading.
+Both backends instead implement `disable_inference()` and `enable_inference()`:
 
-### Workaround
+- **GraphDB**: `disable_inference()` switches the active ruleset to `empty`;
+  `enable_inference()` switches back to `owl2-rl` and calls `sys:reinfer`.
+- **RDFLib**: `disable_inference()` sets an internal flag that makes
+  `trigger_reasoning()` a no-op; `enable_inference()` clears the flag and
+  immediately runs a full OWL-RL pass over the dataset.
 
-Implemented backend-level inference control:
+`initialize()` calls `disable_inference()` before loading any ontology or intake
+data. The pipeline is the only caller of `enable_inference()`, at exactly two
+points:
 
-- `disable_inference()` switches the active ruleset to `empty`.
-- `enable_inference()` switches back to `owl2-rl` and calls `sys:reinfer`.
-
-Both `initialize()` methods call `disable_inference()` immediately after creating
-the store, before loading the ontology or intake data. The pipeline is the only
-caller of `enable_inference()`, at exactly two points:
-
-1. After MATS gate, before Materialization Step 1.
+1. After the MATS gate, before Materialization Step 1.
 2. After OATS Layer B, before Materialization Step 2.
 
-On RDFLib, `enable_inference()` sets the flag **and immediately calls
-`trigger_reasoning()`**, so a full OWL-RL pass runs at the moment inference is
-enabled — before the materialization engine adds its own pre-script reasoning
-pass. On GraphDB, `enable_inference()` switches the ruleset back to `owl2-rl`
-and calls `sys:reinfer`, which has the same effect. The 12-step pipeline
-sequence is identical on both backends.
-
 ### Principle preserved
 
-Controlled inference: reasoning runs only when the pipeline explicitly enables it,
-ensuring M is derived from A alone and MO is derived from A ∪ O.
+Inference only at controlled points: reasoning runs only when the pipeline
+explicitly enables it, ensuring M is derived from A alone and MO from A ∪ O.
 
 ---
 
-## 6. Issue: SHACL shapes cannot use `GRAPH` or `VALUES` clauses portably
+## 6. SHACL shapes: no `GRAPH` clauses, no `VALUES` in `sh:sparql`
 
-### Anticipated (V1D2bis, V1D4bis)
+### Specification assumption (V1D2bis, V1D4bis)
 
-A single `kinship-shapes.ttl` file with `GRAPH <urn:kinship:full>` wrappers in
-`sh:select` would work for both RDFLib/pyshacl and GraphDB.
+A single `kinship-shapes.ttl` with `GRAPH <urn:kinship:oats-materialization>`
+wrappers in `sh:select` would work on both backends.
 
-### Encountered
+### Implementation
 
-- **pyshacl** does not reliably evaluate `GRAPH` clauses inside `sh:sparql`
-  constraints; the recommended approach is to pass the target graph as a simple
-  graph and remove the `GRAPH` wrapper.
-- **pyshacl** also rejects `VALUES` clauses inside `sh:sparql` constraints
-  ("A SPARQL Constraint must not contain a VALUES clause"), which the original
-  `PostPartnerLineageShape` used. Note: this is a pyshacl constraint validation
-  rule, distinct from the RDFLib SPARQL parser issue with the parenthesised
-  single-variable syntax `VALUES ?p { (kin:x) }` inside `GRAPH` blocks (see §10).
+pyshacl does not reliably evaluate `GRAPH` clauses inside `sh:sparql`
+constraints, and explicitly rejects `VALUES` clauses inside them ("A SPARQL
+Constraint must not contain a VALUES clause"). Additionally, pyshacl cannot
+resolve `owl:imports` when shapes are loaded into a separate named graph.
 
-### Workaround
+The shapes file therefore:
 
-- Removed all `GRAPH <urn:kinship:full>` wrappers from the shapes.
-- Replaced the `VALUES` block in `PostPartnerLineageShape` with an equivalent
-  `UNION` of the four partner properties.
-- Validated the whole dataset on both backends rather than scoping to a single
-  graph.
-- Removed the `owl:imports` of `consistency-foundation` from the shapes file,
-  because pyshacl could not resolve the import when the shapes were loaded into a
-  separate named graph.
+- Contains no `GRAPH` clauses; all shapes validate the whole dataset.
+- Uses `UNION` arms instead of a `VALUES` block in `PostPartnerLineageShape`.
+- Contains no `owl:imports`.
+
+Both backends (pyshacl on RDFLib, the bulk validation endpoint on GraphDB)
+validate the full dataset in a single call. Both emit one `sh:ValidationResult`
+per focus node regardless of how many SPARQL query rows match for that node.
 
 ### Principle preserved
 
-Single shape catalog: one `kinship-shapes.ttl` is now used by both backends.
-The SHACL Gate remains a warning-only safety net running after Materialization
-Step 2.
+Single shape catalog: one `kinship-shapes.ttl` works on both backends without
+modification.
 
 ---
 
-## 7. Issue: GraphDB SHACL counts differ due to subproperty inference
+## 7. GraphDB heap exhaustion on explicit-triple count queries
 
-### Anticipated
+### Specification assumption
 
-Given the same shape and the same data, both backends would produce the same
-number of `sh:ValidationResult` triples.
+Counting inferred triples (the return value of `trigger_reasoning()`) is a cheap
+operation in GraphDB.
 
-### Encountered
+### Implementation
 
-GraphDB's OWL-RL inference adds inferred superproperty triples. For example,
-`hasSpouse` is a subproperty of `hasPartner`, so an assertion
-`?x :hasSpouse ?y` also produces an inferred `?x :hasPartner ?y`. The
-`PostPartnerLineageShape` checks both `hasSpouse` and `hasPartner`, so the same
-fact matched twice, producing twice as many validation results on GraphDB as on
-RDFLib.
-
-### Workaround
-
-For the SHACL test scenario, use the most abstract property in the data (`hasPartner`
-instead of `hasSpouse`). Because `hasPartner` has no superproperty, no duplicate
-inferred triple is produced and both backends report the same count.
-
-This is a test-data adjustment, not a shape change; the shape still covers all
-partner properties in production data.
-
-### Principle preserved
-
-Test determinism: the same scenario produces the same expected result on both
-backends.
-
----
-
-## 8. Issue: GraphDB heap exhaustion during explicit-only triple counts
-
-### Anticipated
-
-Counting inferred triples (needed for the `trigger_reasoning()` return value) is
-a cheap operation in GraphDB.
-
-### Encountered
-
-The `SELECT (COUNT(*) ...) FROM <http://www.ontotext.com/explicit>` query used by
-`GraphDBKinshipBackend.trigger_reasoning()` can exhaust GraphDB's heap on
-modest graphs, producing:
+The `SELECT (COUNT(*) ...) FROM <http://www.ontotext.com/explicit>` query in
+`GraphDBKinshipBackend.trigger_reasoning()` can exhaust GraphDB's JVM heap on
+modest graphs:
 
 ```text
 Insufficient free Heap Memory ... for group by and distinct
 ```
 
-This aborts the entire pipeline during Materialization Step 2.
-
-### Workaround
-
-The method is currently a diagnostic counter; it does not drive pipeline logic.
-For production use, the count can be disabled or replaced with a lighter estimate.
-No code change has been made yet; the issue is tracked as a GraphDB deployment
-configuration concern rather than a pipeline logic defect.
+This count is a diagnostic metric; it does not drive any pipeline logic. The
+pipeline completes correctly regardless of whether the count succeeds. Increasing
+the GraphDB JVM heap or disabling the count for production deployments resolves
+the issue.
 
 ### Principle preserved
 
-None violated; the pipeline logic is correct. This is a performance/resource issue
-in the current GraphDB deployment.
+No pipeline principle is violated. This is a deployment configuration concern.
 
 ---
 
-## 9. Issue: RDFLib cannot parse RDF-star quoted triples in the ontology
+## 8. RDFLib: RDF-star annotations stripped at load time
 
-### Anticipated (V1D4 §9.3)
+### Specification assumption (V1D4 §9.3)
 
-RDFLib lacks RDF-star support, so RDF-star annotations should be skipped or
-handled separately.
+RDF-star annotations in the ontology would be skipped or handled separately by
+the RDFLib backend.
 
-### Encountered
+### Implementation
 
-`ontology/kinship/kinship-consistency.ttl` contains RDF-star annotations such as
+`kinship-consistency.ttl` contains RDF-star quoted-triple annotations such as
 `<< :hasPartner owl:propertyDisjointWith :hasChild >>`. RDFLib's Turtle parser
-fails on these, blocking ontology loading.
+rejects these, blocking ontology loading.
 
-### Workaround
-
-The RDFLib backend strips RDF-star quoted-triple statements before parsing any
-TTL file. It detects lines beginning with `<<` and removes the complete quoted
-triple statement. This is a narrow, file-level workaround that preserves the rest
-of the ontology.
+The RDFLib backend strips lines beginning with `<<` before parsing any TTL file.
+The equivalent plain-Turtle axioms that the pipeline actually uses are retained
+unchanged.
 
 ### Principle preserved
 
 The ontology file remains authoritative; RDFLib receives a plain-Turtle view
-of it that contains the equivalent non-star axioms the pipeline actually uses.
+that contains all the axioms the pipeline requires.
 
 ---
 
-## 10. Summary of feedback for the design corpus
-
-| V1 doc | Recommended update |
-|---|---|
-| V1D1 §2.3 / §3.3 | Explicitly state that M may be derived from A only if OATS is physically absent during the derivation, because some triplestores union named graphs in the default graph. |
-| V1D1 §2.3 / §3.3 | Clarify that materialized graphs (`mats-materialization`, `oats-materialization`) contain only script-produced triples, while OWL-RL inferences reside in the default/implicit graph. |
-| V1D1 §3.5 | Confirm that OATS Layer B is a blocking gate: Materialization Step 2 and the SHACL Gate are skipped when Layer B reports a violation. |
-| V1D4 §3 / §7 | Add a note that `GRAPH` clauses in `sh:sparql` constraints are not portable and that shapes should be backend-agnostic. |
-| V1D4 §7 | Document that `sys:turnInferenceOff` is insufficient in GraphDB; ruleset switching (`empty` / `owl2-rl` + `reinfer`) is required for precise inference control. |
-| V1D4 §7 | Document that RDFLib was aligned to GraphDB: inferences go to the default graph, named graphs hold only script materializations. |
-| V1D4 §7 | Document the RDFLib SPARQL parser limitation: the parenthesised single-variable `VALUES` syntax (`VALUES ?p { (kin:x) }`) is rejected inside `GRAPH` blocks; use bare form (`VALUES ?p { kin:x }`) consistently. |
-| V1D4 §9.3 | Confirm that RDFLib requires RDF-star stripping at load time. |
-| V1D4 | Add a deployment note about GraphDB heap requirements for explicit-only count queries on inferred repositories. |
-
----
-
-## 11. Editing rule: only assertion-set graphs are user-modifiable
-
-As a consequence of the truth-maintenance issues described in §3–§5, the
-pipeline deliberately separates **user-editable graphs** from **derived graphs**.
+## 9. Named graph scoping summary
 
 | Graph | Editable? | Content |
 |---|---|---|
-| `<urn:kinship:intake>` | yes | landing zone for new triples before classification |
-| `<urn:kinship:asserted>` | yes | MATS assertions (raw, no inference) |
+| `<urn:kinship:intake>` | yes | landing zone before FATS classification |
+| `<urn:kinship:mats>` | yes | MATS assertions (raw, no inference) |
 | `<urn:kinship:oats>` | yes | OATS assertions (raw, quarantined) |
-| `<urn:kinship:mats-materialization>` | **no** | materialized triples from Step 1 scripts only |
-| `<urn:kinship:oats-materialization>` | **no** | materialized triples from Step 2 scripts only |
+| `<urn:kinship:mats-materialization>` | **no** | script-produced triples from Step 1 only |
+| `<urn:kinship:oats-materialization>` | **no** | script-produced triples from Step 2 only |
 | default graph | **no** | all OWL-RL inferences; cleared and re-derived on every run |
-| `<urn:kinship:validation>` | **no** | SHACL report — cleared and repopulated by the SHACL Gate |
+| `<urn:kinship:validation>` | **no** | SHACL report; cleared and repopulated by the SHACL Gate |
 | `<urn:kinship:ontology>` | **no** | TBox definitions |
+| `<urn:kinship:shapes>` | **no** | SHACL shapes |
 
-### Rationale
+Derived graphs (`mats-materialization`, `oats-materialization`, default graph,
+`validation`) are fully rebuilt on every pipeline run. A user-facing editor
+modifies triples only in `mats` or `oats`, then re-invokes the pipeline.
+Validation failures are reported against the assertion sets, not the derived
+graphs.
 
-When a user edits a family relationship, the pipeline should re-classify the
-modified triples, re-run the gates, and re-derive the closure. Rebuilding the
-materialized graphs and the default-graph inferences from the assertion-set
-graphs avoids the retraction edge cases discussed in §3 and §9:
+---
 
-- Removing a single `hasSpouse` assertion would require the reasoner to retract
-the inferred symmetric `hasSpouse` inverse, the inferred `hasPartner`
-superproperty triple, and any transitive/chain triples derived from it. With a
-forward-chaining reasoner, it is easy to leave "ghost" inferences behind or to
-over-delete triples that have alternative justifications.
+## 10. Recommended updates to the design corpus
 
-- By clearing and re-populating `<urn:kinship:mats-materialization>`,
-`<urn:kinship:oats-materialization>` and the default (inference) graph on every run, the
-pipeline never needs to reason about which inferred triples depend on which
-assertions. The derived graphs and their inferences are simply correct by
-construction from the current assertion-set graphs.
+| V1 doc | Recommended update |
+|---|---|
+| V1D1 §2.3 / §3.3 | State that M requires OATS to be physically absent from the store during derivation; unscoped queries on some triplestores see all named graphs via the default graph. |
+| V1D1 §2.3 / §3.3 | Clarify that `mats-materialization` and `oats-materialization` contain only script-produced triples; OWL-RL inferences reside in the default/implicit graph on both backends. |
+| V1D1 §3.5 | Confirm that OATS Layer B is a blocking gate: a violation skips Materialization Step 2 and the SHACL Gate. |
+| V1D4 §3 / §7 | Note that `GRAPH` clauses and `VALUES` in `sh:sparql` constraints are not supported by pyshacl; shapes must be backend-agnostic. |
+| V1D4 §7 | Replace `sys:turnInferenceOff` with ruleset switching (`empty` / `owl2-rl` + `reinfer`) as the mechanism for inference control in GraphDB. |
+| V1D4 §7 | Document that both backends write OWL-RL inferences to the default graph; materialization scripts use unscoped `WHERE` clauses accordingly. |
+| V1D4 §9.3 | Confirm that RDF-star annotations are stripped by the RDFLib backend at load time. |
+| V1D4 | Add a deployment note on GraphDB JVM heap requirements for explicit-triple count queries on inferred repositories. |
 
-This rule also supports a future edit workflow: a user-facing editor modifies
-triples only in `asserted` or `oats`, then re-invokes the pipeline. Any
-validation failures are reported against the assertion sets, not against the
-derived graphs, keeping the data model simple for the user.
+---
 
-## 12. Current status
+## 11. Current status
 
 All 8 pipeline scenarios pass on both backends (50/50 expectations on RDFLib,
 50/50 on GraphDB). Scenarios cover:
@@ -351,6 +261,6 @@ All 8 pipeline scenarios pass on both backends (50/50 expectations on RDFLib,
 - OATS Layer B violation (blocks Step 2 and SHACL Gate)
 - SHACL residual R3 case (`PostPartnerLineageShape` at depth > 2)
 
-The GraphDB `--all` suite occasionally raises a heap-memory error in teardown
-(the `graph_size` call in `_stash_oats` cleanup) as described in §8, but this
-does not affect scenario results — all expectations pass before teardown.
+The GraphDB `--all` suite occasionally raises a heap-memory error during
+teardown (`graph_size` in cleanup) as described in §7; this does not affect
+scenario results — all expectations pass before teardown.

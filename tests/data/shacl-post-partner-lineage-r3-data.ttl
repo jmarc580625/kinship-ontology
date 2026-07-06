@@ -22,4 +22,5 @@
 :r3_child :hasBloodChild :r3_grand .
 :r3_grand :hasBloodChild :r3_young .
 
-:r3_elder :hasPartner :r3_young .
+:r3_elder :hasSpouse :r3_young .
+
