@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kinship-pipeline"
+version = "0.1.0"
+description = "Kinship ontology consistency-control pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "rdflib>=7.0.0",
+    "requests>=2.31.0",
+    "owlrl>=6.0.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kinship_pipeline"]
