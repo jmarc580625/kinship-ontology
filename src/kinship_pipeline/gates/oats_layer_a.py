@@ -121,7 +121,7 @@ SELECT DISTINCT ?s ?p ?o ?existingRel WHERE {{
         return {
             "status": "ok" if not results else "violation",
             "graph": oats_graph,
-            "asserted": asserted_graph,
+            "asserted": mats_graph,
             "mats_materialization": mats_materialization_graph,
             "count": len(results),
             "violations": results[:50],

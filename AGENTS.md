@@ -84,7 +84,7 @@ after Step 1 cannot alter `M`.
 ### Named graph scoping
 
 - `urn:kinship:intake` — incoming assertions
-- `urn:kinship:asserted` — MATS assertions
+- `urn:kinship:mats` — MATS assertions
 - `urn:kinship:oats` — OATS assertions
 - `urn:kinship:ontology` — TBox
 - `urn:kinship:shapes` — SHACL shapes

@@ -4,7 +4,7 @@ Materialization engine for the kinship consistency pipeline.
 This engine is modelled on the existing ``MaterializationManager`` used by the
 test runner, but it is designed for the pipeline graph architecture:
 
-    Step 1:  <urn:kinship:asserted>  ->  <urn:kinship:mats-materialization>
+    Step 1:  <urn:kinship:mats>  ->  <urn:kinship:mats-materialization>
     Step 2:  asserted + oats        ->  <urn:kinship:oats-materialization>
 
 The engine reads ``:MaterializationScript`` annotations from the TBox, resolves
@@ -31,19 +31,19 @@ class MaterializationEngine:
     def step1(
         self,
         *,
-        source_graph: str = "urn:kinship:asserted",
+        source_graph: str = "urn:kinship:mats",
         target_graph: str = "urn:kinship:mats-materialization",
         reason_after_each: bool = False,
         on_script: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> List[Dict[str, Any]]:
-        """Materialize the MATS closure from ``<urn:kinship:asserted>`` (scripts only)."""
+        """Materialize the MATS closure from ``<urn:kinship:mats>`` (scripts only)."""
         self.backend.clear_graph(target_graph)
         return self._run_scripts(target_graph, reason_after_each=reason_after_each, on_script=on_script)
 
     def step2(
         self,
         *,
-        asserted_graph: str = "urn:kinship:asserted",
+        mats_graph: str = "urn:kinship:mats",
         oats_graph: str = "urn:kinship:oats",
         target_graph: str = "urn:kinship:oats-materialization",
         reason_after_each: bool = False,

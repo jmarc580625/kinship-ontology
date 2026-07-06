@@ -44,12 +44,12 @@ class FatsGate:
     def run(
         self,
         intake_graph: str = "urn:kinship:intake",
-        asserted_graph: str = "urn:kinship:asserted",
+        mats_graph: str = "urn:kinship:mats",
         oats_graph: str = "urn:kinship:oats",
         ontology_graph: str = "urn:kinship:ontology",
     ) -> Dict[str, Any]:
         """Execute the FATS gate and return a detailed routing report."""
-        self.backend.clear_graph(asserted_graph)
+        self.backend.clear_graph(mats_graph)
         self.backend.clear_graph(oats_graph)
 
         # 1-2. Detect FATS rejections, then expunge from intake immediately.
@@ -66,13 +66,13 @@ class FatsGate:
         self._move_by_class_set(intake_graph, oats_graph, ontology_graph, "OATS")
 
         # 6-7. Route MATS.
-        self._move_by_predicate_set(intake_graph, asserted_graph, ontology_graph, "MATS")
-        self._move_by_class_set(intake_graph, asserted_graph, ontology_graph, "MATS")
+        self._move_by_predicate_set(intake_graph, mats_graph, ontology_graph, "MATS")
+        self._move_by_class_set(intake_graph, mats_graph, ontology_graph, "MATS")
 
         # 8. Drop anything left in intake (safeguard — should already be empty).
         self.backend.clear_graph(intake_graph)
 
-        mats_count    = self.backend.graph_size(asserted_graph)
+        mats_count    = self.backend.graph_size(mats_graph)
         oats_count    = self.backend.graph_size(oats_graph)
         fats_count    = len(fats_property_triples) + len(fats_class_triples)
         unclass_count = len(unclassified_triples)

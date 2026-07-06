@@ -31,7 +31,7 @@ try:
 except ImportError:
     PYSHACL_AVAILABLE = False
 
-_URN_ASSERTED   = URIRef("urn:kinship:asserted")
+_URN_MATS   = URIRef("urn:kinship:mats")
 _URN_VALIDATION = URIRef("urn:kinship:validation")
 
 
@@ -115,13 +115,13 @@ class RDFLibBackend:
         """Build a Dataset with named graphs for SHACL validation.
 
         Named graphs populated:
-          <urn:kinship:asserted>   — raw ABox data (before inference)
+          <urn:kinship:mats>   — raw ABox data (before inference)
           default graph            — full working graph (TBox + ABox + inferred)
         """
         self.dataset = Dataset()
 
         # Populate the asserted named graph with ABox data
-        asserted_g = self.dataset.graph(_URN_ASSERTED)
+        asserted_g = self.dataset.graph(_URN_MATS)
         for triple in self.abox:
             asserted_g.add(triple)
 

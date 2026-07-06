@@ -53,7 +53,7 @@ def detect_generational_cycles(
     query_generator:
         Provides the ascending/descending property lists from the TBox cache.
     data_graph:
-        Named graph to scan (``urn:kinship:asserted`` or ``urn:kinship:oats``).
+        Named graph to scan (``urn:kinship:mats`` or ``urn:kinship:oats``).
     assertion_set:
         ``"MATS"`` or ``"OATS"`` -- selects the property lists from the cache.
 

@@ -9,7 +9,7 @@ import time
 from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
 
-_URN_ASSERTED   = "urn:kinship:asserted"
+_URN_MATS   = "urn:kinship:mats"
 _URN_VALIDATION = "urn:kinship:validation"
 
 
@@ -46,7 +46,7 @@ class GraphDBBackend:
             Inference ruleset (owl2-rl, rdfs, etc.).
         shacl_shapes:
             Optional path to a SHACL shapes TTL file.  When provided the
-            backend also loads ABox data into <urn:kinship:asserted> and
+            backend also loads ABox data into <urn:kinship:mats> and
             exposes run_shacl_validation().
         """
         if isinstance(ontology_files, str):
@@ -231,10 +231,10 @@ class GraphDBBackend:
             self._load_file(data_file)
 
         # When SHACL shapes are declared, also load ABox into a named graph
-        # so that SPARQL constraints can use GRAPH <urn:kinship:asserted>.
+        # so that SPARQL constraints can use GRAPH <urn:kinship:mats>.
         if self.shacl_shapes:
             for data_file in self.data_files:
-                self._load_file(data_file, context=_URN_ASSERTED)
+                self._load_file(data_file, context=_URN_MATS)
 
         time.sleep(2)  # let reasoner settle
 

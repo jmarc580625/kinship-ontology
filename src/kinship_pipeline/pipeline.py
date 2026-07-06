@@ -84,7 +84,7 @@ class ConsistencyPipeline:
         self,
         *,
         intake_graph: str = "urn:kinship:intake",
-        asserted_graph: str = "urn:kinship:asserted",
+        mats_graph: str = "urn:kinship:mats",
         oats_graph: str = "urn:kinship:oats",
         mats_materialization_graph: str = "urn:kinship:mats-materialization",
         oats_materialization_graph: str = "urn:kinship:oats-materialization",
@@ -113,7 +113,7 @@ class ConsistencyPipeline:
         # ------------------------------------------------------------------
         # 1. FATS Gate
         # ------------------------------------------------------------------
-        fats_report = self.fats_gate.run(intake_graph, asserted_graph, oats_graph)
+        fats_report = self.fats_gate.run(intake_graph, mats_graph, oats_graph)
         report["stages"]["FATS"] = fats_report
         if verbose:
             _print_fats(fats_report)
@@ -141,7 +141,7 @@ class ConsistencyPipeline:
         # ------------------------------------------------------------------
         # 3. MATS Gate
         # ------------------------------------------------------------------
-        mats_report = self.mats_gate.run(asserted_graph)
+        mats_report = self.mats_gate.run(mats_graph)
         report["stages"]["MATS"] = mats_report
         if verbose:
             _print_violation_gate("MATS Gate", mats_report)
@@ -170,7 +170,7 @@ class ConsistencyPipeline:
         # 5. Materialization Step 1: A -> M
         # ------------------------------------------------------------------
         mats_scripts = self.materialization_engine.step1(
-            source_graph=asserted_graph,
+            source_graph=mats_graph,
             target_graph=mats_materialization_graph,
             reason_after_each=reason_after_each,
         )
@@ -238,7 +238,7 @@ class ConsistencyPipeline:
         # 11. Materialization Step 2: A+O -> MO
         # ------------------------------------------------------------------
         oats_mat_scripts = self.materialization_engine.step2(
-            asserted_graph=asserted_graph,
+            mats_graph=mats_graph,
             oats_graph=oats_graph,
             target_graph=oats_materialization_graph,
             reason_after_each=reason_after_each,

@@ -46,7 +46,7 @@ class KinshipBackend(ABC):
 
     @abstractmethod
     def load_data(self, files: Union[str, Path, List[Union[str, Path]]],
-                  *, graph: str = "urn:kinship:asserted") -> None:
+                  *, graph: str = "urn:kinship:mats") -> None:
         """Load ABox TTL file(s) into the target named graph."""
         ...
 

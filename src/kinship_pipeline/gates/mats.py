@@ -26,7 +26,7 @@ class MatsGate:
         self.backend = backend
         self.query_generator = query_generator
 
-    def run(self, asserted_graph: str = "urn:kinship:asserted") -> Dict[str, Any]:
+    def run(self, mats_graph: str = "urn:kinship:mats") -> Dict[str, Any]:
         """Execute MATS validation and return a report.
 
         Returns
@@ -38,7 +38,7 @@ class MatsGate:
           "warnings":   [ {query, count, ...}, ... ],   # RED families
         }
         """
-        queries = self.query_generator.generate_mats(data_graph=asserted_graph)
+        queries = self.query_generator.generate_mats(data_graph=mats_graph)
         violations: List[Dict[str, Any]] = []
         warnings:   List[Dict[str, Any]] = []
 
@@ -55,7 +55,7 @@ class MatsGate:
 
         # Graph-algorithm cycle detection (Q-CIR2).
         cir2 = detect_generational_cycles(
-            self.backend, self.query_generator, asserted_graph, "MATS",
+            self.backend, self.query_generator, mats_graph, "MATS",
         )
         if cir2["count"] > 0:
             violations.append(cir2)
@@ -69,7 +69,7 @@ class MatsGate:
 
         return {
             "status":     status,
-            "graph":      asserted_graph,
+            "graph":      mats_graph,
             "violations": violations,
             "warnings":   warnings,
         }

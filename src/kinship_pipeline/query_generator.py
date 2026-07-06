@@ -73,7 +73,7 @@ class QueryGenerator:
     # Public API
     # ------------------------------------------------------------------
 
-    def generate_mats(self, data_graph: str = "urn:kinship:asserted") -> Dict[str, str]:
+    def generate_mats(self, data_graph: str = "urn:kinship:mats") -> Dict[str, str]:
         """Generate all MATS gate queries.
 
         Note: Q-CIR2 (generational cycles) is handled by the graph-algorithm

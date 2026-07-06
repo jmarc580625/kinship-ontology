@@ -66,7 +66,7 @@ class RDFLibKinshipBackend(KinshipBackend):
         if self.shacl_shapes:
             self.load_ontology(self.shacl_shapes, graph=self.shapes_graph)
         for ttl in self.data_files:
-            self.load_data(ttl, graph="urn:kinship:asserted")
+            self.load_data(ttl, graph="urn:kinship:mats")
 
     def clear_graph(self, graph_uri: str) -> None:
         """Clear the named graph."""
@@ -91,7 +91,7 @@ class RDFLibKinshipBackend(KinshipBackend):
         for ttl in self._as_list(files):
             self._parse_into(ttl, g)
 
-    def load_data(self, files, *, graph="urn:kinship:asserted") -> None:
+    def load_data(self, files, *, graph="urn:kinship:mats") -> None:
         """Load ABox TTL file(s) into the target graph."""
         if self.dataset is None:
             raise RuntimeError("Backend not initialized")
